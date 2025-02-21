@@ -27,13 +27,18 @@
     "test:coverage": "jest --coverage --collectCoverageFrom=\"./src/**\"",
     "api-sync": "./scripts/api-sync.sh",
     "docs": "npx typedoc --plugin typedoc-plugin-markdown --excludeExternals --githubPages false --out docs ./src && mv docs/README.md docs/Home.md",
-    "build": "npx tsc --noEmit && npx rollup -c --bundleConfigAsCjs"
+    "build": "npx tsc --noEmit && npx rollup -c --bundleConfigAsCjs",
+    "build:clean": "rm -r lib node_modules; npm i && npm run build",
+    "test:integration": "cd integration-test && npm run test:integration",
+    "lint": "npx eslint --ignore-path .eslintignore --ext .ts --fix .",
+    "lint:validation": "npx eslint --ignore-path .eslintignore --ext .ts .",
+    "prepare": "pip3 install pre-commit && pre-commit install"
   },
   "bugs": {
     "url": "https://github.com/rsksmart/rsk-swap-sdk/issues"
   },
   "dependencies": {
-    "@rsksmart/bridges-core-sdk": "^0.4.1",
+    "@rsksmart/bridges-core-sdk": "^0.5.0",
     "bolt11": "^1.4.1"
   },
   "devDependencies": {

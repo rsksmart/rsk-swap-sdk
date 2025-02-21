@@ -1,0 +1,43 @@
+const CONTENT_FIELD_REGEX = /^[a-zA-Z][a-zA-Z0-9_]*\??: [A-Za-z0-9]+,/
+
+const isBigIntField = name => {
+  name = name.toLowerCase();
+  return name.includes('fee') ||
+    name.includes('amount') ||
+    name.includes('cost') ||
+    name.includes('total') ||
+    /^nonce:*/.test(name)
+}
+
+const parseFieldToBigint = line => {
+  const parts = line.split(' ');
+  parts[1] = 'bigint|number,'
+  return parts.join(' ')
+}
+
+const parseContractFields = contract => contract.content.split('\n')
+  .map(line => {
+    line = line.trim();
+    if (CONTENT_FIELD_REGEX.test(line) && isBigIntField(line)) {
+      return parseFieldToBigint(line);
+    } else {
+      return line;
+    }
+  })
+  .join('\n');
+
+const parseQueryFields = query => query.split('\n')
+  .map(line => {
+    line = line.trim();
+    if (CONTENT_FIELD_REGEX.test(line) && isBigIntField(line)) {
+      return parseFieldToBigint(line);
+    } else {
+      return line;
+    }
+  })
+  .join('\n');
+
+module.exports = {
+  parseContractFields,
+  parseQueryFields
+}
