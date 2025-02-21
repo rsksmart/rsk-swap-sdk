@@ -1,0 +1,64 @@
+{
+  "name": "@rsksmart/rsk-swap-sdk",
+  "version": "0.1.4",
+  "description": "SDK to integrate with RSK Swap API which is a service that aggregates several providers to obtain RBTC",
+  "main": "lib/index.js",
+  "private": false,
+  "files": [
+    "./lib/index.js",
+    "./lib/index.d.ts"
+  ],
+  "types": "./lib/index.d.ts",
+  "keywords": [
+    "swap",
+    "erc20",
+    "rootstock",
+    "sdk"
+  ],
+  "author": "Luisfc68 <luisfc68@gmail.com>",
+  "homepage": "https://github.com/rsksmart/rsk-swap-sdk#readme",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rsksmart/rsk-swap-sdk.git"
+  },
+  "scripts": {
+    "test": "jest --verbose",
+    "test:coverage": "jest --coverage --collectCoverageFrom=\"./src/**\"",
+    "api-sync": "./scripts/api-sync.sh",
+    "docs": "npx typedoc --plugin typedoc-plugin-markdown --excludeExternals --githubPages false --out docs ./src && mv docs/README.md docs/Home.md",
+    "build": "npx tsc --noEmit && npx rollup -c --bundleConfigAsCjs"
+  },
+  "bugs": {
+    "url": "https://github.com/rsksmart/rsk-swap-sdk/issues"
+  },
+  "dependencies": {
+    "@rsksmart/bridges-core-sdk": "^0.4.1",
+    "bolt11": "^1.4.1"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.3",
+    "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-node-resolve": "^15.1.0",
+    "@typechain/ethers-v5": "^10.2.0",
+    "@types/json-bigint": "^1.0.4",
+    "@types/qrcode": "^1.5.0",
+    "@typescript-eslint/eslint-plugin": "^5.52.0",
+    "@typescript-eslint/parser": "^5.52.0",
+    "eslint": "^8.34.0",
+    "eslint-config-standard-with-typescript": "^34.0.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-n": "^15.6.1",
+    "eslint-plugin-promise": "^6.1.1",
+    "json-bigint": "^1.0.0",
+    "rollup": "^4.34.8",
+    "rollup-plugin-dts": "^6.1.0",
+    "rollup-plugin-typescript2": "^0.35.0",
+    "swagger-typescript-api": "^13.0.23",
+    "ts-jest": "^29.0.5",
+    "typechain": "^8.1.1",
+    "typedoc": "^0.25.13",
+    "typedoc-plugin-markdown": "^3.15.3",
+    "typescript": "^4.9.5"
+  }
+}
