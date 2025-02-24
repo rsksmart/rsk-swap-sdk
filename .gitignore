@@ -1,0 +1,11 @@
+**/node_modules/
+**/lib/
+**/coverage/
+.vscode/
+lbc-code/
+
+
+.nx
+.idea
+.DS_Store
+.env

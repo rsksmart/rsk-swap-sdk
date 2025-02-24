@@ -1,0 +1,23 @@
+<%
+const { route, utils, config } = it;
+const { _, pascalCase, require } = utils;
+const { query, payload, pathParams, headers } = route.request;
+const { parseQueryFields } = require('./common');
+
+const routeDocs = includeFile("./route-docs", { config, route, utils });
+const routeNamespace = pascalCase(route.routeName.usage);
+
+%>
+/**
+<%~ routeDocs.description %>
+
+<%~ routeDocs.lines %>
+
+*/
+export namespace <%~ routeNamespace %> {
+  export type RequestParams = <%~ (pathParams && pathParams.type) || '{}' %>;
+  export type RequestQuery = <%~ (query && parseQueryFields(query.type)) || '{}' %>;
+  export type RequestBody = <%~ (payload && payload.type) || 'never' %>;
+  export type RequestHeaders = <%~ (headers && headers.type) || '{}' %>;
+  export type ResponseBody = <%~ route.response.type %>;
+}
