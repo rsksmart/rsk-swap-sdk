@@ -42,7 +42,7 @@
     "bolt11": "^1.4.1"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^25.0.3",
+    "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.1.0",
     "@typechain/ethers-v5": "^10.2.0",
