@@ -1,6 +1,6 @@
 import { describe, expect, test, beforeEach, jest } from '@jest/globals'
 import { type HttpClient } from '@rsksmart/bridges-core-sdk'
-import { type CreatedSwap } from '../api/index'
+import { type CreatedSwap } from '../../api/index'
 import { ChangellyClient } from './changelly'
 
 describe('ChangellyClient should', () => {

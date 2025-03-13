@@ -1,13 +1,13 @@
 import { assertTruthy, ethers, validateRequiredFields, type BlockchainConnection } from '@rsksmart/bridges-core-sdk'
-import { type CreateSwapResult, type Swap } from '../api'
+import { type CreateSwapResult, type Swap } from '../../api'
 import { decode } from 'bolt11'
-import { type SwapAction, type TxData } from '../providers/types'
-import { type ProviderContext, type SwapProviderClient } from './types'
-import { VALIDATION_CONSTANTS } from '../constants/validation'
-import { validateContractCode } from '../utils/validation'
-import { BOLTZ_ETHER_SWAP_ABI } from '../constants/abi'
-import { type RskSwapEnvironmentName } from '../constants/environment'
-import { type CreateSwapArgs } from '../sdk/createSwap'
+import { type SwapAction, type TxData } from '../../providers/types'
+import { type ProviderContext, type SwapProviderClient } from '../types'
+import { VALIDATION_CONSTANTS } from '../../constants/validation'
+import { validateContractCode } from '../../utils/validation'
+import { BOLTZ_ETHER_SWAP_ABI } from '../../constants/abi'
+import { type RskSwapEnvironmentName } from '../../constants/environment'
+import { type CreateSwapArgs } from '../../sdk/createSwap'
 
 export interface BoltzProviderContext {
   publicContext: {

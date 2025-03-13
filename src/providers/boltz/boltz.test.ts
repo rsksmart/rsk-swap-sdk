@@ -1,6 +1,6 @@
 import { describe, expect, test, beforeEach, jest } from '@jest/globals'
 import { type BlockchainConnection, ethers } from '@rsksmart/bridges-core-sdk'
-import { type Swap } from '../api'
+import { type Swap } from '../../api'
 import { BoltzClient, type BoltzProviderContext } from './boltz'
 import { readFileSync } from 'fs'
 import { join } from 'path'
