@@ -4,6 +4,9 @@ import { createSwap, type CreateSwapArgs } from './createSwap'
 import { type CreatedSwap } from '../api'
 import { type SwapProviderClient } from '../providers/types'
 import { ProviderClientResolver } from '../providers/resolver'
+import JSONbig from 'json-bigint'
+
+const serializer = JSONbig({ useNativeBigInt: true })
 
 jest.mock('../providers/resolver', function () {
   return {
@@ -30,6 +33,7 @@ describe('createSwap function should', () => {
     mockResult = {
       swap: {
         providerSwapId: '123',
+        refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         providerId: 'PROVIDER1',
         fromAmount: BigInt(500),
         paymentAddress: 'a-payment-address',
@@ -47,7 +51,7 @@ describe('createSwap function should', () => {
             type: 'FIXED'
           }
         ],
-        context: {}
+        context: { publicKey: 'k1' }
       },
       actionType: 'ERC20-PAYMENT'
     }
@@ -68,11 +72,11 @@ describe('createSwap function should', () => {
       fromToken: 'ETH',
       toToken: 'BTC',
       fromAmount: BigInt(500),
-      refundAddress: '0x123456789',
+      refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
       fromNetwork: '1',
       toNetwork: 'BTC'
     }
-    providerClientMock.validateAddress.mockReturnValue(true)
+    providerClientMock.validateAddress.mockResolvedValue(true)
     providerClientMock.generateAction.mockResolvedValue({
       type: 'ERC20-PAYMENT',
       data: {
@@ -83,9 +87,10 @@ describe('createSwap function should', () => {
       requiresClaim: false
     })
     const result = await createSwap(url, httpClient, providerResolver, params)
-    expect(result).toEqual({
+    expect(serializer.stringify(result)).toEqual(serializer.stringify({
       swap: {
         providerSwapId: '123',
+        refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         providerId: 'PROVIDER1',
         fromAmount: BigInt(500),
         paymentAddress: 'a-payment-address',
@@ -117,7 +122,7 @@ describe('createSwap function should', () => {
         },
         requiresClaim: false
       }
-    }
+    })
     )
     expect(httpClient.post).toHaveBeenCalledWith(
       url + '/swaps',
@@ -127,7 +132,7 @@ describe('createSwap function should', () => {
         fromToken: 'ETH',
         toToken: 'BTC',
         fromAmount: BigInt(500),
-        refundAddress: '0x123456789',
+        refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         fromNetwork: '1',
         toNetwork: 'BTC',
         context: { publicKey: 'k1' }
@@ -151,7 +156,7 @@ describe('createSwap function should', () => {
       fromToken: 'ETH',
       toToken: 'BTC',
       fromAmount: BigInt(1),
-      refundAddress: '0x123456789',
+      refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
       fromNetwork: '1',
       toNetwork: 'BTC'
     }
@@ -174,11 +179,11 @@ describe('createSwap function should', () => {
       fromToken: 'ETH',
       toToken: 'BTC',
       fromAmount: BigInt(500),
-      refundAddress: '0x123456789',
+      refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
       fromNetwork: '1',
       toNetwork: 'BTC'
     }
-    providerClientMock.validateAddress.mockReturnValue(false)
+    providerClientMock.validateAddress.mockResolvedValue(false)
     await createSwap(url, httpClient, providerResolver, params)
       .catch(e => {
         expect(e.message).toBe('Untrusted destination address')
@@ -193,7 +198,7 @@ describe('createSwap function should', () => {
         fromToken: 'ETH',
         toToken: 'BTC',
         fromAmount: BigInt(500),
-        refundAddress: '0x123456789',
+        refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         fromNetwork: '1',
         toNetwork: 'BTC',
         context: { publicKey: 'k1' }

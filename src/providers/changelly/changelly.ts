@@ -18,9 +18,9 @@ export class ChangellyClient implements SwapProviderClient {
     }
   }
 
-  validateAddress (_swap: Swap): boolean {
+  async validateAddress (_swap: Swap): Promise<boolean> {
     // Changelly returns only EOAs
-    return true
+    return Promise.resolve(true)
   }
 
   async generateAction (createdSwap: CreateSwapResult): Promise<SwapAction> {

@@ -34,4 +34,13 @@ export class RskSwapError extends BridgeError {
       }
     })
   }
+
+  static invalidApiResponse (request: unknown, response: unknown): RskSwapError {
+    return new RskSwapError({
+      timestamp: Date.now(),
+      recoverable: true,
+      message: "The result returned with the API doesn't match with the request",
+      details: { request, response }
+    })
+  }
 }

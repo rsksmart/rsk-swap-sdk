@@ -38,6 +38,7 @@ describe('ChangellyClient should', () => {
     const swap: CreatedSwap = {
       swap: {
         providerSwapId: '123',
+        refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         providerId: 'CHANGELLY',
         fromAmount: BigInt(100000000),
         paymentAddress: 'paymentAddress',
@@ -76,6 +77,7 @@ describe('ChangellyClient should', () => {
     const swap: CreatedSwap = {
       swap: {
         providerSwapId: '123',
+        refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         providerId: 'CHANGELLY',
         fromAmount: BigInt(40500000),
         paymentAddress: '0xd5f00abfbea7a0b193836cac6833c2ad9d06cea8',
@@ -117,6 +119,7 @@ describe('ChangellyClient should', () => {
     const swap: CreatedSwap = {
       swap: {
         providerSwapId: '123',
+        refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         providerId: 'CHANGELLY',
         fromAmount: BigInt('1255000000000000000'),
         paymentAddress: '0xd5f00abfbea7a0b193836cac6833c2ad9d06cea8',
@@ -155,6 +158,7 @@ describe('ChangellyClient should', () => {
     const swap: CreatedSwap = {
       swap: {
         providerSwapId: '123',
+        refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         providerId: 'CHANGELLY',
         fromAmount: BigInt(100),
         paymentAddress: 'paymentAddress',
