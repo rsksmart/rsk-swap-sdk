@@ -23,7 +23,7 @@ describe('RSK Swap SDK get limits should', () => {
     }
     const limits = await sdk.getSwapLimits(args)
     expect(limits.maxAmount).toBeDefined()
-    expect(limits.maxAmount).toBeDefined()
+    expect(limits.minAmount).toBeDefined()
     expect(typeof limits.maxAmount).toBe('number')
     expect(typeof limits.minAmount).toBe('number')
   })

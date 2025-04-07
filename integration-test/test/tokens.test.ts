@@ -20,7 +20,6 @@ describe('RSK Swap SDK get tokens should', () => {
     for (const token of tokens) {
       expect(token.decimals).toBeDefined()
       expect(token.symbol).toBeDefined()
-      expect(token.symbol).toBeDefined()
       expect(token.type).toBeDefined()
       expect(token.addresses).toBeDefined()
       if (token.type === 'erc20') {
