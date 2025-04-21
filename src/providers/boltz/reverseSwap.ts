@@ -1,10 +1,9 @@
-import { assertTruthy, ethers } from '@rsksmart/bridges-core-sdk'
+import { assertTruthy, ethers, validateRequiredFields } from '@rsksmart/bridges-core-sdk'
 import { decode } from 'bolt11'
 import { type CreateSwapResult, type Swap } from '../../api'
 import { PAYMENT_TAG_NAME } from '../../constants/validation'
 import { type ProviderContext, type SwapAction } from '../types'
-import { type BoltzReverseSwapContext } from './boltz'
-import { type BoltzAtomicSwap } from './types'
+import { type ClaimDetails, type BoltzAtomicSwap, type BoltzReverseSwapContext } from './types'
 
 export class ReverseSwap implements BoltzAtomicSwap {
   private static readonly PREIMAGE_LENGTH = 32
@@ -37,6 +36,20 @@ export class ReverseSwap implements BoltzAtomicSwap {
       type: 'BOLT11',
       data: createdSwap.swap.paymentAddress.toUpperCase(),
       requiresClaim: true
+    }
+  }
+
+  getClaimDetails (swap: Swap): ClaimDetails {
+    const context = swap.context as BoltzReverseSwapContext
+    validateRequiredFields(context, 'publicContext', 'secretContext')
+    validateRequiredFields(context.publicContext, 'lockupAddress', 'onchainAmount', 'refundAddress', 'timeoutBlockHeight')
+    validateRequiredFields(context.secretContext, 'preimage')
+    return {
+      lockupAddress: context.publicContext.lockupAddress,
+      refundAddress: context.publicContext.refundAddress,
+      onchainAmount: context.publicContext.onchainAmount,
+      timeoutBlockHeight: context.publicContext.timeoutBlockHeight,
+      preimage: context.secretContext.preimage
     }
   }
 }

@@ -1,8 +1,7 @@
 import { type HttpClient, ethers, assertTruthy } from '@rsksmart/bridges-core-sdk'
 import { type Swap, type Token, type CreateSwapResult, Routes } from '../../api'
-import { type SwapAction } from '../../providers/types'
+import { type SwapAction, type ProviderContext, type SwapProviderClient } from '../../providers/types'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
-import { type ProviderContext, type SwapProviderClient } from '../types'
 
 export class ChangellyClient implements SwapProviderClient {
   private readonly ERC20_INTERFACE = new ethers.utils.Interface(['function transfer(address _to, uint _value) public'])

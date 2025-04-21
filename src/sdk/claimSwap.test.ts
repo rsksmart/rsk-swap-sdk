@@ -17,7 +17,8 @@ jest.mock('../providers/resolver', function () {
       return {
         register: jest.fn(),
         get: jest.fn().mockReturnValue({
-          buildClaimTransaction: jest.fn().mockReturnValueOnce(claimTx)
+          buildClaimTransaction: jest.fn().mockReturnValueOnce(claimTx),
+          executeExternalClaim: jest.fn().mockReturnValue(Promise.resolve('btc tx hash'))
         })
       }
     })
@@ -31,6 +32,7 @@ describe('claimSwap function should', () => {
   let providerResolver: resolverModule.ProviderClientResolver
   let connectionMock: BlockchainConnection
   let swapMock: SwapWithAction
+  let externalSwapMock: SwapWithAction
 
   beforeEach(() => {
     providerResolver = new resolverModule.ProviderClientResolver()
@@ -39,7 +41,27 @@ describe('claimSwap function should', () => {
       executeTransaction: jest.fn().mockReturnValue(Promise.resolve({ successful: true, txHash: 'txHash' }))
     } as any)
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    swapMock = { swap: { providerId }, action: { requiresClaim: true } } as SwapWithAction
+    swapMock = {
+      swap: {
+        providerId,
+        toNetwork: '30',
+        fromNetwork: 'BTC',
+        fromToken: 'BTC',
+        toToken: 'RBTC'
+      },
+      action: { requiresClaim: true }
+    } as SwapWithAction
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    externalSwapMock = {
+      swap: {
+        providerId,
+        toNetwork: 'BTC',
+        fromNetwork: '30',
+        fromToken: 'RBTC',
+        toToken: 'BTC'
+      },
+      action: { requiresClaim: true }
+    } as SwapWithAction
   })
 
   test('make the proper calls to claim the swap successfully', async () => {
@@ -50,6 +72,7 @@ describe('claimSwap function should', () => {
     expect(providerClientMock.buildClaimTransaction).toHaveBeenCalledWith(swapMock.swap)
     expect(connectionMock.executeTransaction).toHaveBeenCalledTimes(1)
     expect(connectionMock.executeTransaction).toHaveBeenCalledWith(claimTx)
+    expect(providerClientMock.executeExternalClaim).not.toBeCalled()
     expect(result).toEqual(txResult)
   })
   test("fail if swap doesn't require claim", async () => {
@@ -73,6 +96,27 @@ describe('claimSwap function should', () => {
   })
   test("fail if claim transaction can't be built", async () => {
     providerClientMock.buildClaimTransaction = undefined
-    await expect(claimSwap(providerResolver, swapMock, connectionMock)).rejects.toThrow('Claim transaction not available')
+    await expect(claimSwap(providerResolver, swapMock, connectionMock)).rejects.toThrow('Build claim transaction is not defined')
+  })
+  test('execute the external claim function if the destination of the swap is not an EVM', async () => {
+    const result = await claimSwap(providerResolver, externalSwapMock, connectionMock)
+    expect(providerResolver.get).toHaveBeenCalledTimes(2)
+    expect(providerResolver.get).toHaveBeenCalledWith(providerId)
+    expect(providerClientMock.executeExternalClaim).toHaveBeenCalledTimes(1)
+    expect(providerClientMock.executeExternalClaim).toHaveBeenCalledWith(externalSwapMock.swap)
+    expect(connectionMock.executeTransaction).not.toHaveBeenCalled()
+    expect(providerClientMock.buildClaimTransaction).not.toBeCalled()
+    expect(result).toEqual({ successful: true, txHash: 'btc tx hash' })
+  })
+  test("fail if the ProviderClient doesn't support any type of claim", async () => {
+    await expect(claimSwap({
+      register: jest.fn(),
+      get: jest.fn().mockReturnValue({})
+    } as unknown as resolverModule.ProviderClientResolver, externalSwapMock, connectionMock)).rejects.toThrow('Swap error')
+    expect(providerResolver.get).toHaveBeenCalledTimes(1)
+    expect(providerResolver.get).toHaveBeenCalledWith(providerId)
+    expect(providerClientMock.executeExternalClaim).not.toHaveBeenCalled()
+    expect(connectionMock.executeTransaction).not.toHaveBeenCalled()
+    expect(providerClientMock.buildClaimTransaction).not.toBeCalled()
   })
 })

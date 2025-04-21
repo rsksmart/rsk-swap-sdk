@@ -12,6 +12,7 @@ export interface SwapProviderClient {
   validateAddress: (swap: Swap) => Promise<boolean>
   generateAction: (swap: CreateSwapResult) => Promise<SwapAction>
   buildClaimTransaction?: (swap: Swap) => Promise<TxData>
+  executeExternalClaim?: (swap: Swap) => Promise<string>
 }
 
 export interface SwapAction {

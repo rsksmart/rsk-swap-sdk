@@ -72,7 +72,7 @@ describe('SubmarineSwap class', () => {
           data: '0x0899146b2b8103153039f3c466d77b7773e268c0e8a9d3c1a055057154c9e3ea3575854200000000000000000000000042f92ecf2d3fa43239de7fab235679a5c74f8dcd00000000000000000000000000000000000000000000000000000000005cb190',
           value: '0x5f0625494000'
         },
-        requiresClaim: true
+        requiresClaim: false
       })
     })
   })

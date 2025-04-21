@@ -1,7 +1,7 @@
 import { describe, expect, test, beforeEach } from '@jest/globals'
 import { ethers } from '@rsksmart/bridges-core-sdk'
 import { type Swap } from '../../api'
-import { type BoltzReverseSwapContext } from './boltz'
+import { type BoltzReverseSwapContext } from './types'
 import { ReverseSwap } from './reverseSwap'
 
 const reverseSwap: Swap =
@@ -87,5 +87,13 @@ describe('ReverseSwap class should', () => {
       data: 'LNTB105U1PN67HGDSP5HJ33G4PQ0CVXKADNZU3U46M4VK8CJ8LZFZ9V8N94TRX4KCX84XQQPP57C9C6MW89NMJZ5S9XJDCXVAY5RRHJ52D46VH6ZFQDUJWL7M8VW7QDPQ2DJKUEPQW3HJQ5JZ23PJQCTYV3EX2UMNXQYP2XQCQZ959QYYSGQMGJTXQCMHPJY3KGW90K2FH6LYV3TS5NSGXHWUK4E7TFEEJJX42KKKM2922RUGE7DYZMA2M42RY2HP0528HW0UFU3A8P4KS26WW4KJSCPFKLV67',
       requiresClaim: true
     })
+  })
+  test('build claim details properly', () => {
+    const claimDetails = client.getClaimDetails(reverseSwap)
+    expect(claimDetails.lockupAddress).toEqual('0x42F92ecF2d3Fa43239dE7FAB235679A5C74F8dCD')
+    expect(claimDetails.refundAddress).toEqual('0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db')
+    expect(claimDetails.onchainAmount).toEqual(10448)
+    expect(claimDetails.timeoutBlockHeight).toEqual(6074768)
+    expect(claimDetails.preimage).toEqual('937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae2244')
   })
 })

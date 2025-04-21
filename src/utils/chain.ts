@@ -9,3 +9,7 @@ export function isLightningNetwork (value: string): boolean {
 export function isRskChain (value: string | number): boolean {
   return ['30', '31', '33'].includes(value.toString())
 }
+
+export function isEvmChain (value: string): boolean {
+  return !isBtcChain(value) && !isLightningNetwork(value) && ![undefined, null, ''].includes(value)
+}

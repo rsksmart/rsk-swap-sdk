@@ -2,6 +2,7 @@ import { assertTruthy, type BlockchainConnection, type TxResult } from '@rsksmar
 import { RskSwapError } from '../error/error'
 import { type ProviderClientResolver } from '../providers/resolver'
 import { type SwapWithAction } from '../providers/types'
+import { isEvmChain } from '../utils/chain'
 
 export async function claimSwap (
   clientResolver: ProviderClientResolver,
@@ -13,8 +14,15 @@ export async function claimSwap (
     throw RskSwapError.withCause('This swap does not require a claim', swap)
   }
   const swapProviderClient = clientResolver.get(swap.providerId)
-  const result = await swapProviderClient.buildClaimTransaction?.(swap)
-  assertTruthy(result, 'Claim transaction not available')
-  const txHash = await connection.executeTransaction(result)
-  return txHash
+  if (isEvmChain(swap.toNetwork)) {
+    const result = await swapProviderClient.buildClaimTransaction?.(swap)
+    assertTruthy(result, 'Build claim transaction is not defined')
+    const txHash = await connection.executeTransaction(result)
+    return txHash
+  } else if (swapProviderClient.executeExternalClaim !== undefined) {
+    const id = await swapProviderClient.executeExternalClaim(swap)
+    return { txHash: id, successful: true }
+  } else {
+    throw RskSwapError.withCause('Claim functionality not available', swap)
+  }
 }
