@@ -17,7 +17,7 @@ export async function executeSwap (connection: BlockchainConnection, action: Swa
     case 'CONTRACT-INTERACTION':
       return executeEvmTransaction(connection, action)
     default:
-      throw RskSwapError.withCause(`Unsupported swap action type: ${action.type}`)
+      throw RskSwapError.unsupportedAction(action)
   }
 }
 

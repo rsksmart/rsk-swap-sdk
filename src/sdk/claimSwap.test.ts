@@ -55,12 +55,11 @@ describe('claimSwap function should', () => {
   test("fail if swap doesn't require claim", async () => {
     const modifiedMock = structuredClone(swapMock)
     modifiedMock.action.requiresClaim = false
-    expect.assertions(3)
+    expect.assertions(2)
     try {
       await claimSwap(providerResolver, modifiedMock, connectionMock)
     } catch (e: any) {
-      expect(e.message).toBe('Swap error')
-      expect(e.details.cause).toBe('This swap does not require a claim')
+      expect(e.message).toBe('This swap does not require a claim')
       expect(e.details.swap).toEqual(swapMock.swap)
     }
   })

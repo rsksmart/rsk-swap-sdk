@@ -75,6 +75,23 @@ describe('SubmarineSwap class', () => {
         requiresClaim: true
       })
     })
+    test('fail on missing claimAddress', async () => {
+      const submarineSwap = new SubmarineSwap('Testnet', connection);
+      (swap.context as any).publicContext.claimAddress = undefined
+      await expect(submarineSwap.generateAction(createdSwap)).rejects.toThrow('Missing claimAddress in swap context')
+    })
+
+    test('fail on missing expectedAmount', async () => {
+      const submarineSwap = new SubmarineSwap('Testnet', connection);
+      (swap.context as any).publicContext.expectedAmount = undefined
+      await expect(submarineSwap.generateAction(createdSwap)).rejects.toThrow('Missing expectedAmount in swap context')
+    })
+
+    test('fail on missing timeoutBlockHeight', async () => {
+      const submarineSwap = new SubmarineSwap('Testnet', connection);
+      (swap.context as any).publicContext.timeoutBlockHeight = undefined
+      await expect(submarineSwap.generateAction(createdSwap)).rejects.toThrow('Missing timeoutBlockHeight in swap context')
+    })
   })
   describe('validateAddress method should', () => {
     test('return true on valid contract', async () => {
