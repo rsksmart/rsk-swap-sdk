@@ -3,6 +3,7 @@ import { RskSwapError } from '../error/error'
 import { type ProviderClientResolver } from '../providers/resolver'
 import { type SwapWithAction } from '../providers/types'
 import { isEvmChain } from '../utils/chain'
+import { RSK_SWAP_ERROR_CODES } from '../error/codes'
 
 export async function claimSwap (
   clientResolver: ProviderClientResolver,
@@ -11,7 +12,7 @@ export async function claimSwap (
 ): Promise<TxResult> {
   const { swap, action } = swapWithAction
   if (!action.requiresClaim) {
-    throw RskSwapError.withCause('This swap does not require a claim', swap)
+    throw RskSwapError.withCause(RSK_SWAP_ERROR_CODES.NOT_CLAIMABLE, swap)
   }
   const swapProviderClient = clientResolver.get(swap.providerId)
   if (isEvmChain(swap.toNetwork)) {
@@ -23,6 +24,6 @@ export async function claimSwap (
     const id = await swapProviderClient.executeExternalClaim(swap)
     return { txHash: id, successful: true }
   } else {
-    throw RskSwapError.withCause('Claim functionality not available', swap)
+    throw RskSwapError.withCause(RSK_SWAP_ERROR_CODES.NOT_CLAIMABLE, swap)
   }
 }

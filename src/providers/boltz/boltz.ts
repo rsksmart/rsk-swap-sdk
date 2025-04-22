@@ -22,6 +22,7 @@ import { type ECPairAPI } from 'ecpair'
 import * as ecc from 'tiny-secp256k1'
 import { getSecp256k1 } from './secp256k1'
 import { type BoltzAtomicSwapFactory } from './factory'
+import { RSK_SWAP_ERROR_CODES } from '../../error/codes'
 
 export class BoltzClient implements SwapProviderClient {
   private readonly reverseSwap: ReverseSwap
@@ -102,7 +103,7 @@ export class BoltzClient implements SwapProviderClient {
 
   async executeExternalClaim (swap: Swap): Promise<string> {
     if (!(isRskChain(swap.fromNetwork) && isBtcChain(swap.toNetwork))) {
-      throw RskSwapError.withCause('External claim is not applicable for this swap', swap)
+      throw RskSwapError.withCause(RSK_SWAP_ERROR_CODES.NOT_CLAIMABLE, swap)
     }
 
     const context = this.validateExternalClaimContext(swap)

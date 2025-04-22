@@ -211,4 +211,32 @@ describe('createSwap function should', () => {
     expect(providerClientMock.validateAddress).toHaveBeenCalledTimes(1)
     expect(providerClientMock.validateAddress).toHaveBeenCalledWith(mockResult.swap)
   })
+
+  test('fail on manipulated context', async () => {
+    const url = 'http://localhost:8080'
+    const params: CreateSwapArgs = {
+      providerId: 'PROVIDER1',
+      address: 'a-receiver-address',
+      fromToken: 'ETH',
+      toToken: 'BTC',
+      fromAmount: BigInt(500),
+      refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
+      fromNetwork: '1',
+      toNetwork: 'BTC'
+    }
+    providerClientMock.validateAddress.mockResolvedValue(true)
+    providerClientMock.generateAction.mockResolvedValue({
+      type: 'ERC20-PAYMENT',
+      data: {
+        to: 'a-payment-address',
+        data: 'some-data',
+        value: '0x02BC'
+      },
+      requiresClaim: false
+    })
+    const manipulatedResult = structuredClone(mockResult);
+    (manipulatedResult.swap.context as { publicKey: string }).publicKey = 'manipulated-key'
+    httpClient.post = jest.fn<any>().mockResolvedValueOnce(manipulatedResult)
+    await expect(createSwap(url, httpClient, providerResolver, params)).rejects.toThrowError('The result returned with the API doesn\'t match with the request')
+  })
 })

@@ -224,7 +224,7 @@ describe('BoltzClient class should', () => {
 
       await expect(boltzClient.executeExternalClaim(invalidSwap))
         .rejects
-        .toHaveProperty('details.cause', 'External claim is not applicable for this swap')
+        .toHaveProperty('details', { swap: invalidSwap })
     })
 
     test('should throw error if context validation fails', async () => {
