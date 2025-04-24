@@ -15,8 +15,8 @@ import { type CreateSwapRQ as CreateSwapArgs } from '../api'
 import { type TxResult, type BlockchainConnection } from '@rsksmart/bridges-core-sdk'
 import { type SwapWithAction, type SwapAction } from '../providers/types'
 import { ProviderClientResolver } from '../providers/resolver'
-import { BoltzClient } from '../providers/boltz'
-import { ChangellyClient } from '../providers/changelly'
+import { BoltzClient } from '../providers/boltz/boltz'
+import { ChangellyClient } from '../providers/changelly/changelly'
 
 jest.mock('./getProviders')
 jest.mock('./getProvider')
@@ -28,7 +28,7 @@ jest.mock('./getLimits')
 jest.mock('./listTokens')
 jest.mock('./claimSwap')
 
-jest.mock('../providers/boltz', () => {
+jest.mock('../providers/boltz/boltz', () => {
   return {
     BoltzClient: jest.fn().mockImplementation(() => {
       return {
@@ -40,7 +40,7 @@ jest.mock('../providers/boltz', () => {
   }
 })
 
-jest.mock('../providers/changelly', () => {
+jest.mock('../providers/changelly/changelly', () => {
   return {
     ChangellyClient: jest.fn().mockImplementation(() => {
       return {

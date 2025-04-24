@@ -1,8 +1,8 @@
 import { type HttpClient, ethers, assertTruthy } from '@rsksmart/bridges-core-sdk'
-import { type Swap, type Token, type CreateSwapResult, Routes } from '../api'
-import { type SwapAction } from '../providers/types'
-import { type CreateSwapArgs } from '../sdk/createSwap'
-import { type ProviderContext, type SwapProviderClient } from './types'
+import { type Swap, type Token, type CreateSwapResult, Routes } from '../../api'
+import { type SwapAction } from '../../providers/types'
+import { type CreateSwapArgs } from '../../sdk/createSwap'
+import { type ProviderContext, type SwapProviderClient } from '../types'
 
 export class ChangellyClient implements SwapProviderClient {
   private readonly ERC20_INTERFACE = new ethers.utils.Interface(['function transfer(address _to, uint _value) public'])
@@ -18,9 +18,9 @@ export class ChangellyClient implements SwapProviderClient {
     }
   }
 
-  validateAddress (_swap: Swap): boolean {
+  async validateAddress (_swap: Swap): Promise<boolean> {
     // Changelly returns only EOAs
-    return true
+    return Promise.resolve(true)
   }
 
   async generateAction (createdSwap: CreateSwapResult): Promise<SwapAction> {
