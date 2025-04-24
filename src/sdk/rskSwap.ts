@@ -28,8 +28,8 @@ import { getPrices, type GetPricesArgs } from './getPrices'
 import { listTokens } from './listTokens'
 import { type SwapAction, type SwapWithAction } from '../providers/types'
 import { ProviderClientResolver } from '../providers/resolver'
-import { BoltzClient } from '../providers/boltz'
-import { ChangellyClient } from '../providers/changelly'
+import { BoltzClient } from '../providers/boltz/boltz'
+import { ChangellyClient } from '../providers/changelly/changelly'
 import { claimSwap } from './claimSwap'
 
 /** Class that represents the entrypoint to the RSK Swap SDK */

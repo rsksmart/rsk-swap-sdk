@@ -2,6 +2,7 @@ import { assertTruthy, type BlockchainConnection, type TxResult } from '@rsksmar
 import { RskSwapError } from '../error/error'
 import { type ProviderClientResolver } from '../providers/resolver'
 import { type SwapWithAction } from '../providers/types'
+import { RSK_SWAP_ERROR_CODES } from '../error/codes'
 
 export async function claimSwap (
   clientResolver: ProviderClientResolver,
@@ -10,7 +11,7 @@ export async function claimSwap (
 ): Promise<TxResult> {
   const { swap, action } = swapWithAction
   if (!action.requiresClaim) {
-    throw RskSwapError.withCause('This swap does not require a claim', swap)
+    throw RskSwapError.withCause(RSK_SWAP_ERROR_CODES.NOT_CLAIMABLE, swap)
   }
   const swapProviderClient = clientResolver.get(swap.providerId)
   const result = await swapProviderClient.buildClaimTransaction?.(swap)

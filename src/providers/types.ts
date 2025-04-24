@@ -9,7 +9,7 @@ export interface ProviderContext {
 
 export interface SwapProviderClient {
   createContext: (creationArgs: CreateSwapArgs) => ProviderContext
-  validateAddress: (swap: Swap) => boolean
+  validateAddress: (swap: Swap) => Promise<boolean>
   generateAction: (swap: CreateSwapResult) => Promise<SwapAction>
   buildClaimTransaction?: (swap: Swap) => Promise<TxData>
 }
