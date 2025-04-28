@@ -1,3 +1,4 @@
+<%
 const CONTENT_FIELD_REGEX = /^[a-zA-Z][a-zA-Z0-9_]*\??: [A-Za-z0-9]+,/
 
 const isBigIntField = name => {
@@ -37,7 +38,8 @@ const parseQueryFields = query => query.split('\n')
   })
   .join('\n');
 
-module.exports = {
+return {
   parseContractFields,
   parseQueryFields
 }
+%>

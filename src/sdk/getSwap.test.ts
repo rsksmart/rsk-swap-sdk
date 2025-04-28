@@ -13,6 +13,7 @@ describe('getSwap function should', () => {
   beforeEach(() => {
     mockResult = {
       providerSwapId: '123',
+      refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
       providerId: 'PROVIDER1',
       fromAmount: BigInt(500),
       paymentAddress: 'an address',
