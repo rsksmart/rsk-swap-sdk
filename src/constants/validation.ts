@@ -10,3 +10,5 @@ export const VALIDATION_CONSTANTS = deepFreeze({
     }
   }
 } as const)
+
+export const PAYMENT_TAG_NAME = 'payment_hash' as const

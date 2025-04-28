@@ -1,0 +1,17 @@
+{
+    "name": "rsk-swap-integration-tests",
+    "version": "1.0.0",
+    "description": "Integration tests for RskSwapSDK",
+    "scripts": {
+        "test:integration": "rm -rf node_modules && npm i && jest --verbose --testPathPattern=test/boltz/submarine.test.ts",
+        "lint": "npx eslint --ignore-path .eslintignore --ext .ts --fix .",
+        "lint:validate": "npx eslint --ignore-path .eslintignore --ext .ts ."
+    },
+    "author": "Luis Chavez",
+    "license": "ISC",
+    "private": true,
+    "dependencies": {
+        "@rsksmart/rsk-swap-sdk": "file:.."
+    },
+    "devDependencies": {}
+}

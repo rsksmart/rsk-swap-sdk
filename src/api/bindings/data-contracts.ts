@@ -174,6 +174,8 @@ export interface SwapDTO {
   paymentAddress: string;
   /** The address to receive the swap in the destination network */
   receiverAddress: string;
+  /** The address to refund the amount in case of error. Must be of the origin network */
+  refundAddress: string;
   /** The token symbol of the origin token */
   fromToken: string;
   /** The token symbol of the destination token */
@@ -198,6 +200,7 @@ export const SwapDtoRequiredFields: string[] = [
   "fromAmount",
   "paymentAddress",
   "receiverAddress",
+  "refundAddress",
   "fromToken",
   "toToken",
   "fromNetwork",
@@ -212,7 +215,7 @@ export interface CreateSwapRS {
   /** The swap created */
   swap: SwapDTO;
   /** The type of action to perform */
-  actionType: "NONE" | "ERC20-PAYMENT" | "EVM-NATIVE-PAYMENT" | "BIP21" | "BOLT11";
+  actionType: "NONE" | "ERC20-PAYMENT" | "EVM-NATIVE-PAYMENT" | "BIP21" | "BOLT11" | "CONTRACT-INTERACTION";
 }
 
 export const CreateSwapRsRequiredFields: string[] = ["swap", "actionType"];
