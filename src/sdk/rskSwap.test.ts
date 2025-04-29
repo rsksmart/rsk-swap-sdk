@@ -77,6 +77,7 @@ describe('RskSwapSDK class should', () => {
     expect(ChangellyClient).toHaveBeenCalledTimes(1)
   })
   test('throw an error on unexpected environment name', async () => {
+    // @ts-expect-error "Unexpected" is not assignable to parameter of type RskSwapEnvironmentName
     expect(() => new RskSwapSDK('Unexpected', connectionMock)).toThrow('Environment Unexpected not found')
   })
   test('invoke estimateSwap properly', async () => {

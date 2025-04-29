@@ -4,14 +4,17 @@ export interface RskSwapEnvironment {
   api: string
 }
 
-export const RskSwapEnvironments: Record<string, RskSwapEnvironment> = deepFreeze({
+export const RskSwapEnvironments = deepFreeze({
   Local: {
     api: 'http://localhost:8080/api'
   },
   Testnet: {
     api: 'https://rskswap.testnet.flyover.rif.technology/api'
+  },
+  Mainnet: {
+    api: ''
   }
-} as const)
+} as const satisfies Record<string, RskSwapEnvironment>)
 
 /** Available environment for the RskSwapSDK */
 export type RskSwapEnvironmentName = keyof typeof RskSwapEnvironments
