@@ -2,10 +2,12 @@
   "name": "@rsksmart/rsk-swap-sdk",
   "version": "0.0.1",
   "description": "SDK to integrate with RSK Swap API which is a service that aggregates several providers to obtain RBTC",
-  "main": "lib/index.js",
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/esm/index.js",
   "private": false,
   "files": [
-    "./lib/index.js",
+    "./lib/cjs/index.js",
+    "./lib/esm/index.js",
     "./lib/index.d.ts"
   ],
   "types": "./lib/index.d.ts",
