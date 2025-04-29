@@ -6,12 +6,18 @@ import dts from 'rollup-plugin-dts'
 export default [
   {
     input: 'src/index.ts',
-    output: {
-      name: 'index.js',
-      dir: './lib',
-      format: 'cjs',
-      dynamicImportInCjs: false
-    },
+    output: [
+      {
+        dir: 'lib/cjs',
+        format: 'cjs',
+        exports: 'named'
+      },
+      {
+        dir: 'lib/esm',
+        format: 'es',
+        exports: 'named'
+      }
+    ],
     plugins: [
       commonjs(),
       json(),
@@ -21,7 +27,7 @@ export default [
     ]
   },
   {
-    input: 'lib/index.d.ts',
+    input: 'lib/esm/index.d.ts',
     output: {
       file: 'lib/index.d.ts',
       format: 'es'
