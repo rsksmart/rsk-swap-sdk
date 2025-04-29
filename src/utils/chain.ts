@@ -11,5 +11,5 @@ export function isRskChain (value: string | number): boolean {
 }
 
 export function isEvmChain (value: string): boolean {
-  return !isBtcChain(value) && !isLightningNetwork(value) && ![undefined, null, ''].includes(value)
+  return Boolean(value) && !isBtcChain(value) && !isLightningNetwork(value)
 }

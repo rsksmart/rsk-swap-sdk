@@ -10,6 +10,9 @@ export const RskSwapEnvironments: Record<string, RskSwapEnvironment> = deepFreez
   },
   Testnet: {
     api: 'https://rskswap.testnet.flyover.rif.technology/api'
+  },
+  Development: {
+    api: 'https://rskswap.dev.flyover.rif.technology/api'
   }
 } as const)
 
