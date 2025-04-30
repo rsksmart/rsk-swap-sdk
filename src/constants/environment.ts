@@ -8,6 +8,9 @@ export const RskSwapEnvironments = deepFreeze({
   Local: {
     api: 'http://localhost:8080/api'
   },
+  Development: {
+    api: 'https://rskswap.dev.flyover.rif.technology/api'
+  },
   Testnet: {
     api: 'https://rskswap.testnet.flyover.rif.technology/api'
   },

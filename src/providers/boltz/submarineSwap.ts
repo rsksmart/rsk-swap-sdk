@@ -7,8 +7,7 @@ import { VALIDATION_CONSTANTS } from '../../constants/validation'
 import { satToWei } from '../../utils/conversion'
 import { validateContractCode } from '../../utils/validation'
 import { type ProviderContext, type SwapAction } from '../types'
-import { type BoltzSubmarineSwapContext } from './boltz'
-import { type BoltzAtomicSwap } from './types'
+import { type ClaimDetails, type BoltzAtomicSwap, type BoltzSubmarineSwapContext } from './types'
 
 export class SubmarineSwap implements BoltzAtomicSwap {
   constructor (
@@ -50,7 +49,11 @@ export class SubmarineSwap implements BoltzAtomicSwap {
         ),
         value: '0x' + satToWei(context.publicContext?.expectedAmount).toString(16)
       },
-      requiresClaim: true
+      requiresClaim: false
     }
+  }
+
+  getClaimDetails (_swap: Swap): ClaimDetails {
+    throw new Error('ClaimDetails are only needed for claims in EVM. Not in Lightning Network.')
   }
 }

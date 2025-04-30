@@ -31,6 +31,7 @@ import { ProviderClientResolver } from '../providers/resolver'
 import { BoltzClient } from '../providers/boltz/boltz'
 import { ChangellyClient } from '../providers/changelly/changelly'
 import { claimSwap } from './claimSwap'
+import { DefaultBoltzAtomicSwapFactory } from '../providers/boltz/factory'
 
 /** Class that represents the entrypoint to the RSK Swap SDK */
 export class RskSwapSDK {
@@ -55,7 +56,7 @@ export class RskSwapSDK {
     assertTruthy(environment, `Environment ${envName} not found`)
     this.environment = environment
     this.providerClientResolver = new ProviderClientResolver()
-      .register('BOLTZ', new BoltzClient(envName, connection))
+      .register('BOLTZ', new BoltzClient(envName, connection, this.httpClient, new DefaultBoltzAtomicSwapFactory()))
       .register('CHANGELLY', new ChangellyClient(this.environment.api, this.httpClient))
   }
 
