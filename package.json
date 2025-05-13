@@ -25,8 +25,8 @@
     "url": "git+https://github.com/rsksmart/rsk-swap-sdk.git"
   },
   "scripts": {
-    "test": "jest --verbose",
-    "test:coverage": "jest --coverage --collectCoverageFrom=\"./src/**\"",
+    "test": "npm run build && NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest --verbose",
+    "test:coverage": "npm run build && NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest --coverage --collectCoverageFrom=\"./src/**\"",
     "api-sync": "./scripts/api-sync.sh",
     "docs": "npx typedoc --plugin typedoc-plugin-markdown --excludeExternals --githubPages false --out docs ./src && mv docs/README.md docs/Home.md",
     "build": "npx tsc --noEmit && npx rollup -c --bundleConfigAsCjs",
@@ -62,9 +62,12 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-n": "^15.6.1",
     "eslint-plugin-promise": "^6.1.1",
+    "glob": "^11.0.2",
     "json-bigint": "^1.0.0",
     "rollup": "^4.34.8",
     "rollup-plugin-dts": "^6.1.0",
+    "rollup-plugin-polyfill-node": "^0.13.0",
+    "rollup-plugin-string": "^3.0.0",
     "rollup-plugin-typescript2": "^0.35.0",
     "swagger-typescript-api": "^13.0.23",
     "ts-jest": "^29.0.5",
