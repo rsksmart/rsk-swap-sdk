@@ -70,7 +70,7 @@
     "rollup-plugin-string": "^3.0.0",
     "rollup-plugin-typescript2": "^0.35.0",
     "swagger-typescript-api": "^13.0.23",
-    "ts-jest": "^29.0.5",
+    "ts-jest": "^29.3.3",
     "typechain": "^8.1.1",
     "typedoc": "^0.28.1",
     "typedoc-plugin-markdown": "^3.15.3",
