@@ -3,7 +3,6 @@ import { type CreatedSwap, type Swap } from '../../api'
 import { type ProviderContext, type SwapAction } from '../types'
 import { assertTruthy, ethers, validateRequiredFields } from '@rsksmart/bridges-core-sdk'
 import { type ECPairAPI } from 'ecpair'
-import { SwapTreeSerializer } from 'boltz-core'
 import { tapTweakHash, toHashTree } from 'bitcoinjs-lib/src/payments/bip341'
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371'
 import { type RskSwapEnvironmentName } from '../../constants/environment'
@@ -11,6 +10,8 @@ import { networks, payments } from 'bitcoinjs-lib'
 import { BTC_DECIMALS } from '../../constants/tokens'
 import { arrayToHexKey } from '../../utils/conversion'
 import { getSecp256k1 } from './secp256k1'
+import { createWorkers } from '../../utils/workers'
+import { type Taptree } from 'bitcoinjs-lib/src/types'
 
 export class ChainSwapIn implements BoltzAtomicSwap {
   constructor (
@@ -51,7 +52,28 @@ export class ChainSwapIn implements BoltzAtomicSwap {
       Buffer.from(serverPubKey, 'hex'),
       Buffer.from(pubKey, 'hex')
     ])
-    const swapTree = SwapTreeSerializer.deserializeSwapTree({ claimLeaf, refundLeaf }).tree
+    const params = { claimLeaf, refundLeaf }
+    const swapTree = await createWorkers<typeof params, Array<{ output: string, version: number }>, Taptree>(
+      { provider: 'boltz', workerName: 'treeDeserializer' },
+      params,
+      (swapTree) => {
+        const claimLeaf = swapTree[0]
+        const refundLeaf = swapTree[1]
+        assertTruthy(claimLeaf, 'Claim leaf is undefined')
+        assertTruthy(refundLeaf, 'Refund leaf is undefined')
+        // We can parse like this because this tree has only 2 scripts (claim and refund)
+        const parsedTree: Taptree = [
+          {
+            version: claimLeaf.version,
+            output: Buffer.from(claimLeaf.output, 'hex')
+          },
+          {
+            version: refundLeaf.version,
+            output: Buffer.from(refundLeaf.output, 'hex')
+          }
+        ]
+        return parsedTree
+      })
     const tweak = tapTweakHash(
       Buffer.from(aggregatedKey.aggPubkey),
       toHashTree(swapTree).hash
