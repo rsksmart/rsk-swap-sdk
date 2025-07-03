@@ -15,7 +15,7 @@ export const RskSwapEnvironments = deepFreeze({
     api: 'https://rskswap.testnet.flyover.rif.technology/api'
   },
   Mainnet: {
-    api: ''
+    api: 'https://rskswap.mainnet.flyover.rif.technology/api'
   }
 } as const satisfies Record<string, RskSwapEnvironment>)
 
