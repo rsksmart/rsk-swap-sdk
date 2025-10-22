@@ -8,6 +8,9 @@ on:
 jobs:
     publish:
         runs-on: ubuntu-latest
+        permissions:
+          contents: read
+          packages: write
 
         steps:
             - name: Checkout
@@ -51,10 +54,10 @@ jobs:
               run: exit 1
 
             - name: Check if package registry matches registry url
-              if: steps.get_package_info.outputs.PACKAGE_REGISTRY != "https://registry.npmjs.org/"
+              if: steps.get_package_info.outputs.PACKAGE_REGISTRY != "https://npm.pkg.github.com"
               run: exit 1
 
-            - name: Push package to npmjs.com
+            - name: Setup Node.js for GitHub Packages
               uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af #v4.1.0
               with:
                   node-version: 16
@@ -62,6 +65,9 @@ jobs:
 
             - name: Install dependencies
               run: npm install
+
+            - name: Build package
+              run: npm run build
 
             - name: Pre upload validation
               id: pack
@@ -71,6 +77,8 @@ jobs:
 
             - name: Upload package
               run: npm publish
+              env:
+                NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Post upload validation
               id: unpack
