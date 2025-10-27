@@ -28,7 +28,6 @@
     "test": "npm run build && NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest --verbose",
     "test:coverage": "npm run build && NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" npx jest --coverage --collectCoverageFrom=\"./src/**\"",
     "api-sync": "./scripts/api-sync.sh",
-    "docs": "npx typedoc --plugin typedoc-plugin-markdown --excludeExternals --githubPages false --out docs ./src && mv docs/README.md docs/Home.md",
     "build": "npx tsc --noEmit && npx rollup -c --bundleConfigAsCjs",
     "build:clean": "rm -r lib node_modules; npm i && npm run build",
     "test:integration": "cd integration-test && npm run test:integration",
