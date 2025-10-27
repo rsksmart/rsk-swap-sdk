@@ -34,7 +34,7 @@
     "test:integration": "cd integration-test && npm run test:integration",
     "lint": "npx eslint --ignore-path .eslintignore --ext .ts --fix .",
     "lint:validation": "npx eslint --ignore-path .eslintignore --ext .ts .",
-    "prepare": "pip3 install pre-commit && pre-commit install"
+    "prepare": "command -v pre-commit >/dev/null 2>&1 || (pip3 install --user --break-system-packages pre-commit 2>/dev/null || pip3 install pre-commit) && python3 -m pre_commit install --install-hooks"
   },
   "bugs": {
     "url": "https://github.com/rsksmart/rsk-swap-sdk/issues"
