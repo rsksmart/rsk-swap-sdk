@@ -1,10 +1,11 @@
-import { describe, expect, test, beforeEach, jest } from '@jest/globals'
+import { describe, expect, test, beforeEach, jest, afterEach } from '@jest/globals'
 import { type HttpClient } from '@rsksmart/bridges-core-sdk'
 import { createSwap, type CreateSwapArgs } from './createSwap'
 import { type CreatedSwap } from '../api'
 import { type SwapProviderClient } from '../providers/types'
 import { ProviderClientResolver } from '../providers/resolver'
 import JSONbig from 'json-bigint'
+import { sanitizeSwap } from '../utils/sanitization'
 
 const serializer = JSONbig({ useNativeBigInt: true })
 
@@ -62,6 +63,10 @@ describe('createSwap function should', () => {
     providerResolver = new ProviderClientResolver()
     providerClientMock = providerResolver.get('PROVIDER1') as jest.Mocked<SwapProviderClient>
     providerClientMock.createContext.mockReturnValue({ publicContext: { publicKey: 'k1' }, secretContext: { privateKey: 'k2' } })
+  })
+
+  afterEach(() => {
+    jest.clearAllMocks()
   })
 
   test('make the proper calls to the API and swap client', async () => {
@@ -188,7 +193,7 @@ describe('createSwap function should', () => {
       .catch(e => {
         expect(e.message).toBe('Untrusted destination address')
         expect(e.details.cause).toEqual('Address returned by the server (a-payment-address) does not meet the requirements for the client to consider it as valid')
-        expect(e.details.swap).toEqual(mockResult.swap)
+        expect(e.details.swap).toEqual(sanitizeSwap(mockResult.swap))
       })
     expect(httpClient.post).toHaveBeenCalledWith(
       url + '/swaps',
