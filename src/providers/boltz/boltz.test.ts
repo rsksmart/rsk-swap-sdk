@@ -10,6 +10,7 @@ import { type ChainSwapIn } from './chainSwapIn'
 import { type ChainSwapOut } from './chainSwapOut'
 import { DefaultBoltzAtomicSwapFactory } from './factory'
 import { PROVIDER_URLS } from '../../constants/url'
+import { sanitizeSwap } from '../../utils/sanitization'
 
 jest.mock('boltz-core', () => {
   const originalModule: any = jest.requireActual('boltz-core')
@@ -221,10 +222,11 @@ describe('BoltzClient class should', () => {
       const invalidSwap: Swap = structuredClone(reverseSwapMock)
       invalidSwap.fromNetwork = 'ETH'
       invalidSwap.toNetwork = 'BTC'
+      const sanitizedInvalidSwap = sanitizeSwap(invalidSwap)
 
       await expect(boltzClient.executeExternalClaim(invalidSwap))
         .rejects
-        .toHaveProperty('details', { swap: invalidSwap })
+        .toHaveProperty('details', { swap: sanitizedInvalidSwap })
     })
 
     test('should throw error if context validation fails', async () => {

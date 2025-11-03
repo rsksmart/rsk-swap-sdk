@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Integration tests for RskSwapSDK",
     "scripts": {
-        "test:integration": "rm -rf node_modules && npm i && jest --verbose --testPathPattern=test/boltz/submarine.test.ts",
+        "test:integration": "npm ci && jest --verbose --testPathPattern=test/boltz/submarine.test.ts",
         "lint": "npx eslint --ignore-path .eslintignore --ext .ts --fix .",
         "lint:validate": "npx eslint --ignore-path .eslintignore --ext .ts ."
     },

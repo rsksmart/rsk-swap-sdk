@@ -6,38 +6,18 @@
 Rsk Swap SDK acts eases the integration between client applications and the RSK Swap API. Which is an aggregator that providers several ways to perform swaps to obtain RBTC through different 3rd party providers.
 
 ## Installation
-    npm install @rsksmart/rsk-swap-sdk
+
+For most users, simply install the SDK from npm:
+
+```bash
+npm install @rsksmart/rsk-swap-sdk
+```
+
+For installing private packages from the GitHub registry (requires authentication), see the [Building from Source](#building-from-source) section below.
 
 ## Quickstart guide (integrating into a dApp)
-This section explains how to integrate this SDK into a dApp and start using it. There are two options to achieve this:
-* [Build from the source code](#build-from-the-source-code)
-* [Install npm package](#install-npm-package)
 
-### Build from the source code
-In this case, you're going to build the SDK locally and install it from your own file system. To achieve that you need to clone the repo by running the following commands:
-
-1. `git clone git@github.com:rsksmart/rsk-swap-sdk.git`
-2. `npm i`
-3. `npm run build:clean`
-
-Then in your application you can install this build by pointing to the SDK repository in the package.json of your project. E.g.: `"@rsksmart/rsk-swap-sdk": "file:../rsk-swap-sdk"`
-
-The advantage of this approach if that you can modify the SDK code without generating a new release. You just need to rebuild the SDK and reinstall in the consumer application.
-
-### Install npm package
-In this option there are two scenarios, you might want to install a public version or a private version. The public versions are published in the npm registry, meanwhile the private versions are published in the Github registry under the `rsksmart` organization. This means that if you're not part of the organization you won't be able to user that version of the package.
-
-Both installations are done by running
-
-    npm install @rsksmart/rsk-swap-sdk
-
-However, in the case you're installing a private version, you must authenticate first with by running
-
-    npm login --scope=@rsksmart --auth-type=legacy --registry=https://npm.pkg.github.com
-
-In this case you'll need to provide some credentials which are your GitHub username a personal token generated with read packages permissions.
-
-Now that you have installed the SDK in your project, you can check how to start using it in the [Usage](#usage) section.
+Now that you have installed the SDK in your project, you can start using it as shown in the [Usage](#usage) section.
 
 ## Usage
 Create RskSwapSDK client instance. For this SDK, the blockchain connection is mandatory. There are 3 ways to create an RSK connection, you can check them in [BlockchainConnection class](TODO url) documentation.
@@ -106,6 +86,70 @@ Depending on your provider, the swap might not arrive automatically to your wall
 
 ## Configuration
 This SDK only requires the [BlockchainConnection class](TODO url) instance and the environment name to be used. Regarding the BlockchainConnection it mustn't be readonly as the SDK will try to broadcast transactions during the execute step.
+
+## Local Development
+
+If you want to contribute to the SDK or build it from source, you'll need to set up your local development environment.
+
+### Development Prerequisites
+
+Before setting up the project locally, ensure you have the following requirements:
+
+#### Node.js Version
+This project uses Node.js version **19.6.0** as specified in the `.nvmrc` file. To install and use the correct version:
+
+1. If you're using `nvm` (Node Version Manager), run:
+   ```bash
+   nvm use
+   ```
+   This will automatically switch to the version specified in `.nvmrc`.
+
+2. Alternatively, you can manually install Node.js v19.6.0 from [nodejs.org](https://nodejs.org/).
+
+#### Python 3
+The `prepare` script requires Python 3 to install and configure pre-commit hooks. Ensure Python 3 is installed on your system:
+
+- Check if Python 3 is installed: `python3 --version` or `python --version`
+- Install Python 3 from [python.org](https://www.python.org/downloads/) if needed
+
+#### GitHub Token (for private packages)
+If you need to install private versions of this package from the GitHub registry, you'll need a GitHub personal access token with the following configuration:
+
+1. Go to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. Generate a new **classic token** with the `read:packages` scope
+3. Use this token when prompted for authentication when running `npm login`
+
+> ⚠️ **Important**: The token must be a **classic token** with the `read:packages` permission. Fine-grained tokens are not supported.
+
+### Building from Source
+
+To build the SDK locally:
+
+1. Clone the repository:
+   ```bash
+   git clone git@github.com:rsksmart/rsk-swap-sdk.git
+   cd rsk-swap-sdk
+   ```
+
+2. Install dependencies (this will trigger the prepare script which requires Python 3):
+   ```bash
+   npm i
+   ```
+
+3. Build the SDK:
+   ```bash
+   npm run build:clean
+   ```
+
+### Installing Private Packages from GitHub Registry
+
+If you need to install private versions from the GitHub registry, authenticate first:
+
+```bash
+npm login --scope=@rsksmart --auth-type=legacy --registry=https://npm.pkg.github.com
+```
+
+You'll need to provide your GitHub username and the classic token with `read:packages` scope mentioned in the [Development Prerequisites](#development-prerequisites) section above.
 
 ## Application Programming Interface
 To see the full API of this package please refer to the [the docs folder](./docs/) of this project
