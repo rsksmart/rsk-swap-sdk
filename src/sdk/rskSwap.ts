@@ -32,6 +32,7 @@ import { BoltzClient } from '../providers/boltz/boltz'
 import { ChangellyClient } from '../providers/changelly/changelly'
 import { claimSwap } from './claimSwap'
 import { DefaultBoltzAtomicSwapFactory } from '../providers/boltz/factory'
+import { getQrCode, type GetQrCodeArgs } from './getQrCode'
 
 /** Class that represents the entrypoint to the RSK Swap SDK */
 export class RskSwapSDK {
@@ -174,5 +175,9 @@ export class RskSwapSDK {
    */
   async getPrices (args: GetPricesArgs): Promise<CoinPrice[]> {
     return getPrices(this.environment.api, this.httpClient, args)
+  }
+
+  async getQrCode (args: GetQrCodeArgs): Promise<string> {
+    return getQrCode(args)
   }
 }
