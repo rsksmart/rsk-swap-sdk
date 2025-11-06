@@ -67,14 +67,13 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org
 
+      - name: Update npm
+        run: npm install -g npm@latest
+
       - name: Clean install dependencies
         run: |
           rm -rf dist
           npm ci
-
-      - name: Update npm
-        run: npm install -g npm@latest
-
       - name: Build
         run: npm run build
 
