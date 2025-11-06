@@ -12,7 +12,6 @@ jobs:
     permissions:
       id-token: write
       contents: read
-      packages: write
 
     runs-on: ubuntu-latest
 
@@ -66,17 +65,15 @@ jobs:
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af #v4.1.0
         with:
           node-version: 20
-          registry-url: https://npm.pkg.github.com
-
-      - name: Clean install dependencies
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          rm -rf dist
-          npm ci
+          registry-url: https://registry.npmjs.com
 
       - name: Update npm
         run: npm install -g npm@latest
+
+      - name: Clean install dependencies
+        run: |
+          rm -rf dist
+          npm ci
 
       - name: Build
         run: npm run build
@@ -102,8 +99,6 @@ jobs:
           echo "Version $PACKAGE_VERSION of $PACKAGE_NAME is not published. Proceeding with publishing..."
 
       - name: Upload package
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm publish
 
       - name: Post upload validation
