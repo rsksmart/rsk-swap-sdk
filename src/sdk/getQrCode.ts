@@ -38,13 +38,22 @@ export interface Eip681QrCodeArgs {
 
 /**
  * Arguments for the getQrCode function
- * @param type - The type of QR code to generate 'EIP-681' | 'BIP-21' | 'BOLT11'
- * @param data - The data for the QR code LightningQrCodeArgs | Bip21QrCodeArgs | Eip681QrCodeArgs
+ * @param type - The type of QR code to generate 'BIP-21' | 'EIP-681' | 'BOLT11'
+ * @param data - The data for the QR code Bip21QrCodeArgs | Eip681QrCodeArgs | LightningQrCodeArgs
  */
-export interface GetQrCodeArgs {
-  type: 'EIP-681' | 'BIP-21' | 'BOLT11'
-  data: LightningQrCodeArgs | Bip21QrCodeArgs | Eip681QrCodeArgs
-}
+export type GetQrCodeArgs =
+  | {
+    type: 'BIP-21'
+    data: Bip21QrCodeArgs
+  }
+  | {
+    type: 'EIP-681'
+    data: Eip681QrCodeArgs
+  }
+  | {
+    type: 'BOLT11'
+    data: LightningQrCodeArgs
+  }
 
 /**
  * Generates a QR code data URL from a payment URI.
@@ -68,8 +77,6 @@ export async function getQrCode (args: GetQrCodeArgs): Promise<string> {
       case 'BOLT11':
         uri = (args.data as LightningQrCodeArgs).lnPaymentString
         break
-      default:
-        throw new Error(`Unsupported QR code type: ${args.type}`)
     }
 
     const qrCodeUrl = await toDataURL(uri)

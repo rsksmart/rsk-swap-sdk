@@ -242,17 +242,6 @@ describe('getQrCode function', () => {
   })
 
   describe('Error handling', () => {
-    test('throws error for unsupported QR code type', async () => {
-      const args = {
-        type: 'UNSUPPORTED' as any,
-        data: {
-          address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb'
-        }
-      }
-
-      await expect(getQrCode(args)).rejects.toThrow('Unsupported QR code type: UNSUPPORTED')
-    })
-
     test('throws error when QR code generation fails', async () => {
       const qrError = new Error('QR code generation failed')
       mockedToDataURL.mockRejectedValueOnce(qrError)
