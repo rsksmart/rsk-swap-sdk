@@ -21,3 +21,9 @@ export type {
   RskSwapEnvironment,
   RskSwapEnvironments
 } from './constants/environment'
+export type {
+  GetQrCodeArgs,
+  Bip21QrCodeArgs,
+  Eip681QrCodeArgs,
+  LightningQrCodeArgs
+} from './sdk/getQrCode'
