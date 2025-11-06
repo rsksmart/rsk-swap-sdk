@@ -142,6 +142,7 @@ To build the SDK locally:
    ```
 
 ### Installing Private Packages from GitHub Registry
+# Do we still require this?
 
 If you need to install private versions from the GitHub registry, authenticate first:
 
