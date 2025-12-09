@@ -34,6 +34,7 @@ import { SymbiosisClient } from '../providers/symbiosis/symbiosis'
 import { claimSwap } from './claimSwap'
 import { DefaultBoltzAtomicSwapFactory } from '../providers/boltz/factory'
 import { getQrCode, type GetQrCodeArgs } from './getQrCode'
+import { LiFiClient } from '../providers/lifi/lifi'
 
 /** Class that represents the entrypoint to the RSK Swap SDK */
 export class RskSwapSDK {
@@ -61,6 +62,7 @@ export class RskSwapSDK {
       .register('BOLTZ', new BoltzClient('Mainnet', connection, this.httpClient, new DefaultBoltzAtomicSwapFactory()))
       .register('CHANGELLY', new ChangellyClient(this.environment.api, this.httpClient))
       .register('SYMBIOSIS', new SymbiosisClient(this.environment.api, this.httpClient))
+      .register('LIFI', new LiFiClient())
   }
 
   /**
