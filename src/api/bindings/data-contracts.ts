@@ -220,6 +220,33 @@ export interface CreateSwapRS {
 
 export const CreateSwapRsRequiredFields: string[] = ["swap", "actionType"];
 
+export interface TokenDTO {
+  /**
+   * Symbol of the asset
+   * @example "RBTC"
+   */
+  symbol: string;
+  /**
+   * Long name of the asset
+   * @example "Rootstock Smart Bitcoin"
+   */
+  description: string;
+  /** Type of the asset */
+  type: "native-evm" | "erc20" | "native-btc" | "oft";
+  /**
+   * Decimal precision of the asset
+   * @example 18
+   */
+  decimals: number;
+  /**
+   * Address of the token depending on the network. Only used for ERC20 tokens. The key is the chainId and the value is the address.
+   * @example {"1":"0xdac17f958d2ee523a2206206994597c13d831ec7"}
+   */
+  addresses: Record<string, string>;
+}
+
+export const TokenDtoRequiredFields: string[] = ["symbol", "description", "type", "decimals", "addresses"];
+
 export interface CoinPriceDto {
   /**
    * Name of the cryptocurrency
@@ -234,30 +261,3 @@ export interface CoinPriceDto {
 }
 
 export const CoinPriceDtoRequiredFields: string[] = ["name", "price"];
-
-export interface TokenDTO {
-  /**
-   * Symbol of the asset
-   * @example "RBTC"
-   */
-  symbol: string;
-  /**
-   * Long name of the asset
-   * @example "Rootstock Smart Bitcoin"
-   */
-  description: string;
-  /** Type of the asset */
-  type: "native-evm" | "erc20" | "native-btc";
-  /**
-   * Decimal precision of the asset
-   * @example 18
-   */
-  decimals: number;
-  /**
-   * Address of the token depending on the network. Only used for ERC20 tokens. The key is the chainId and the value is the address.
-   * @example {"1":"0xdac17f958d2ee523a2206206994597c13d831ec7"}
-   */
-  addresses: Record<string, string>;
-}
-
-export const TokenDtoRequiredFields: string[] = ["symbol", "description", "type", "decimals", "addresses"];

@@ -137,25 +137,6 @@ export namespace Api {
     export type ResponseBody = SwapDTO;
   }
   /**
-   * @description Fetches the price(s) of the given currency/currencies in USD. Provide multiple currency IDs separated by commas.
-   * @tags Price Feeder
-   * @name PriceFeederControllerGetPrices
-   * @request GET:/api/price-feeder
-   */
-  export namespace PriceFeederControllerGetPrices {
-    export type RequestParams = {};
-    export type RequestQuery = {
-      /**
-       * Comma-separated list of currency symbols to fetch its prices
-       * @example "BTC,ETH,USDC"
-       */
-      currencies: string;
-    };
-    export type RequestBody = never;
-    export type RequestHeaders = {};
-    export type ResponseBody = CoinPriceDto[];
-  }
-  /**
    * @description Returns the list of the tokens supported by the API
    * @tags Tokens
    * @name TokensControllerGetTokens
@@ -182,5 +163,24 @@ export namespace Api {
     export type RequestBody = never;
     export type RequestHeaders = {};
     export type ResponseBody = TokenDTO;
+  }
+  /**
+   * @description Fetches the price(s) of the given currency/currencies in USD. Provide multiple currency IDs separated by commas.
+   * @tags Price Feeder
+   * @name PriceFeederControllerGetPrices
+   * @request GET:/api/price-feeder
+   */
+  export namespace PriceFeederControllerGetPrices {
+    export type RequestParams = {};
+    export type RequestQuery = {
+      /**
+       * Comma-separated list of currency symbols to fetch its prices
+       * @example "BTC,ETH,USDC"
+       */
+      currencies: string;
+    };
+    export type RequestBody = never;
+    export type RequestHeaders = {};
+    export type ResponseBody = CoinPriceDto[];
   }
 }
