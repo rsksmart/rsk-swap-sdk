@@ -32,7 +32,7 @@ describe('LiFiClient should', () => {
     const createdSwap: CreateSwapResult = {
       swap: {
         ...baseSwap,
-        context: expectedTxData
+        context: { publicContext: expectedTxData }
       },
       actionType: 'ERC20-PAYMENT'
     }
@@ -53,7 +53,7 @@ describe('LiFiClient should', () => {
     const createdSwap: CreateSwapResult = {
       swap: {
         ...baseSwap,
-        context: expectedTxData
+        context: { publicContext: expectedTxData }
       },
       actionType: 'EVM-NATIVE-PAYMENT'
     }
