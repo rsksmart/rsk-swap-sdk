@@ -1,3 +1,4 @@
+import { type BlockchainConnection } from '@rsksmart/bridges-core-sdk'
 import { type CreateSwapResult, type Swap } from '../api'
 import { type CreateSwapRS } from '../api/bindings/data-contracts'
 import { type CreateSwapArgs } from '../sdk/createSwap'
@@ -21,6 +22,7 @@ export interface SwapAction {
   /** The data to perform the action. Format depends on the action itself */
   data: TxData | string
   requiresClaim: boolean
+  executePreSteps?: (connection: BlockchainConnection) => Promise<void>
 }
 
 export interface SwapWithAction {
