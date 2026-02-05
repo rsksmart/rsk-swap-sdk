@@ -124,6 +124,8 @@ export namespace Api {
   export namespace SwapsControllerGetSwapStatus {
     export type RequestParams = {};
     export type RequestQuery = {
+      /** The transaction hash of the swap execution (required for some providers like Symbiosis) */
+      tx_hash?: string;
       /**
        * ID of the provider of the swap
        * @example "MOCK"
