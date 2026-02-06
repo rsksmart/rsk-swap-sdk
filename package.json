@@ -74,5 +74,8 @@
     "typedoc": "^0.28.1",
     "typedoc-plugin-markdown": "^3.15.3",
     "typescript": "^5.8.2"
+  },
+  "peerDependencies": {
+    "@sentry/browser": "^10.0.0"
   }
 }
