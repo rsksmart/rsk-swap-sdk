@@ -36,7 +36,7 @@ export function createApprovalHandler (params: ApprovalParams): (connection: Blo
       return
     }
 
-    const approveData = ERC20_INTERFACE.encodeFunctionData('approve', [spender, ethers.constants.MaxUint256])
+    const approveData = ERC20_INTERFACE.encodeFunctionData('approve', [spender, requiredAmount])
     await connection.executeTransaction({
       to: tokenAddress,
       data: approveData,
