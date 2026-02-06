@@ -17,6 +17,7 @@ import { type SwapWithAction, type SwapAction } from '../providers/types'
 import { ProviderClientResolver } from '../providers/resolver'
 import { BoltzClient } from '../providers/boltz/boltz'
 import { ChangellyClient } from '../providers/changelly/changelly'
+import type { TelemetryProvider } from '../telemetry/types'
 
 jest.mock('./getProviders')
 jest.mock('./getProvider')
@@ -94,6 +95,31 @@ describe('RskSwapSDK class should', () => {
     expect(result).toEqual(mockResult)
     expect(estimateSwapMod.estimateSwap).toHaveBeenCalledTimes(1)
     expect(estimateSwapMod.estimateSwap).toHaveBeenCalledWith(apiUrl, httpClientMatcher, args)
+  })
+  test('capture telemetry on estimateSwap error', async () => {
+    const profile = jest.fn((_name: string, fn: () => unknown) => fn()) as TelemetryProvider['profile']
+    const telemetry: TelemetryProvider = {
+      captureException: jest.fn(),
+      log: jest.fn(),
+      profile
+    }
+    sdk = new RskSwapSDK('Local', connectionMock, { telemetry })
+    const error = new Error('fail')
+    jest.spyOn(estimateSwapMod, 'estimateSwap').mockRejectedValueOnce(error)
+    const args: estimateSwapMod.SwapEstimationArgs = {
+      fromToken: 'ETH',
+      toToken: 'BTC',
+      fromAmount: BigInt(1),
+      fromChainId: '1',
+      toChainId: 'BTC'
+    }
+
+    await expect(sdk.estimateSwap(args)).rejects.toThrow('fail')
+    expect(telemetry.captureException).toHaveBeenCalledTimes(1)
+    expect(telemetry.captureException).toHaveBeenCalledWith(error, expect.objectContaining({
+      operation: 'estimateSwap',
+      env: 'Local'
+    }))
   })
   test('invoke createNewSwap properly', async () => {
     const mockResult: any = { value: 2 }
