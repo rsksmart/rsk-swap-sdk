@@ -55,5 +55,5 @@ function isValidApiResponse (request: CreateSwapRQ, result: CreateSwapResult): b
     request.toNetwork === result.swap.toNetwork &&
     request.providerId === result.swap.providerId &&
     request.address === result.swap.receiverAddress &&
-    request.refundAddress === result.swap.refundAddress
+    (result.swap.refundAddress === '' || request.refundAddress === result.swap.refundAddress)
 }
