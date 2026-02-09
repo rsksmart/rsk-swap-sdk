@@ -1,3 +1,4 @@
+import { ethers } from '@rsksmart/bridges-core-sdk'
 import { type SwapProviderClient, type ProviderContext, type SwapAction, type TxData } from '../types'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
 import { type CreateSwapResult, type Swap } from '../../api'
@@ -20,11 +21,10 @@ export class LiFiClient implements SwapProviderClient {
       throw new Error(`Action type ${actionType} not supported for LI.FI`)
     }
     // TODO: validate by decoding data with ethers and contract interface or calling LIFI API /calldata/parse (beta endpoint)
-    const data = swap.context as TxData
-    return {
-      type: actionType,
-      data,
-      requiresClaim: false
+    const { to, data, value } = (swap.context as { publicContext: TxData }).publicContext
+    if (swap.paymentAddress && ethers.utils.getAddress(swap.paymentAddress) !== ethers.utils.getAddress(to)) {
+      throw new Error(`LI.FI payment address mismatch: ${swap.paymentAddress} !== ${to}`)
     }
+    return { type: actionType, data: { to, data, value }, requiresClaim: false }
   }
 }
