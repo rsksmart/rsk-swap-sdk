@@ -21,7 +21,11 @@ export class LiFiClient implements SwapProviderClient {
       throw new Error(`Action type ${actionType} not supported for LI.FI`)
     }
     // TODO: validate by decoding data with ethers and contract interface or calling LIFI API /calldata/parse (beta endpoint)
-    const { to, data, value } = (swap.context as { publicContext: TxData }).publicContext
+    const publicContext = (swap.context as { publicContext?: TxData })?.publicContext
+    if (!publicContext?.to || !publicContext?.data || publicContext?.value === undefined) {
+      throw new Error('LI.FI swap context missing required publicContext fields (to, data, value)')
+    }
+    const { to, data, value } = publicContext
     if (swap.paymentAddress && ethers.utils.getAddress(swap.paymentAddress) !== ethers.utils.getAddress(to)) {
       throw new Error(`LI.FI payment address mismatch: ${swap.paymentAddress} !== ${to}`)
     }
