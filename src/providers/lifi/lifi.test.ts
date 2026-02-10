@@ -131,4 +131,58 @@ describe('LiFiClient should', () => {
     const isValid = await client.validateAddress(baseSwap)
     expect(isValid).toBe(true)
   })
+
+  test('throw error when payment address mismatches publicContext.to', async () => {
+    const expectedTxData: TxData = {
+      to: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE',
+      data: '0x4630a0d8000000000000000000000000',
+      value: '0x0'
+    }
+    const createdSwap: CreateSwapResult = {
+      swap: {
+        ...baseSwap,
+        paymentAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
+        context: { publicContext: expectedTxData }
+      },
+      actionType: 'ERC20-PAYMENT'
+    }
+
+    await expect(client.generateAction(createdSwap)).rejects.toThrow(
+      'LI.FI payment address mismatch: 0x79568c2989232dCa1840087D73d403602364c0D4 !== 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE'
+    )
+  })
+
+  test('throw error when publicContext is missing', async () => {
+    const createdSwap: CreateSwapResult = {
+      swap: {
+        ...baseSwap,
+        context: {}
+      },
+      actionType: 'ERC20-PAYMENT'
+    }
+
+    await expect(client.generateAction(createdSwap)).rejects.toThrow(
+      'LI.FI swap context missing required publicContext fields (to, data, value)'
+    )
+  })
+
+  test('throw error when publicContext is missing required fields', async () => {
+    const createdSwap: CreateSwapResult = {
+      swap: {
+        ...baseSwap,
+        context: {
+          publicContext: {
+            to: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE',
+            data: '0x4630a0d8000000000000000000000000'
+            // value is missing
+          }
+        }
+      },
+      actionType: 'ERC20-PAYMENT'
+    }
+
+    await expect(client.generateAction(createdSwap)).rejects.toThrow(
+      'LI.FI swap context missing required publicContext fields (to, data, value)'
+    )
+  })
 })
