@@ -32,6 +32,7 @@ import { BoltzClient } from '../providers/boltz/boltz'
 import { ChangellyClient } from '../providers/changelly/changelly'
 import { claimSwap } from './claimSwap'
 import { DefaultBoltzAtomicSwapFactory } from '../providers/boltz/factory'
+import { LiFiClient } from '../providers/lifi/lifi'
 
 /** Class that represents the entrypoint to the RSK Swap SDK */
 export class RskSwapSDK {
@@ -58,6 +59,7 @@ export class RskSwapSDK {
     this.providerClientResolver = new ProviderClientResolver()
       .register('BOLTZ', new BoltzClient(envName, connection, this.httpClient, new DefaultBoltzAtomicSwapFactory()))
       .register('CHANGELLY', new ChangellyClient(this.environment.api, this.httpClient))
+      .register('LIFI', new LiFiClient())
   }
 
   /**

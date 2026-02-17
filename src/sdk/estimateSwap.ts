@@ -13,6 +13,10 @@ export interface SwapEstimationArgs {
   toChainId: string
   /** Chain id of the origin network. If the origin network is Bitcoin use BTC instead. */
   fromChainId: string
+  /** Optional sender address on the origin network. Improves fee estimation accuracy for providers like LiFi. */
+  address?: string
+  /** Optional receiver address on the destination network. Improves fee estimation accuracy for providers like LiFi. */
+  toAddress?: string
 }
 
 export async function estimateSwap (apiUrl: string, client: HttpClient, args: SwapEstimationArgs): Promise<SwapEstimation[]> {
@@ -26,6 +30,8 @@ export async function estimateSwap (apiUrl: string, client: HttpClient, args: Sw
   }
   validateRequiredFields(queryParams, ...Object.keys(queryParams))
   Object.entries(queryParams).forEach(([key, value]) => { url.searchParams.append(key, value.toString()) })
+  if (args.address) url.searchParams.append('address', args.address)
+  if (args.toAddress) url.searchParams.append('to_address', args.toAddress)
   const estimation = await client.get<SwapEstimation[]>(url.toString())
   return estimation
 }
