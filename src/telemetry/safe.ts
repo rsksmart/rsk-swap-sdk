@@ -1,13 +1,17 @@
 import type { TelemetryProvider, LogLevel } from './types'
 
 export class SafeTelemetryProvider implements TelemetryProvider {
-  constructor (private readonly wrapped: TelemetryProvider) {}
+  constructor (
+    private readonly wrapped: TelemetryProvider,
+    private readonly onError?: (error: Error) => void
+  ) {}
 
   captureException = (error: Error, context?: Record<string, unknown>): void => {
     try {
       this.wrapped.captureException(error, context)
-    } catch {
+    } catch (telemetryError) {
       // Telemetry failures must never affect SDK behavior.
+      this.onError?.(telemetryError instanceof Error ? telemetryError : new Error(String(telemetryError)))
     }
   }
 

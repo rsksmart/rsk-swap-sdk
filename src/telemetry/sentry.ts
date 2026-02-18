@@ -88,16 +88,14 @@ export class SentryTelemetryProvider implements TelemetryProvider {
 }
 
 function sanitizeEvent (event: unknown): Record<string, unknown> | null {
-  if (!event || typeof event !== 'object') {
+  if (!event || typeof event !== 'object' || Array.isArray(event)) {
     return null
   }
 
-  const safeEvent: Record<string, unknown> = { ...(event as Record<string, unknown>) }
-  delete safeEvent.request
-  delete safeEvent.user
-  delete safeEvent.extra
-  delete safeEvent.contexts
-  delete safeEvent.breadcrumbs
+  const eventObj = event as Record<string, unknown>
+  const sensitiveFields = ['request', 'user', 'extra', 'contexts', 'breadcrumbs'] as const
 
-  return safeEvent
+  return Object.fromEntries(
+    Object.entries(eventObj).filter(([key]) => !sensitiveFields.includes(key as any))
+  )
 }
