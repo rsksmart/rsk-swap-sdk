@@ -75,8 +75,7 @@ export class SentryTelemetryProvider implements TelemetryProvider {
     })
   }
 
-  // eslint-disable-next-line @typescript-eslint/promise-function-async
-  profile: TelemetryProvider['profile'] = ((name, fn) => {
+  profile: TelemetryProvider['profile'] = (async (name, fn) => {
     return this.sentry.startSpan({ name, op: 'function' }, async () => fn())
   }) as TelemetryProvider['profile']
 
@@ -90,10 +89,10 @@ export class SentryTelemetryProvider implements TelemetryProvider {
 
 function sanitizeEvent (event: unknown): Record<string, unknown> | null {
   if (!event || typeof event !== 'object') {
-    return event as Record<string, unknown>
+    return null
   }
 
-  const safeEvent: Record<string, unknown> = { ...event }
+  const safeEvent: Record<string, unknown> = { ...(event as Record<string, unknown>) }
   delete safeEvent.request
   delete safeEvent.user
   delete safeEvent.extra

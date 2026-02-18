@@ -20,20 +20,48 @@ export class SafeTelemetryProvider implements TelemetryProvider {
   }
 
   profile: TelemetryProvider['profile'] = ((name, fn) => {
-    let invoked = false
+    let callbackInvoked = false
+    let callbackResult: unknown
+    let callbackError: unknown
+
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     const wrappedFn: () => unknown = () => {
-      invoked = true
-      return fn()
+      callbackInvoked = true
+      try {
+        const result = fn()
+        // Handle async callbacks by capturing eventual result/error.
+        if (result && typeof (result as any).then === 'function') {
+          return (result as Promise<unknown>)
+            .then(value => {
+              callbackResult = value
+              return value
+            })
+            .catch(err => {
+              callbackError = err
+              throw err
+            })
+        }
+        callbackResult = result
+        return result
+      } catch (error) {
+        callbackError = error
+        throw error
+      }
     }
 
     try {
       return this.wrapped.profile(name, wrappedFn as () => any)
-    } catch (error) {
-      if (invoked) {
-        throw error
+    } catch {
+      // If the original callback threw, rethrow that error.
+      if (callbackError !== undefined) {
+        throw callbackError
       }
-      return wrappedFn()
+      // If the callback ran successfully, return its result even if telemetry failed.
+      if (callbackInvoked) {
+        return callbackResult
+      }
+      // Telemetry failed before the callback ran; fall back to calling the callback directly.
+      return fn()
     }
   }) as TelemetryProvider['profile']
 }
