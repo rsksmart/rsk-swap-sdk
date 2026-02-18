@@ -30,6 +30,7 @@ import { type SwapAction, type SwapWithAction } from '../providers/types'
 import { ProviderClientResolver } from '../providers/resolver'
 import { BoltzClient } from '../providers/boltz/boltz'
 import { ChangellyClient } from '../providers/changelly/changelly'
+import { SymbiosisClient } from '../providers/symbiosis/symbiosis'
 import { claimSwap } from './claimSwap'
 import { DefaultBoltzAtomicSwapFactory } from '../providers/boltz/factory'
 
@@ -58,6 +59,7 @@ export class RskSwapSDK {
     this.providerClientResolver = new ProviderClientResolver()
       .register('BOLTZ', new BoltzClient(envName, connection, this.httpClient, new DefaultBoltzAtomicSwapFactory()))
       .register('CHANGELLY', new ChangellyClient(this.environment.api, this.httpClient))
+      .register('SYMBIOSIS', new SymbiosisClient(this.environment.api, this.httpClient))
   }
 
   /**
