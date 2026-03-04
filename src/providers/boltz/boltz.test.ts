@@ -11,6 +11,8 @@ import { type ChainSwapOut } from './chainSwapOut'
 import { DefaultBoltzAtomicSwapFactory } from './factory'
 import { PROVIDER_URLS } from '../../constants/url'
 import { sanitizeSwap } from '../../utils/sanitization'
+import * as validation from '../../utils/validation'
+import { VALIDATION_CONSTANTS } from '../../constants/validation'
 
 jest.mock('boltz-core', () => {
   const originalModule: any = jest.requireActual('boltz-core')
@@ -126,6 +128,8 @@ describe('BoltzClient class should', () => {
       createSubmarineSwap: () => submarineSwapClient,
       createReverseSwap: () => reverseSwapClient
     })
+
+    jest.spyOn(validation, 'validateContractCode').mockResolvedValue(true)
   })
   describe('build a correct claim transaction', () => {
     test('fail on incomplete context', async () => {
@@ -135,13 +139,18 @@ describe('BoltzClient class should', () => {
       await expect(async () => boltzClient.buildClaimTransaction(swap)).rejects.toThrow('Validation failed for object with following missing properties: publicContext, secretContext')
     })
     test('fail on contract code mismatch', async () => {
+      jest.spyOn(validation, 'validateContractCode').mockResolvedValue(false)
       boltzClient = new BoltzClient('Mainnet', conn, http, new DefaultBoltzAtomicSwapFactory())
       await expect(boltzClient.buildClaimTransaction(reverseSwapMock)).rejects.toThrow('Unexpected contract content')
     })
     test('build claim correctly', async () => {
       boltzClient = new BoltzClient('Testnet', conn, http, new DefaultBoltzAtomicSwapFactory())
       const result = await boltzClient.buildClaimTransaction(reverseSwapMock)
-      expect(conn.getUnderlyingProvider()?.getCode).toHaveBeenCalledTimes(1)
+      expect(validation.validateContractCode).toHaveBeenCalledWith(
+        conn,
+        '0x42f92ecf2d3fa43239de7fab235679a5c74f8dcd',
+        VALIDATION_CONSTANTS.boltz.etherSwapBytecodeHash
+      )
       expect(result).toEqual({
         to: '0x42f92ecf2d3fa43239de7fab235679a5c74f8dcd',
         data: '0xcd413efa937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae224400000000000000000000000000000000000000000000000000005f062549400000000000000000000000000079568c2989232dca1840087d73d403602364c0d40000000000000000000000004217bd283e9dc9a2ce3d5d20fae34aa0902c28db00000000000000000000000000000000000000000000000000000000005cb190',
@@ -209,7 +218,11 @@ describe('BoltzClient class should', () => {
       timeoutBlockHeight: 12345
     })
     const result = await boltzClient.buildClaimTransaction(reverseSwapMock)
-    expect(conn.getUnderlyingProvider()?.getCode).toHaveBeenCalledTimes(1)
+    expect(validation.validateContractCode).toHaveBeenCalledWith(
+      conn,
+      '0x0000000000000000000000000000000000000001',
+      VALIDATION_CONSTANTS.boltz.etherSwapBytecodeHash
+    )
     expect(result).toEqual({
       to: '0x0000000000000000000000000000000000000001',
       data: '0xcd413efad7b6468a714e46602e9cd5188486e56d8ec01b6a8607e19342a914db86975437000000000000000000000000000000000000000000000000000009184e72a00000000000000000000000000079568c2989232dca1840087d73d403602364c0d400000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000003039',

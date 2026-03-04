@@ -80,7 +80,7 @@ export class BoltzClient implements SwapProviderClient {
     const claimDetails = this.routeAtomicSwap(swap).getClaimDetails(swap)
     const lockupAddress = claimDetails.lockupAddress.toLowerCase()
     const validationInfo = VALIDATION_CONSTANTS.boltz
-    const expectedHash = this.network === 'Mainnet' ? validationInfo.mainnet.etherSwapBytecodeHash : validationInfo.testnet.etherSwapBytecodeHash
+    const expectedHash = validationInfo.etherSwapBytecodeHash
     const isValidContract = await validateContractCode(this.connection, lockupAddress, expectedHash)
     if (!isValidContract) {
       throw RskSwapError.unexpectedContract(lockupAddress)

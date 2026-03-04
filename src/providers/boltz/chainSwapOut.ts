@@ -11,7 +11,7 @@ import { BOLTZ_ETHER_SWAP_ABI } from '../../constants/abi'
 
 export class ChainSwapOut implements BoltzAtomicSwap {
   constructor (
-    private readonly network: RskSwapEnvironmentName,
+    _network: RskSwapEnvironmentName,
     private readonly connection: Connection,
     private readonly keyFactory: ECPairAPI
   ) {}
@@ -36,7 +36,7 @@ export class ChainSwapOut implements BoltzAtomicSwap {
 
   async validateAddress (swap: Swap): Promise<boolean> {
     const validationInfo = VALIDATION_CONSTANTS.boltz
-    const expectedHash = this.network === 'Mainnet' ? validationInfo.mainnet.etherSwapBytecodeHash : validationInfo.testnet.etherSwapBytecodeHash
+    const expectedHash = validationInfo.etherSwapBytecodeHash
     const isValid = await validateContractCode(this.connection, swap.paymentAddress, expectedHash)
     return isValid
   }
