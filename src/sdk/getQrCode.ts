@@ -3,12 +3,13 @@ import { toDataURL } from 'qrcode'
 export interface LightningQrCodeArgs {
   lnPaymentString: string
 }
+
 /**
  * Arguments for the BIP21 QR code
- * @param address - The address of the wallet
- * @param amountInDecimal - The amount of the payment in decimal
- * @param label - The label of the payment
- * @param message - The message of the payment
+ * @property address - The address of the wallet
+ * @property amountInDecimal - The amount of the payment in decimal
+ * @property label - The label of the payment
+ * @property message - The message of the payment
  */
 export interface Bip21QrCodeArgs {
   address: string
@@ -19,12 +20,12 @@ export interface Bip21QrCodeArgs {
 
 /**
  * Arguments for the EIP681 QR code
- * @param address - The address of the wallet
- * @param value - The value of the payment in wei
- * @param chainId - The chain ID of the network
- * @param tokenAddress - The address of the token
- * @param recipient - The address of the recipient
- * @param uint256 - The amount of the token in uint256
+ * @property address - The address of the wallet
+ * @property value - The value of the payment in wei
+ * @property chainId - The chain ID of the network
+ * @property tokenAddress - The address of the token
+ * @property recipient - The address of the recipient
+ * @property uint256 - The amount of the token in uint256
  */
 export interface Eip681QrCodeArgs {
   address: string
@@ -37,9 +38,9 @@ export interface Eip681QrCodeArgs {
 }
 
 /**
- * Arguments for the getQrCode function
- * @param type - The type of QR code to generate 'BIP-21' | 'EIP-681' | 'BOLT11'
- * @param data - The data for the QR code Bip21QrCodeArgs | Eip681QrCodeArgs | LightningQrCodeArgs
+ * Arguments for {@link getQrCode}.
+ * @property type - The type of QR code to generate 'BIP-21' | 'EIP-681' | 'BOLT11'
+ * @property data - The data for the QR code Bip21QrCodeArgs | Eip681QrCodeArgs | LightningQrCodeArgs
  */
 export type GetQrCodeArgs =
   | {
@@ -69,14 +70,16 @@ export async function getQrCode (args: GetQrCodeArgs): Promise<string> {
   try {
     switch (args.type) {
       case 'BIP-21':
-        uri = buildBip21Uri(args.data as Bip21QrCodeArgs)
+        uri = buildBip21Uri(args.data)
         break
       case 'EIP-681':
-        uri = buildEip681Uri(args.data as Eip681QrCodeArgs)
+        uri = buildEip681Uri(args.data)
         break
       case 'BOLT11':
-        uri = (args.data as LightningQrCodeArgs).lnPaymentString
+        uri = args.data.lnPaymentString
         break
+      default:
+        throw new Error('Unsupported QR code type')
     }
 
     const qrCodeUrl = await toDataURL(uri)
@@ -118,15 +121,15 @@ function buildEip681Uri (args: Eip681QrCodeArgs): string {
 
   // ERC20 token transfer
   if (tokenAddress && recipient && uint256) {
-    const chainIdParam = chainId ? `@${chainId}` : ''
-    return `ethereum:${tokenAddress}${chainIdParam}/transfer?address=${recipient}&uint256=${uint256}`
+    const chainIdParam = chainId !== undefined ? `@${chainId}` : ''
+    return `ethereum:${encodeURIComponent(tokenAddress)}${chainIdParam}/transfer?address=${encodeURIComponent(recipient)}&uint256=${encodeURIComponent(uint256)}`
   }
 
   // Native token payment
-  let uri = `ethereum:${address}`
+  let uri = `ethereum:${encodeURIComponent(address)}`
   const params: string[] = []
-  if (value) params.push(`value=${value}`)
-  if (chainId && !tokenAddress) params.push(`chainId=${chainId}`)
+  if (value) params.push(`value=${encodeURIComponent(value)}`)
+  if (chainId !== undefined && !tokenAddress) params.push(`chainId=${encodeURIComponent(chainId.toString())}`)
 
   if (params.length > 0) {
     uri += `?${params.join('&')}`
