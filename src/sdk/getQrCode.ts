@@ -23,9 +23,9 @@ export interface Bip21QrCodeArgs {
  * @property address - The address of the wallet
  * @property value - The value of the payment in wei
  * @property chainId - The chain ID of the network
- * @property tokenAddress - The address of the token
- * @property recipient - The address of the recipient
- * @property uint256 - The amount of the token in uint256
+ * @property tokenAddress - The address of the token. Must be provided together with recipient and uint256.
+ * @property recipient - The address of the recipient. Must be provided together with tokenAddress and uint256.
+ * @property uint256 - The amount of the token in uint256. Must be provided together with tokenAddress and recipient.
  */
 export interface Eip681QrCodeArgs {
   address: string
@@ -120,7 +120,11 @@ function buildEip681Uri (args: Eip681QrCodeArgs): string {
   const { address, value, chainId, tokenAddress, recipient, uint256 } = args
 
   // ERC20 token transfer
-  if (tokenAddress && recipient && uint256) {
+  if (tokenAddress !== undefined || recipient !== undefined || uint256 !== undefined) {
+    if (!tokenAddress || !recipient || !uint256) {
+      throw new Error('Invalid EIP-681 data: tokenAddress, recipient, and uint256 must be provided together for ERC20 transfers')
+    }
+
     const chainIdParam = chainId !== undefined ? `@${chainId}` : ''
     return `ethereum:${encodeURIComponent(tokenAddress)}${chainIdParam}/transfer?address=${encodeURIComponent(recipient)}&uint256=${encodeURIComponent(uint256)}`
   }

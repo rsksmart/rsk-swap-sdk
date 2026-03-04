@@ -177,6 +177,17 @@ export class RskSwapSDK {
     return getPrices(this.environment.api, this.httpClient, args)
   }
 
+  /**
+   * Generates a QR code data URL for a payment request.
+   *
+   * Supports:
+   * - `BIP-21` for Bitcoin payments.
+   * - `EIP-681` for EVM native-token and ERC20 payments.
+   * - `BOLT11` for Lightning invoices.
+   *
+   * @param { GetQrCodeArgs } args The QR-code type and payload.
+   * @returns { string } A Base64 data URL representing the generated QR image.
+   */
   async getQrCode (args: GetQrCodeArgs): Promise<string> {
     return getQrCode(args)
   }
