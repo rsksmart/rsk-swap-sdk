@@ -132,7 +132,7 @@ describe('getQrCode function', () => {
       const result = await getQrCode(args)
 
       expect(result).toBe(mockQrCodeDataUrl)
-      expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x9D93929A9099be4355fC2389FbF253982F9dF47c?value=1000000000000000000&chainId=30')
+      expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x9D93929A9099be4355fC2389FbF253982F9dF47c@30?value=1000000000000000000')
     })
 
     test('generates QR code for native ETH payment on RSK Testnet', async () => {
@@ -149,7 +149,7 @@ describe('getQrCode function', () => {
       const result = await getQrCode(args)
 
       expect(result).toBe(mockQrCodeDataUrl)
-      expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db?value=500000000000000000&chainId=31')
+      expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db@31?value=500000000000000000')
     })
 
     test('generates QR code for ERC20 token transfer on RSK Mainnet', async () => {
@@ -326,7 +326,7 @@ describe('getQrCode function', () => {
       const result = await getQrCode(args)
 
       expect(result).toBe(mockQrCodeDataUrl)
-      expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db?value=100000000000000000&chainId=31')
+      expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db@31?value=100000000000000000')
     })
   })
 })

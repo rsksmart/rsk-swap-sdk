@@ -113,7 +113,7 @@ function buildBip21Uri (args: Bip21QrCodeArgs): string {
 
 /**
  * Builds an EIP681 URI for Ethereum/EVM payments
- * For native tokens: ethereum:<address>?value=<value>
+ * For native tokens: ethereum:<address>@<chainId>?value=<value>
  * For ERC20 tokens: ethereum:<tokenAddress>@<chainId>/transfer?address=<recipient>&uint256=<amount>
  */
 function buildEip681Uri (args: Eip681QrCodeArgs): string {
@@ -126,10 +126,10 @@ function buildEip681Uri (args: Eip681QrCodeArgs): string {
   }
 
   // Native token payment
-  let uri = `ethereum:${encodeURIComponent(address)}`
+  const chainIdParam = chainId !== undefined ? `@${chainId}` : ''
+  let uri = `ethereum:${encodeURIComponent(address)}${chainIdParam}`
   const params: string[] = []
   if (value) params.push(`value=${encodeURIComponent(value)}`)
-  if (chainId !== undefined && !tokenAddress) params.push(`chainId=${encodeURIComponent(chainId.toString())}`)
 
   if (params.length > 0) {
     uri += `?${params.join('&')}`
