@@ -217,6 +217,34 @@ describe('createSwap function should', () => {
     expect(providerClientMock.validateAddress).toHaveBeenCalledWith(mockResult.swap)
   })
 
+  test('call finalizeContext when defined and use its result as swap context', async () => {
+    const url = 'http://localhost:8080'
+    const params: CreateSwapArgs = {
+      providerId: 'PROVIDER1',
+      address: 'a-receiver-address',
+      fromToken: 'ETH',
+      toToken: 'BTC',
+      fromAmount: BigInt(500),
+      refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
+      fromNetwork: '1',
+      toNetwork: 'BTC'
+    }
+    const finalizedContext = {
+      publicContext: { publicKey: 'k1' },
+      secretContext: { privateKey: 'k2', swapTree: '{}', timeoutBlockHeight: 100, claimPublicKey: 'serverKey', version: 3 }
+    }
+    providerClientMock.finalizeContext = jest.fn<any>().mockReturnValue(finalizedContext)
+    providerClientMock.validateAddress.mockResolvedValue(true)
+    providerClientMock.generateAction.mockResolvedValue({
+      type: 'ERC20-PAYMENT',
+      data: { to: 'a-payment-address', data: 'some-data', value: '0x02BC' },
+      requiresClaim: false
+    })
+    const result = await createSwap(url, httpClient, providerResolver, params)
+    expect(providerClientMock.finalizeContext).toHaveBeenCalledTimes(1)
+    expect(result.swap.context).toEqual(finalizedContext)
+  })
+
   test('fail on manipulated context', async () => {
     const url = 'http://localhost:8080'
     const params: CreateSwapArgs = {

@@ -193,6 +193,58 @@ describe('BoltzClient class should', () => {
     })
   })
 
+  describe('finalizeContext method', () => {
+    const localContext = {
+      publicContext: {
+        preimageHash: 'abc123',
+        refundPublicKey: '02aabbcc',
+        lockupDetails: {
+          serverPublicKey: '03serverKey',
+          amount: BigInt(100000),
+          lockupAddress: 'tb1lockup',
+          timeoutBlockHeight: 919456,
+          swapTree: {
+            claimLeaf: { version: 192, output: 'claimoutput' },
+            refundLeaf: { version: 192, output: 'refundoutput' }
+          }
+        },
+        claimDetails: {
+          refundAddress: 'tb1refund',
+          amount: BigInt(99000),
+          lockupAddress: '0xlockupRSK',
+          timeoutBlockHeight: 919456
+        }
+      },
+      secretContext: {
+        preimage: 'preimage123',
+        privateKey: 'privkey123',
+        swapTree: '',
+        timeoutBlockHeight: 0,
+        claimPublicKey: '',
+        version: 0
+      }
+    }
+
+    test('should populate secretContext from lockupDetails for BTC to RSK swaps', () => {
+      const swap = { fromNetwork: 'BTC', toNetwork: '31' } as unknown as Swap
+      const result = boltzClient.finalizeContext(localContext, swap)
+      expect(result.publicContext).toEqual(localContext.publicContext)
+      const secret = result.secretContext as typeof localContext.secretContext
+      expect(secret.preimage).toBe('preimage123')
+      expect(secret.privateKey).toBe('privkey123')
+      expect(secret.claimPublicKey).toBe('03serverKey')
+      expect(secret.timeoutBlockHeight).toBe(919456)
+      expect(secret.swapTree).toBe(JSON.stringify(localContext.publicContext.lockupDetails.swapTree))
+      expect(secret.version).toBe(3)
+    })
+
+    test('should return localContext unchanged for non BTC-to-RSK swaps', () => {
+      const swap = { fromNetwork: 'LN', toNetwork: '31' } as unknown as Swap
+      const result = boltzClient.finalizeContext(localContext, swap)
+      expect(result).toBe(localContext)
+    })
+  })
+
   describe('validateAddress method', () => {
     test('should validate address using the correct swap type', async () => {
       expect(async () => boltzClient.validateAddress(reverseSwapMock)).not.toThrow()

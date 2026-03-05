@@ -13,6 +13,7 @@ export interface SwapProviderClient {
   generateAction: (swap: CreateSwapResult) => Promise<SwapAction>
   buildClaimTransaction?: (swap: Swap) => Promise<TxData>
   executeExternalClaim?: (swap: Swap) => Promise<string>
+  finalizeContext?: (localContext: ProviderContext, swap: Swap) => ProviderContext
 }
 
 export interface SwapAction {
