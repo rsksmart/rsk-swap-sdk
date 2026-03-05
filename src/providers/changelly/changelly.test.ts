@@ -121,7 +121,7 @@ describe('ChangellyClient should', () => {
         providerSwapId: '123',
         refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         providerId: 'CHANGELLY',
-        fromAmount: BigInt('1255000000000000000'),
+        fromAmount: BigInt('125500000'),
         paymentAddress: '0xd5f00abfbea7a0b193836cac6833c2ad9d06cea8',
         receiverAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
         fromToken: 'ETH',
@@ -153,6 +153,42 @@ describe('ChangellyClient should', () => {
     })
     expect(httpMock.get).toHaveBeenCalledTimes(1)
     expect(httpMock.get).toHaveBeenCalledWith(apiUrl + '/tokens/ETH')
+  })
+  test('generate action for EVM-NATIVE-PAYMENT scales satoshi-denominated amount to wei', async () => {
+    httpMock.get.mockResolvedValueOnce({
+      decimals: 18
+    })
+    const swap: CreatedSwap = {
+      swap: {
+        providerSwapId: '456',
+        refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
+        providerId: 'CHANGELLY',
+        fromAmount: BigInt('300000'),
+        paymentAddress: '0xd5f00abfbea7a0b193836cac6833c2ad9d06cea8',
+        receiverAddress: 'receiverAddress',
+        fromToken: 'RBTC',
+        toToken: 'BTC',
+        fromNetwork: '30',
+        toNetwork: 'BTC',
+        status: 'CREATED',
+        requiredConfirmations: 3,
+        usedFees: [],
+        context: {}
+      },
+      actionType: 'EVM-NATIVE-PAYMENT'
+    }
+    const action = await client.generateAction(swap)
+    expect(action).toEqual({
+      requiresClaim: false,
+      type: 'EVM-NATIVE-PAYMENT',
+      data: {
+        to: '0xd5f00abfbea7a0b193836cac6833c2ad9d06cea8',
+        value: '0x0aa87bee538000',
+        data: '0x'
+      }
+    })
+    expect(httpMock.get).toHaveBeenCalledTimes(1)
+    expect(httpMock.get).toHaveBeenCalledWith(apiUrl + '/tokens/RBTC')
   })
   test('fail if actionType is not supported by Changelly', async () => {
     const swap: CreatedSwap = {

@@ -2,6 +2,7 @@ import { type HttpClient, ethers, assertTruthy } from '@rsksmart/bridges-core-sd
 import { type Swap, type Token, type CreateSwapResult, Routes } from '../../api'
 import { type SwapAction, type ProviderContext, type SwapProviderClient } from '../../providers/types'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
+import { BTC_DECIMALS } from '../../constants/tokens'
 
 export class ChangellyClient implements SwapProviderClient {
   private readonly ERC20_INTERFACE = new ethers.utils.Interface(['function transfer(address _to, uint _value) public'])
@@ -54,7 +55,7 @@ export class ChangellyClient implements SwapProviderClient {
           type: actionType,
           data: {
             to: swap.paymentAddress,
-            value: '0x' + swap.fromAmount.toString(16),
+            value: ethers.utils.parseUnits(ethers.utils.formatUnits(swap.fromAmount, BTC_DECIMALS), tokenInfo.decimals).toHexString(),
             data: '0x'
           }
         }
