@@ -25,12 +25,16 @@ describe('ChainSwapIn', () => {
       expect(context.publicContext).toHaveProperty('preimageHash')
       expect(context.publicContext).toHaveProperty('refundPublicKey')
       expect(context.secretContext).toHaveProperty('preimage')
-      expect(context.secretContext).toHaveProperty('refundPrivateKey')
+      expect(context.secretContext).toHaveProperty('privateKey')
       const swapContext = context as BoltzChainSwapInContext
       expect(swapContext.publicContext.preimageHash).toHaveLength(64)
       expect(swapContext.secretContext.preimage).toHaveLength(64)
-      expect(swapContext.secretContext.refundPrivateKey).toHaveLength(64)
+      expect(swapContext.secretContext.privateKey).toHaveLength(64)
       expect(swapContext.publicContext.refundPublicKey).toHaveLength(66)
+      expect(swapContext.secretContext.swapTree).toBe('')
+      expect(swapContext.secretContext.timeoutBlockHeight).toBe(0)
+      expect(swapContext.secretContext.claimPublicKey).toBe('')
+      expect(swapContext.secretContext.version).toBe(0)
     })
   })
 
@@ -171,7 +175,12 @@ describe('ChainSwapIn', () => {
           }
         },
         secretContext: {
-          preimage: 'preimage'
+          preimage: 'preimage',
+          privateKey: 'privateKey',
+          swapTree: '{}',
+          timeoutBlockHeight: 1000,
+          claimPublicKey: 'claimPublicKey',
+          version: 3
         }
       }
     } as unknown as Swap
@@ -187,6 +196,7 @@ describe('ChainSwapIn', () => {
       })
     })
     test('should throw an error if claim details are missing', () => {
+      const validSecretContext = { preimage: 'preimage', privateKey: 'privateKey', swapTree: '{}', timeoutBlockHeight: 1000, claimPublicKey: 'claimPublicKey', version: 3 }
       const partialContexts = [
         {
           publicContext: {
@@ -196,9 +206,7 @@ describe('ChainSwapIn', () => {
               timeoutBlockHeight: 1000
             }
           },
-          secretContext: {
-            preimage: 'preimage'
-          }
+          secretContext: validSecretContext
         },
         {
           publicContext: {
@@ -208,9 +216,7 @@ describe('ChainSwapIn', () => {
               timeoutBlockHeight: 1000
             }
           },
-          secretContext: {
-            preimage: 'preimage'
-          }
+          secretContext: validSecretContext
         },
         {
           publicContext: {
@@ -220,9 +226,7 @@ describe('ChainSwapIn', () => {
               timeoutBlockHeight: 1000
             }
           },
-          secretContext: {
-            preimage: 'preimage'
-          }
+          secretContext: validSecretContext
         },
         {
           publicContext: {
@@ -232,9 +236,7 @@ describe('ChainSwapIn', () => {
               refundAddress: 'refundAddress'
             }
           },
-          secretContext: {
-            preimage: 'preimage'
-          }
+          secretContext: validSecretContext
         },
         {
           publicContext: {
@@ -246,6 +248,17 @@ describe('ChainSwapIn', () => {
             }
           },
           secretContext: {}
+        },
+        {
+          publicContext: {
+            claimDetails: {
+              lockupAddress: 'lockupAddress',
+              amount: '100000000',
+              refundAddress: 'refundAddress',
+              timeoutBlockHeight: 1000
+            }
+          },
+          secretContext: { preimage: 'preimage' }
         }
       ]
       for (const context of partialContexts) {

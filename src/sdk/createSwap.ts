@@ -22,13 +22,14 @@ export async function createSwap (apiUrl: string, client: HttpClient, clientReso
   }
 
   // only the public context is sent to the server
-  result.swap.context = {
+  const baseContext = {
     publicContext: {
       ...result.swap.context,
       ...context.publicContext // to ensure the original context was not modified
     },
     secretContext: context.secretContext
   }
+  result.swap.context = swapProviderClient.finalizeContext?.(baseContext, result.swap) ?? baseContext
 
   const isValidAddress = await swapProviderClient.validateAddress(result.swap)
   if (!isValidAddress) {

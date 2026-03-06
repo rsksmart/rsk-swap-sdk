@@ -32,7 +32,11 @@ export class ChainSwapIn implements BoltzAtomicSwap {
       },
       secretContext: {
         preimage: ethers.utils.hexlify(preimage).slice(2),
-        refundPrivateKey: arrayToHexKey(privateKey)
+        privateKey: arrayToHexKey(privateKey),
+        swapTree: '',
+        timeoutBlockHeight: 0,
+        claimPublicKey: '',
+        version: 0
       }
     }
   }
@@ -104,7 +108,7 @@ export class ChainSwapIn implements BoltzAtomicSwap {
     const context = swap.context as BoltzChainSwapInContext
     validateRequiredFields(context, 'publicContext', 'secretContext')
     validateRequiredFields(context.publicContext, 'claimDetails')
-    validateRequiredFields(context.secretContext, 'preimage')
+    validateRequiredFields(context.secretContext, 'preimage', 'privateKey')
     validateRequiredFields(context.publicContext.claimDetails, 'lockupAddress', 'amount', 'refundAddress', 'timeoutBlockHeight')
     return {
       lockupAddress: context.publicContext.claimDetails.lockupAddress,

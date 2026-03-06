@@ -6,7 +6,7 @@ import { validateContractCode } from '../../utils/validation'
 import { BOLTZ_ETHER_SWAP_ABI } from '../../constants/abi'
 import { type RskSwapEnvironmentName } from '../../constants/environment'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
-import { type BoltzChainSwapOutContext, type BoltzAtomicSwap } from './types'
+import { type BoltzChainSwapOutContext, type BoltzChainSwapInContext, type BoltzAtomicSwap } from './types'
 import { type ReverseSwap } from './reverseSwap'
 import { isBtcChain, isLightningNetwork, isRskChain } from '../../utils/chain'
 import { RskSwapError } from '../../error/error'
@@ -74,6 +74,31 @@ export class BoltzClient implements SwapProviderClient {
   async generateAction (createdSwap: CreateSwapResult): Promise<SwapAction> {
     const swapType = this.routeAtomicSwap(createdSwap.swap)
     return swapType.generateAction(createdSwap)
+  }
+
+  finalizeContext (localContext: ProviderContext, swap: Swap): ProviderContext {
+    if (!(isBtcChain(swap.fromNetwork) && isRskChain(swap.toNetwork))) {
+      return localContext
+    }
+    const serverContext = (localContext.publicContext as BoltzChainSwapInContext['publicContext'])
+    const lockupDetails = serverContext.lockupDetails
+    assertTruthy(lockupDetails, 'Missing lockupDetails in server response context')
+    assertTruthy(lockupDetails.serverPublicKey, 'Missing serverPublicKey in lockupDetails')
+    assertTruthy(lockupDetails.swapTree, 'Missing swapTree in lockupDetails')
+    assertTruthy(lockupDetails.timeoutBlockHeight, 'Missing timeoutBlockHeight in lockupDetails')
+    const serverSwap = swap as unknown as { version?: number }
+    const version = serverSwap.version ?? 3
+    const localSecret = localContext.secretContext as BoltzChainSwapInContext['secretContext']
+    return {
+      publicContext: localContext.publicContext,
+      secretContext: {
+        ...localSecret,
+        swapTree: JSON.stringify(lockupDetails.swapTree),
+        timeoutBlockHeight: lockupDetails.timeoutBlockHeight,
+        claimPublicKey: lockupDetails.serverPublicKey,
+        version
+      }
+    }
   }
 
   async buildClaimTransaction (swap: Swap): Promise<TxData> {
