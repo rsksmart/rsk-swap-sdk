@@ -1,9 +1,10 @@
-import { describe, expect, test, beforeEach, jest } from '@jest/globals'
+import { describe, expect, test, beforeEach, afterEach, jest } from '@jest/globals'
 import { type BlockchainConnection } from '@rsksmart/bridges-core-sdk'
 import { type CreatedSwap, type Swap } from '../../api'
 import { SubmarineSwap } from './submarineSwap'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import * as validation from '../../utils/validation'
 
 describe('SubmarineSwap class', () => {
   let swap: Swap
@@ -94,7 +95,10 @@ describe('SubmarineSwap class', () => {
     })
   })
   describe('validateAddress method should', () => {
+    afterEach(() => { jest.restoreAllMocks() })
+
     test('return true on valid contract', async () => {
+      jest.spyOn(validation, 'validateContractCode').mockResolvedValue(true)
       const submarineSwap = new SubmarineSwap('Testnet', connection)
       const result = await submarineSwap.validateAddress(swap)
       expect(result).toBe(true)

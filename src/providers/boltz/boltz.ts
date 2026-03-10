@@ -6,7 +6,7 @@ import { validateContractCode } from '../../utils/validation'
 import { BOLTZ_ETHER_SWAP_ABI } from '../../constants/abi'
 import { type RskSwapEnvironmentName } from '../../constants/environment'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
-import { type BoltzChainSwapOutContext, type BoltzAtomicSwap } from './types'
+import { type BoltzChainSwapOutContext, type BoltzChainSwapInContext, type BoltzAtomicSwap } from './types'
 import { type ReverseSwap } from './reverseSwap'
 import { isBtcChain, isLightningNetwork, isRskChain } from '../../utils/chain'
 import { RskSwapError } from '../../error/error'
@@ -41,10 +41,10 @@ export class BoltzClient implements SwapProviderClient {
     initEccLib(ecc)
     this.keyFactory = ecpair.ECPairFactory(ecc)
     this.reverseSwap = swapFactory.createReverseSwap()
-    this.submarineSwap = swapFactory.createSubmarineSwap(this.network, this.connection)
-    this.chainSwapIn = swapFactory.createChainSwapIn(this.network, this.keyFactory)
-    this.chainSwapOut = swapFactory.createChainSwapOut(this.network, this.connection, this.keyFactory)
-    this.providerUrl = this.network === 'Mainnet' ? PROVIDER_URLS.boltz.mainnet : PROVIDER_URLS.boltz.testnet
+    this.submarineSwap = swapFactory.createSubmarineSwap('Mainnet', this.connection)
+    this.chainSwapIn = swapFactory.createChainSwapIn('Mainnet', this.keyFactory)
+    this.chainSwapOut = swapFactory.createChainSwapOut('Mainnet', this.connection, this.keyFactory)
+    this.providerUrl = PROVIDER_URLS.boltz.mainnet
   }
 
   private routeAtomicSwap (spec: { fromNetwork: string, toNetwork: string }): BoltzAtomicSwap {
@@ -76,11 +76,36 @@ export class BoltzClient implements SwapProviderClient {
     return swapType.generateAction(createdSwap)
   }
 
+  finalizeContext (localContext: ProviderContext, swap: Swap): ProviderContext {
+    if (!(isBtcChain(swap.fromNetwork) && isRskChain(swap.toNetwork))) {
+      return localContext
+    }
+    const serverContext = (localContext.publicContext as BoltzChainSwapInContext['publicContext'])
+    const lockupDetails = serverContext.lockupDetails
+    assertTruthy(lockupDetails, 'Missing lockupDetails in server response context')
+    assertTruthy(lockupDetails.serverPublicKey, 'Missing serverPublicKey in lockupDetails')
+    assertTruthy(lockupDetails.swapTree, 'Missing swapTree in lockupDetails')
+    assertTruthy(lockupDetails.timeoutBlockHeight, 'Missing timeoutBlockHeight in lockupDetails')
+    const serverSwap = swap as unknown as { version?: number }
+    const version = serverSwap.version ?? 3
+    const localSecret = localContext.secretContext as BoltzChainSwapInContext['secretContext']
+    return {
+      publicContext: localContext.publicContext,
+      secretContext: {
+        ...localSecret,
+        swapTree: JSON.stringify(lockupDetails.swapTree),
+        timeoutBlockHeight: lockupDetails.timeoutBlockHeight,
+        claimPublicKey: lockupDetails.serverPublicKey,
+        version
+      }
+    }
+  }
+
   async buildClaimTransaction (swap: Swap): Promise<TxData> {
     const claimDetails = this.routeAtomicSwap(swap).getClaimDetails(swap)
     const lockupAddress = claimDetails.lockupAddress.toLowerCase()
     const validationInfo = VALIDATION_CONSTANTS.boltz
-    const expectedHash = this.network === 'Mainnet' ? validationInfo.mainnet.etherSwapBytecodeHash : validationInfo.testnet.etherSwapBytecodeHash
+    const expectedHash = validationInfo.etherSwapBytecodeHash
     const isValidContract = await validateContractCode(this.connection, lockupAddress, expectedHash)
     if (!isValidContract) {
       throw RskSwapError.unexpectedContract(lockupAddress)

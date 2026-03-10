@@ -1,13 +1,12 @@
 import { ethers } from '@rsksmart/bridges-core-sdk'
 import { ChainSwapOut } from './chainSwapOut'
-import { validateContractCode } from '../../utils/validation'
+import * as validation from '../../utils/validation'
 import { VALIDATION_CONSTANTS } from '../../constants/validation'
 import { type Connection } from '@rsksmart/bridges-core-sdk'
 import { type ECPairAPI } from 'ecpair'
 import { type Swap, type CreatedSwap } from '../../api'
 import { describe, expect, test, beforeEach, jest } from '@jest/globals'
 
-jest.mock('../../utils/validation')
 jest.mock('@rsksmart/bridges-core-sdk', () => {
   const coreModule = jest.requireActual<any>('@rsksmart/bridges-core-sdk')
   return {
@@ -68,13 +67,12 @@ describe('ChainSwapOut', () => {
   describe('validateAddress', () => {
     test('should validate the address correctly', async () => {
       const mockSwap = { paymentAddress: '0x123' } as Swap // eslint-disable-line @typescript-eslint/consistent-type-assertions
-      const expectedHash = VALIDATION_CONSTANTS.boltz.testnet.etherSwapBytecodeHash;
-
-      (validateContractCode as jest.Mock<any>).mockResolvedValue(true)
+      const expectedHash = VALIDATION_CONSTANTS.boltz.etherSwapBytecodeHash
+      const spy = jest.spyOn(validation, 'validateContractCode').mockResolvedValue(true)
 
       const isValid = await chainSwapOut.validateAddress(mockSwap)
 
-      expect(validateContractCode).toHaveBeenCalledWith(mockConnection, mockSwap.paymentAddress, expectedHash)
+      expect(spy).toHaveBeenCalledWith(mockConnection, mockSwap.paymentAddress, expectedHash)
       expect(isValid).toBe(true)
     })
   })

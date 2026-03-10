@@ -11,6 +11,8 @@ import { type ChainSwapOut } from './chainSwapOut'
 import { DefaultBoltzAtomicSwapFactory } from './factory'
 import { PROVIDER_URLS } from '../../constants/url'
 import { sanitizeSwap } from '../../utils/sanitization'
+import * as validation from '../../utils/validation'
+import { VALIDATION_CONSTANTS } from '../../constants/validation'
 
 jest.mock('boltz-core', () => {
   const originalModule: any = jest.requireActual('boltz-core')
@@ -126,6 +128,8 @@ describe('BoltzClient class should', () => {
       createSubmarineSwap: () => submarineSwapClient,
       createReverseSwap: () => reverseSwapClient
     })
+
+    jest.spyOn(validation, 'validateContractCode').mockResolvedValue(true)
   })
   describe('build a correct claim transaction', () => {
     test('fail on incomplete context', async () => {
@@ -135,13 +139,18 @@ describe('BoltzClient class should', () => {
       await expect(async () => boltzClient.buildClaimTransaction(swap)).rejects.toThrow('Validation failed for object with following missing properties: publicContext, secretContext')
     })
     test('fail on contract code mismatch', async () => {
+      jest.spyOn(validation, 'validateContractCode').mockResolvedValue(false)
       boltzClient = new BoltzClient('Mainnet', conn, http, new DefaultBoltzAtomicSwapFactory())
       await expect(boltzClient.buildClaimTransaction(reverseSwapMock)).rejects.toThrow('Unexpected contract content')
     })
     test('build claim correctly', async () => {
       boltzClient = new BoltzClient('Testnet', conn, http, new DefaultBoltzAtomicSwapFactory())
       const result = await boltzClient.buildClaimTransaction(reverseSwapMock)
-      expect(conn.getUnderlyingProvider()?.getCode).toHaveBeenCalledTimes(1)
+      expect(validation.validateContractCode).toHaveBeenCalledWith(
+        conn,
+        '0x42f92ecf2d3fa43239de7fab235679a5c74f8dcd',
+        VALIDATION_CONSTANTS.boltz.etherSwapBytecodeHash
+      )
       expect(result).toEqual({
         to: '0x42f92ecf2d3fa43239de7fab235679a5c74f8dcd',
         data: '0xcd413efa937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae224400000000000000000000000000000000000000000000000000005f062549400000000000000000000000000079568c2989232dca1840087d73d403602364c0d40000000000000000000000004217bd283e9dc9a2ce3d5d20fae34aa0902c28db00000000000000000000000000000000000000000000000000000000005cb190',
@@ -184,6 +193,58 @@ describe('BoltzClient class should', () => {
     })
   })
 
+  describe('finalizeContext method', () => {
+    const localContext = {
+      publicContext: {
+        preimageHash: 'abc123',
+        refundPublicKey: '02aabbcc',
+        lockupDetails: {
+          serverPublicKey: '03serverKey',
+          amount: BigInt(100000),
+          lockupAddress: 'tb1lockup',
+          timeoutBlockHeight: 919456,
+          swapTree: {
+            claimLeaf: { version: 192, output: 'claimoutput' },
+            refundLeaf: { version: 192, output: 'refundoutput' }
+          }
+        },
+        claimDetails: {
+          refundAddress: 'tb1refund',
+          amount: BigInt(99000),
+          lockupAddress: '0xlockupRSK',
+          timeoutBlockHeight: 919456
+        }
+      },
+      secretContext: {
+        preimage: 'preimage123',
+        privateKey: 'privkey123',
+        swapTree: '',
+        timeoutBlockHeight: 0,
+        claimPublicKey: '',
+        version: 0
+      }
+    }
+
+    test('should populate secretContext from lockupDetails for BTC to RSK swaps', () => {
+      const swap = { fromNetwork: 'BTC', toNetwork: '31' } as unknown as Swap
+      const result = boltzClient.finalizeContext(localContext, swap)
+      expect(result.publicContext).toEqual(localContext.publicContext)
+      const secret = result.secretContext as typeof localContext.secretContext
+      expect(secret.preimage).toBe('preimage123')
+      expect(secret.privateKey).toBe('privkey123')
+      expect(secret.claimPublicKey).toBe('03serverKey')
+      expect(secret.timeoutBlockHeight).toBe(919456)
+      expect(secret.swapTree).toBe(JSON.stringify(localContext.publicContext.lockupDetails.swapTree))
+      expect(secret.version).toBe(3)
+    })
+
+    test('should return localContext unchanged for non BTC-to-RSK swaps', () => {
+      const swap = { fromNetwork: 'LN', toNetwork: '31' } as unknown as Swap
+      const result = boltzClient.finalizeContext(localContext, swap)
+      expect(result).toBe(localContext)
+    })
+  })
+
   describe('validateAddress method', () => {
     test('should validate address using the correct swap type', async () => {
       expect(async () => boltzClient.validateAddress(reverseSwapMock)).not.toThrow()
@@ -209,7 +270,11 @@ describe('BoltzClient class should', () => {
       timeoutBlockHeight: 12345
     })
     const result = await boltzClient.buildClaimTransaction(reverseSwapMock)
-    expect(conn.getUnderlyingProvider()?.getCode).toHaveBeenCalledTimes(1)
+    expect(validation.validateContractCode).toHaveBeenCalledWith(
+      conn,
+      '0x0000000000000000000000000000000000000001',
+      VALIDATION_CONSTANTS.boltz.etherSwapBytecodeHash
+    )
     expect(result).toEqual({
       to: '0x0000000000000000000000000000000000000001',
       data: '0xcd413efad7b6468a714e46602e9cd5188486e56d8ec01b6a8607e19342a914db86975437000000000000000000000000000000000000000000000000000009184e72a00000000000000000000000000079568c2989232dca1840087d73d403602364c0d400000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000003039',
@@ -357,14 +422,14 @@ describe('BoltzClient class should', () => {
 
       const result = await boltzClient.executeExternalClaim(swap)
       expect(http.get).toHaveBeenNthCalledWith(
-        1, `${PROVIDER_URLS.boltz.testnet}/swap/chain/${swap.providerSwapId}/transactions`
+        1, `${PROVIDER_URLS.boltz.mainnet}/swap/chain/${swap.providerSwapId}/transactions`
       )
       expect(http.get).toHaveBeenNthCalledWith(
-        2, `${PROVIDER_URLS.boltz.testnet}/chain/fees`
+        2, `${PROVIDER_URLS.boltz.mainnet}/chain/fees`
       )
       expect(http.post).toHaveBeenNthCalledWith(
         1,
-        `${PROVIDER_URLS.boltz.testnet}/swap/chain/${swap.providerSwapId}/claim`,
+        `${PROVIDER_URLS.boltz.mainnet}/swap/chain/${swap.providerSwapId}/claim`,
         {
           preimage: '3749c977b68c5d70f08c545f79545bf3b8d981edcf35c438e12580f9d45b485d',
           toSign: {
@@ -376,7 +441,7 @@ describe('BoltzClient class should', () => {
       )
       expect(http.post).toHaveBeenNthCalledWith(
         2,
-        `${PROVIDER_URLS.boltz.testnet}/chain/BTC/transaction`,
+        `${PROVIDER_URLS.boltz.mainnet}/chain/BTC/transaction`,
         { hex: '01000000000101651b98a178859375406371b8dff1b932eb78be3bdf923ae1e17515aae0fc89650000000000fdffffff011bc1000000000000160014387a7b5e8d93f17e6c6e8275907e1dae083f4b2f010301020300000000' }
       )
       expect(result).toBe(mockTxId)

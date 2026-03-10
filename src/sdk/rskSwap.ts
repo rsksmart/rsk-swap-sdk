@@ -33,6 +33,7 @@ import { ChangellyClient } from '../providers/changelly/changelly'
 import { SymbiosisClient } from '../providers/symbiosis/symbiosis'
 import { claimSwap } from './claimSwap'
 import { DefaultBoltzAtomicSwapFactory } from '../providers/boltz/factory'
+import { getQrCode, type GetQrCodeArgs } from './getQrCode'
 
 /** Class that represents the entrypoint to the RSK Swap SDK */
 export class RskSwapSDK {
@@ -176,5 +177,20 @@ export class RskSwapSDK {
    */
   async getPrices (args: GetPricesArgs): Promise<CoinPrice[]> {
     return getPrices(this.environment.api, this.httpClient, args)
+  }
+
+  /**
+   * Generates a QR code data URL for a payment request.
+   *
+   * Supports:
+   * - `BIP-21` for Bitcoin payments.
+   * - `EIP-681` for EVM native-token and ERC20 payments.
+   * - `BOLT11` for Lightning invoices.
+   *
+   * @param { GetQrCodeArgs } args The QR-code type and payload.
+   * @returns { string } A Base64 data URL representing the generated QR image.
+   */
+  async getQrCode (args: GetQrCodeArgs): Promise<string> {
+    return getQrCode(args)
   }
 }

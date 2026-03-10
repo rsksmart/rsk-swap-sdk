@@ -69,7 +69,11 @@ export interface BoltzChainSwapInContext {
   }
   secretContext: {
     preimage: string
-    refundPrivateKey: string
+    privateKey: string
+    swapTree: string
+    timeoutBlockHeight: number
+    claimPublicKey: string
+    version: number
   }
 }
 
