@@ -32,7 +32,7 @@ export class SubmarineSwap implements BoltzAtomicSwap {
     assertTruthy(paymentHash, 'The invoice does not contain a payment hash')
     const context = createdSwap.swap.context as BoltzSubmarineSwapContext
     assertTruthy(context?.publicContext?.claimAddress, 'Missing claimAddress in swap context')
-    assertTruthy(context?.publicContext?.expectedAmount, 'Missing expectedAmount in swap context')
+    assertTruthy(context?.publicContext?.destinationAmount, 'Missing destinationAmount in swap context')
     assertTruthy(context?.publicContext?.timeoutBlockHeight, 'Missing timeoutBlockHeight in swap context')
 
     return {
@@ -47,7 +47,7 @@ export class SubmarineSwap implements BoltzAtomicSwap {
             context.publicContext?.timeoutBlockHeight
           ]
         ),
-        value: '0x' + satToWei(context.publicContext?.expectedAmount).toString(16)
+        value: '0x' + satToWei(context.publicContext?.destinationAmount).toString(16)
       },
       requiresClaim: false
     }
