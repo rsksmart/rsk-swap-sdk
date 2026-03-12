@@ -42,12 +42,12 @@ export class ReverseSwap implements BoltzAtomicSwap {
   getClaimDetails (swap: Swap): ClaimDetails {
     const context = swap.context as BoltzReverseSwapContext
     validateRequiredFields(context, 'publicContext', 'secretContext')
-    validateRequiredFields(context.publicContext, 'lockupAddress', 'onchainAmount', 'refundAddress', 'timeoutBlockHeight')
+    validateRequiredFields(context.publicContext, 'lockupAddress', 'destinationAmount', 'refundAddress', 'timeoutBlockHeight')
     validateRequiredFields(context.secretContext, 'preimage')
     return {
       lockupAddress: context.publicContext.lockupAddress,
       refundAddress: context.publicContext.refundAddress,
-      onchainAmount: context.publicContext.onchainAmount,
+      destinationAmount: context.publicContext.destinationAmount,
       timeoutBlockHeight: context.publicContext.timeoutBlockHeight,
       preimage: context.secretContext.preimage
     }
