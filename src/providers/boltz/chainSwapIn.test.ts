@@ -190,7 +190,7 @@ describe('ChainSwapIn', () => {
       expect(claimDetails).toEqual({
         lockupAddress: 'lockupAddress',
         refundAddress: 'refundAddress',
-        onchainAmount: '100000000',
+        destinationAmount: '100000000',
         timeoutBlockHeight: 1000,
         preimage: 'preimage'
       })

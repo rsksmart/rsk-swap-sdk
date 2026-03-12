@@ -116,7 +116,7 @@ export class BoltzClient implements SwapProviderClient {
         'claim',
         [
           '0x' + claimDetails.preimage,
-          satToWei(claimDetails.onchainAmount),
+          satToWei(claimDetails.destinationAmount),
           swap.receiverAddress.toLowerCase(),
           claimDetails.refundAddress.toLowerCase(),
           claimDetails.timeoutBlockHeight

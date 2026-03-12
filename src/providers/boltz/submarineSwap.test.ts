@@ -29,7 +29,7 @@ describe('SubmarineSwap class', () => {
         publicContext: {
           claimAddress: '0x42F92ecF2d3Fa43239dE7FAB235679A5C74F8dCD',
           timeoutBlockHeight: 6074768,
-          expectedAmount: 10448
+          destinationAmount: 10448
         },
         secretContext: {}
       },
@@ -82,10 +82,10 @@ describe('SubmarineSwap class', () => {
       await expect(submarineSwap.generateAction(createdSwap)).rejects.toThrow('Missing claimAddress in swap context')
     })
 
-    test('fail on missing expectedAmount', async () => {
+    test('fail on missing destinationAmount', async () => {
       const submarineSwap = new SubmarineSwap('Testnet', connection);
-      (swap.context as any).publicContext.expectedAmount = undefined
-      await expect(submarineSwap.generateAction(createdSwap)).rejects.toThrow('Missing expectedAmount in swap context')
+      (swap.context as any).publicContext.destinationAmount = undefined
+      await expect(submarineSwap.generateAction(createdSwap)).rejects.toThrow('Missing destinationAmount in swap context')
     })
 
     test('fail on missing timeoutBlockHeight', async () => {

@@ -6,7 +6,7 @@ export const PREIMAGE_LENGTH = 32 as const
 export interface ClaimDetails {
   lockupAddress: string
   refundAddress: string
-  onchainAmount: bigint
+  destinationAmount: bigint
   timeoutBlockHeight: number
   preimage: string
 }
@@ -22,7 +22,7 @@ export interface BoltzReverseSwapContext {
   publicContext: {
     preimageHash: string
     timeoutBlockHeight: number
-    onchainAmount: bigint
+    destinationAmount: bigint
     lockupAddress: string
     refundAddress: string
   }
@@ -35,7 +35,7 @@ export interface BoltzSubmarineSwapContext {
   publicContext: {
     timeoutBlockHeight: number
     claimAddress: string
-    expectedAmount: bigint | number
+    destinationAmount: bigint | number
   }
   secretContext: unknown
 }

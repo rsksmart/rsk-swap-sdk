@@ -36,7 +36,7 @@ const reverseSwapMock: Swap =
         publicContext: {
           preimageHash: 'f60b8d6dc72cf7215205349b8333a4a0c779514dae997d09206f24effb6763bc',
           timeoutBlockHeight: 6074768,
-          onchainAmount: 10448,
+          destinationAmount: 10448,
           lockupAddress: '0x42F92ecF2d3Fa43239dE7FAB235679A5C74F8dCD',
           refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db'
         },
@@ -265,7 +265,7 @@ describe('BoltzClient class should', () => {
     (reverseSwapClient.getClaimDetails as jest.Mock<any>).mockReturnValue({
       lockupAddress: '0x0000000000000000000000000000000000000001',
       preimage: 'd7b6468a714e46602e9cd5188486e56d8ec01b6a8607e19342a914db86975437',
-      onchainAmount: 1000,
+      destinationAmount: 1000,
       refundAddress: '0x0000000000000000000000000000000000000002',
       timeoutBlockHeight: 12345
     })
