@@ -58,7 +58,7 @@ export class RskSwapSDK {
     assertTruthy(environment, `Environment ${envName} not found`)
     this.environment = environment
     this.providerClientResolver = new ProviderClientResolver()
-      .register('BOLTZ', new BoltzClient(envName, connection, this.httpClient, new DefaultBoltzAtomicSwapFactory()))
+      .register('BOLTZ', new BoltzClient('Mainnet', connection, this.httpClient, new DefaultBoltzAtomicSwapFactory()))
       .register('CHANGELLY', new ChangellyClient(this.environment.api, this.httpClient))
       .register('SYMBIOSIS', new SymbiosisClient(this.environment.api, this.httpClient))
   }

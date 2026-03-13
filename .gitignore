@@ -9,3 +9,4 @@ lbc-code/
 .idea
 .DS_Store
 .env
+.cursor
