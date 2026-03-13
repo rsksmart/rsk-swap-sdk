@@ -373,7 +373,7 @@ describe('BoltzClient class should', () => {
       }
     })
 
-    test.skip('should execute external claim successfully', async () => {
+    test('should execute external claim successfully', async () => {
       const swap = {
         providerSwapId: 'mocked-swap-id',
         fromNetwork: '31',
@@ -422,14 +422,14 @@ describe('BoltzClient class should', () => {
 
       const result = await boltzClient.executeExternalClaim(swap)
       expect(http.get).toHaveBeenNthCalledWith(
-        1, `${PROVIDER_URLS.boltz.mainnet}/swap/chain/${swap.providerSwapId}/transactions`
+        1, `${PROVIDER_URLS.boltz.testnet}/swap/chain/${swap.providerSwapId}/transactions`
       )
       expect(http.get).toHaveBeenNthCalledWith(
-        2, `${PROVIDER_URLS.boltz.mainnet}/chain/fees`
+        2, `${PROVIDER_URLS.boltz.testnet}/chain/fees`
       )
       expect(http.post).toHaveBeenNthCalledWith(
         1,
-        `${PROVIDER_URLS.boltz.mainnet}/swap/chain/${swap.providerSwapId}/claim`,
+        `${PROVIDER_URLS.boltz.testnet}/swap/chain/${swap.providerSwapId}/claim`,
         {
           preimage: '3749c977b68c5d70f08c545f79545bf3b8d981edcf35c438e12580f9d45b485d',
           toSign: {
@@ -441,7 +441,7 @@ describe('BoltzClient class should', () => {
       )
       expect(http.post).toHaveBeenNthCalledWith(
         2,
-        `${PROVIDER_URLS.boltz.mainnet}/chain/BTC/transaction`,
+        `${PROVIDER_URLS.boltz.testnet}/chain/BTC/transaction`,
         { hex: '01000000000101651b98a178859375406371b8dff1b932eb78be3bdf923ae1e17515aae0fc89650000000000fdffffff011bc1000000000000160014387a7b5e8d93f17e6c6e8275907e1dae083f4b2f010301020300000000' }
       )
       expect(result).toBe(mockTxId)
