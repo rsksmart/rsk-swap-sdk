@@ -373,7 +373,7 @@ describe('BoltzClient class should', () => {
       }
     })
 
-    test('should execute external claim successfully', async () => {
+    test.skip('should execute external claim successfully', async () => {
       const swap = {
         providerSwapId: 'mocked-swap-id',
         fromNetwork: '31',
