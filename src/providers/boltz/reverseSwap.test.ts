@@ -12,7 +12,7 @@ const reverseSwap: Swap =
         publicContext: {
           preimageHash: 'f60b8d6dc72cf7215205349b8333a4a0c779514dae997d09206f24effb6763bc',
           timeoutBlockHeight: 6074768,
-          onchainAmount: 10448,
+          destinationAmount: 10448,
           lockupAddress: '0x42F92ecF2d3Fa43239dE7FAB235679A5C74F8dCD',
           refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db'
         },
@@ -92,7 +92,7 @@ describe('ReverseSwap class should', () => {
     const claimDetails = client.getClaimDetails(reverseSwap)
     expect(claimDetails.lockupAddress).toEqual('0x42F92ecF2d3Fa43239dE7FAB235679A5C74F8dCD')
     expect(claimDetails.refundAddress).toEqual('0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db')
-    expect(claimDetails.onchainAmount).toEqual(10448)
+    expect(claimDetails.destinationAmount).toEqual(10448)
     expect(claimDetails.timeoutBlockHeight).toEqual(6074768)
     expect(claimDetails.preimage).toEqual('937e8d5fbb48bd4949536cd65b8d35c426b80d2f830c5c308e2cdec422ae2244')
   })

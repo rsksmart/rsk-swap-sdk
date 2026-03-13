@@ -41,10 +41,10 @@ export class BoltzClient implements SwapProviderClient {
     initEccLib(ecc)
     this.keyFactory = ecpair.ECPairFactory(ecc)
     this.reverseSwap = swapFactory.createReverseSwap()
-    this.submarineSwap = swapFactory.createSubmarineSwap('Mainnet', this.connection)
-    this.chainSwapIn = swapFactory.createChainSwapIn('Mainnet', this.keyFactory)
-    this.chainSwapOut = swapFactory.createChainSwapOut('Mainnet', this.connection, this.keyFactory)
-    this.providerUrl = PROVIDER_URLS.boltz.mainnet
+    this.submarineSwap = swapFactory.createSubmarineSwap(this.network, this.connection)
+    this.chainSwapIn = swapFactory.createChainSwapIn(this.network, this.keyFactory)
+    this.chainSwapOut = swapFactory.createChainSwapOut(this.network, this.connection, this.keyFactory)
+    this.providerUrl = this.network === 'Mainnet' ? PROVIDER_URLS.boltz.mainnet : PROVIDER_URLS.boltz.testnet
   }
 
   private routeAtomicSwap (spec: { fromNetwork: string, toNetwork: string }): BoltzAtomicSwap {
@@ -116,7 +116,7 @@ export class BoltzClient implements SwapProviderClient {
         'claim',
         [
           '0x' + claimDetails.preimage,
-          satToWei(claimDetails.onchainAmount),
+          satToWei(claimDetails.destinationAmount),
           swap.receiverAddress.toLowerCase(),
           claimDetails.refundAddress.toLowerCase(),
           claimDetails.timeoutBlockHeight

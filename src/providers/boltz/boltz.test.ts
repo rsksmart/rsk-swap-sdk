@@ -36,7 +36,7 @@ const reverseSwapMock: Swap =
         publicContext: {
           preimageHash: 'f60b8d6dc72cf7215205349b8333a4a0c779514dae997d09206f24effb6763bc',
           timeoutBlockHeight: 6074768,
-          onchainAmount: 10448,
+          destinationAmount: 10448,
           lockupAddress: '0x42F92ecF2d3Fa43239dE7FAB235679A5C74F8dCD',
           refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db'
         },
@@ -265,7 +265,7 @@ describe('BoltzClient class should', () => {
     (reverseSwapClient.getClaimDetails as jest.Mock<any>).mockReturnValue({
       lockupAddress: '0x0000000000000000000000000000000000000001',
       preimage: 'd7b6468a714e46602e9cd5188486e56d8ec01b6a8607e19342a914db86975437',
-      onchainAmount: 1000,
+      destinationAmount: 1000,
       refundAddress: '0x0000000000000000000000000000000000000002',
       timeoutBlockHeight: 12345
     })
@@ -422,14 +422,14 @@ describe('BoltzClient class should', () => {
 
       const result = await boltzClient.executeExternalClaim(swap)
       expect(http.get).toHaveBeenNthCalledWith(
-        1, `${PROVIDER_URLS.boltz.mainnet}/swap/chain/${swap.providerSwapId}/transactions`
+        1, `${PROVIDER_URLS.boltz.testnet}/swap/chain/${swap.providerSwapId}/transactions`
       )
       expect(http.get).toHaveBeenNthCalledWith(
-        2, `${PROVIDER_URLS.boltz.mainnet}/chain/fees`
+        2, `${PROVIDER_URLS.boltz.testnet}/chain/fees`
       )
       expect(http.post).toHaveBeenNthCalledWith(
         1,
-        `${PROVIDER_URLS.boltz.mainnet}/swap/chain/${swap.providerSwapId}/claim`,
+        `${PROVIDER_URLS.boltz.testnet}/swap/chain/${swap.providerSwapId}/claim`,
         {
           preimage: '3749c977b68c5d70f08c545f79545bf3b8d981edcf35c438e12580f9d45b485d',
           toSign: {
@@ -441,7 +441,7 @@ describe('BoltzClient class should', () => {
       )
       expect(http.post).toHaveBeenNthCalledWith(
         2,
-        `${PROVIDER_URLS.boltz.mainnet}/chain/BTC/transaction`,
+        `${PROVIDER_URLS.boltz.testnet}/chain/BTC/transaction`,
         { hex: '01000000000101651b98a178859375406371b8dff1b932eb78be3bdf923ae1e17515aae0fc89650000000000fdffffff011bc1000000000000160014387a7b5e8d93f17e6c6e8275907e1dae083f4b2f010301020300000000' }
       )
       expect(result).toBe(mockTxId)
