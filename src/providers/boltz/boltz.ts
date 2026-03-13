@@ -33,7 +33,7 @@ export class BoltzClient implements SwapProviderClient {
   private readonly keyFactory: ECPairAPI
 
   constructor (
-    private readonly network: RskSwapEnvironmentName,
+    _network: RskSwapEnvironmentName,
     private readonly connection: BlockchainConnection,
     private readonly httpClient: HttpClient,
     swapFactory: BoltzAtomicSwapFactory
@@ -199,7 +199,7 @@ export class BoltzClient implements SwapProviderClient {
             txHash: btcLockTx.getHash()
           }
         ],
-        address.toOutputScript(swap.receiverAddress, this.network === 'Mainnet' ? networks.bitcoin : networks.testnet),
+        address.toOutputScript(swap.receiverAddress, networks.bitcoin),
         fee
       )
     )
