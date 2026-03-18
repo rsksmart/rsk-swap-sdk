@@ -113,7 +113,7 @@ export class ChainSwapIn implements BoltzAtomicSwap {
     return {
       lockupAddress: context.publicContext.claimDetails.lockupAddress,
       refundAddress: context.publicContext.claimDetails.refundAddress,
-      onchainAmount: context.publicContext.claimDetails.amount,
+      destinationAmount: context.publicContext.claimDetails.amount,
       timeoutBlockHeight: context.publicContext.claimDetails.timeoutBlockHeight,
       preimage: context.secretContext.preimage
     }
