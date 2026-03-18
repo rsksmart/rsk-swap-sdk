@@ -76,8 +76,10 @@ describe('SymbiosisClient should', () => {
         requiredConfirmations: 3,
         usedFees: [],
         context: {
-          depositAddress: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
-          expiresAt: '2026-02-03T00:00:00Z'
+          publicContext: {
+            depositAddress: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
+            expiresAt: '2026-02-03T00:00:00Z'
+          }
         }
       },
       actionType: 'BIP21'
