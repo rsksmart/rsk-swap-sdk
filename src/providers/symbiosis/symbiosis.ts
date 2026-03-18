@@ -48,7 +48,7 @@ export class SymbiosisClient implements SwapProviderClient {
 
     switch (actionType) {
       case 'BIP21': {
-        const context = swap.context as SymbiosisBtcContext
+        const { publicContext: context } = swap.context as { publicContext: SymbiosisBtcContext }
         assertTruthy(context.depositAddress, 'Missing deposit address in Symbiosis swap context')
         return {
           type: actionType,
