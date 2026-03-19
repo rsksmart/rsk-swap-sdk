@@ -34,6 +34,21 @@ import { SymbiosisClient } from '../providers/symbiosis/symbiosis'
 import { claimSwap } from './claimSwap'
 import { DefaultBoltzAtomicSwapFactory } from '../providers/boltz/factory'
 import { getQrCode, type GetQrCodeArgs } from './getQrCode'
+import { NoOpTelemetryProvider } from '../telemetry/noop'
+import { SafeTelemetryProvider } from '../telemetry/safe'
+import type { TelemetryProvider } from '../telemetry/types'
+import { SentryTelemetryProvider } from '../telemetry/sentry'
+
+export interface TelemetryInitOptions {
+  dsn: string
+  options?: Record<string, unknown>
+  tag?: string
+}
+
+export interface RskSwapSDKOptions {
+  telemetry?: TelemetryProvider
+  telemetryInit?: TelemetryInitOptions
+}
 
 /** Class that represents the entrypoint to the RSK Swap SDK */
 export class RskSwapSDK {
@@ -41,17 +56,22 @@ export class RskSwapSDK {
   private readonly environment: RskSwapEnvironment
   private connection: BlockchainConnection
   private readonly providerClientResolver: ProviderClientResolver
+  private telemetry: TelemetryProvider
+  private readonly envName: RskSwapEnvironmentName
 
   /**
    * Create a RskSwapSDK client instance.
    *
    * @param { RskSwapEnvironmentName } envName Name of the network environment to use.
    * @param { BlockchainConnection } connection Connection to the blockchain where the payments will be executed.
+   * @param { RskSwapSDKOptions } options Optional SDK configuration
    */
   constructor (
     envName: RskSwapEnvironmentName,
-    connection: BlockchainConnection
+    connection: BlockchainConnection,
+    options: RskSwapSDKOptions = {}
   ) {
+    this.envName = envName
     this.connection = connection
     this.httpClient = getHttpClient(async () => Promise.resolve(''))
     const environment = RskSwapEnvironments[envName]
@@ -61,6 +81,21 @@ export class RskSwapSDK {
       .register('BOLTZ', new BoltzClient(envName, connection, this.httpClient, new DefaultBoltzAtomicSwapFactory()))
       .register('CHANGELLY', new ChangellyClient(this.environment.api, this.httpClient))
       .register('SYMBIOSIS', new SymbiosisClient(this.environment.api, this.httpClient))
+    this.telemetry = new SafeTelemetryProvider(new NoOpTelemetryProvider())
+
+    if (options.telemetry) {
+      this.telemetry = new SafeTelemetryProvider(options.telemetry)
+    } else if (options.telemetryInit?.dsn) {
+      SentryTelemetryProvider.create(
+        options.telemetryInit.dsn,
+        options.telemetryInit.options,
+        options.telemetryInit.tag
+      ).then((provider) => {
+        this.telemetry = new SafeTelemetryProvider(provider)
+      }).catch(() => {
+        // Telemetry init failures must never affect SDK behavior.
+      })
+    }
   }
 
   /**
@@ -80,7 +115,15 @@ export class RskSwapSDK {
   async estimateSwap (
     estimationArgs: SwapEstimationArgs
   ): Promise<SwapEstimation[]> {
-    return estimateSwap(this.environment.api, this.httpClient, estimationArgs)
+    try {
+      return await estimateSwap(this.environment.api, this.httpClient, estimationArgs)
+    } catch (error) {
+      this.telemetry.captureException(normalizeError(error), {
+        operation: 'estimateSwap',
+        env: this.envName
+      })
+      throw error
+    }
   }
 
   /**
@@ -90,7 +133,16 @@ export class RskSwapSDK {
    * @returns { SwapWithAction } The swap with the action to execute its payment
    */
   async createNewSwap (args: CreateSwapArgs): Promise<SwapWithAction> {
-    return createSwap(this.environment.api, this.httpClient, this.providerClientResolver, args)
+    try {
+      return await createSwap(this.environment.api, this.httpClient, this.providerClientResolver, args)
+    } catch (error) {
+      this.telemetry.captureException(normalizeError(error), {
+        operation: 'createNewSwap',
+        env: this.envName,
+        providerId: args.providerId
+      })
+      throw error
+    }
   }
 
   /**
@@ -100,7 +152,16 @@ export class RskSwapSDK {
    * @returns { Swap } The swap information
    */
   async getSwapStatus (id: SwapId): Promise<Swap> {
-    return getSwap(this.environment.api, this.httpClient, id)
+    try {
+      return await getSwap(this.environment.api, this.httpClient, id)
+    } catch (error) {
+      this.telemetry.captureException(normalizeError(error), {
+        operation: 'getSwapStatus',
+        env: this.envName,
+        providerId: id.providerId
+      })
+      throw error
+    }
   }
 
   /**
@@ -109,7 +170,15 @@ export class RskSwapSDK {
    * @returns { SwapProvider[] } The list of the enabled providers to get swaps from.
    */
   async getProviders (): Promise<SwapProvider[]> {
-    return getProviders(this.environment.api, this.httpClient)
+    try {
+      return await getProviders(this.environment.api, this.httpClient)
+    } catch (error) {
+      this.telemetry.captureException(normalizeError(error), {
+        operation: 'getProviders',
+        env: this.envName
+      })
+      throw error
+    }
   }
 
   /**
@@ -118,7 +187,15 @@ export class RskSwapSDK {
    * @returns { Token[] } List of the supported token to perform swaps.
    */
   async listTokens (): Promise<Token[]> {
-    return listTokens(this.environment.api, this.httpClient)
+    try {
+      return await listTokens(this.environment.api, this.httpClient)
+    } catch (error) {
+      this.telemetry.captureException(normalizeError(error), {
+        operation: 'listTokens',
+        env: this.envName
+      })
+      throw error
+    }
   }
 
   /**
@@ -128,7 +205,16 @@ export class RskSwapSDK {
    * @returns { SwapProvider } The provider information.
    */
   async getProvider (id: string): Promise<SwapProvider> {
-    return getProvider(this.environment.api, this.httpClient, id)
+    try {
+      return await getProvider(this.environment.api, this.httpClient, id)
+    } catch (error) {
+      this.telemetry.captureException(normalizeError(error), {
+        operation: 'getProvider',
+        env: this.envName,
+        providerId: id
+      })
+      throw error
+    }
   }
 
   /**
@@ -142,7 +228,15 @@ export class RskSwapSDK {
    * @returns { string } The result of the action (BIP21 or transaction hash).
    */
   async executeSwap (action: SwapAction): Promise<string> {
-    return executeSwap(this.connection, action)
+    try {
+      return await executeSwap(this.connection, action)
+    } catch (error) {
+      this.telemetry.captureException(normalizeError(error), {
+        operation: 'executeSwap',
+        env: this.envName
+      })
+      throw error
+    }
   }
 
   /**
@@ -154,8 +248,17 @@ export class RskSwapSDK {
    * @throws { RskSwapError } If the swap does not require a claim
    */
   async claimSwap (swap: SwapWithAction): Promise<string> {
-    const result = await claimSwap(this.providerClientResolver, swap, this.connection)
-    return result.txHash
+    try {
+      const result = await claimSwap(this.providerClientResolver, swap, this.connection)
+      return result.txHash
+    } catch (error) {
+      this.telemetry.captureException(normalizeError(error), {
+        operation: 'claimSwap',
+        env: this.envName,
+        providerId: swap.swap.providerId
+      })
+      throw error
+    }
   }
 
   /**
@@ -165,7 +268,15 @@ export class RskSwapSDK {
    * @returns { SwapLimits } The swap limits
    */
   async getSwapLimits (args: SwapLimitsArgs): Promise<SwapLimits> {
-    return getSwapLimits(this.environment.api, this.httpClient, args)
+    try {
+      return await getSwapLimits(this.environment.api, this.httpClient, args)
+    } catch (error) {
+      this.telemetry.captureException(normalizeError(error), {
+        operation: 'getSwapLimits',
+        env: this.envName
+      })
+      throw error
+    }
   }
 
   /**
@@ -176,7 +287,15 @@ export class RskSwapSDK {
    * @returns { CoinPrice[] } An array of coin names and their prices.
    */
   async getPrices (args: GetPricesArgs): Promise<CoinPrice[]> {
-    return getPrices(this.environment.api, this.httpClient, args)
+    try {
+      return await getPrices(this.environment.api, this.httpClient, args)
+    } catch (error) {
+      this.telemetry.captureException(normalizeError(error), {
+        operation: 'getPrices',
+        env: this.envName
+      })
+      throw error
+    }
   }
 
   /**
@@ -193,4 +312,8 @@ export class RskSwapSDK {
   async getQrCode (args: GetQrCodeArgs): Promise<string> {
     return getQrCode(args)
   }
+}
+
+function normalizeError (error: unknown): Error {
+  return error instanceof Error ? error : new Error('Unknown error')
 }
