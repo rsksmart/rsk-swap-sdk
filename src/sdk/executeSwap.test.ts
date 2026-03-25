@@ -101,6 +101,24 @@ describe('executeSwap function should', () => {
     expect(blockchainConnection.executeTransaction).toHaveBeenCalledTimes(1)
     expect(blockchainConnection.executeTransaction).toHaveBeenCalledWith(action.data)
   })
+
+  test('ERC20-PAYMENT runs executePreSteps before main tx when set', async () => {
+    const preStep = jest.fn(async () => {
+      await blockchainConnection.executeTransaction({ to: '0xToken', data: '0xapprove', value: '0x0' })
+    })
+    txMock.executeTransaction
+      .mockImplementationOnce(async () => ({ txHash: 'a' }))
+      .mockImplementationOnce(async () => ({ txHash: 'b' }))
+    const action: SwapAction = {
+      requiresClaim: false,
+      type: 'ERC20-PAYMENT',
+      data: { to: '0x9D93929A9099be4355fC2389FbF253982F9dF47c', value: '0x0', data: '0xabcdef' },
+      executePreSteps: preStep
+    }
+    await expect(executeSwap(blockchainConnection, action)).resolves.toBe('b')
+    expect(preStep).toHaveBeenCalledTimes(1)
+    expect(blockchainConnection.executeTransaction).toHaveBeenCalledTimes(2)
+  })
   test('do nothing on NONE', async () => {
     const action = { type: 'NONE', data: {} } as any as SwapAction
     const result = await executeSwap(blockchainConnection, action)

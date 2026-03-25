@@ -11,8 +11,8 @@ export async function executeSwap (connection: BlockchainConnection, action: Swa
     case 'BOLT11':
       return returnQrCodeData(action)
     case 'EVM-NATIVE-PAYMENT':
-      return executeEvmTransaction(connection, action)
     case 'ERC20-PAYMENT':
+      await action.executePreSteps?.(connection)
       return executeEvmTransaction(connection, action)
     case 'CONTRACT-INTERACTION':
       await action.executePreSteps?.(connection)
