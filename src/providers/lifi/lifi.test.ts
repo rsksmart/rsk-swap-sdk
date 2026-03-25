@@ -1,10 +1,20 @@
-import { describe, expect, test } from '@jest/globals'
+import { describe, expect, test, jest } from '@jest/globals'
 import { type CreateSwapResult } from '../../api/index'
 import { type TxData } from '../types'
 import { LiFiClient } from './lifi'
 
 describe('LiFiClient should', () => {
-  const client = new LiFiClient()
+  const tokenOnNetwork1 = '0x0000000000000000000000000000000000000abc'
+  const httpClient = {
+    get: jest.fn(async () => ({
+      symbol: 'USDC',
+      description: 'USD',
+      type: 'erc20' as const,
+      decimals: 6,
+      addresses: { 1: tokenOnNetwork1 }
+    }))
+  }
+  const client = new LiFiClient('https://api.test', httpClient as any)
 
   const baseSwap: any = {
     providerSwapId: 'lifi-123',
@@ -42,6 +52,8 @@ describe('LiFiClient should', () => {
     expect(action.type).toBe('ERC20-PAYMENT')
     expect(action.requiresClaim).toBe(false)
     expect(action.data).toEqual(expectedTxData)
+    expect(httpClient.get).toHaveBeenCalled()
+    expect(action.executePreSteps).toBeDefined()
   })
 
   test('pass through EVM-NATIVE-PAYMENT tx data from swap context', async () => {
@@ -63,6 +75,7 @@ describe('LiFiClient should', () => {
     expect(action.type).toBe('EVM-NATIVE-PAYMENT')
     expect(action.requiresClaim).toBe(false)
     expect(action.data).toEqual(expectedTxData)
+    expect(action.executePreSteps).toBeUndefined()
   })
 
   test('reject unsupported BIP21 action type', async () => {
@@ -200,6 +213,36 @@ describe('LiFiClient should', () => {
 
     await expect(client.generateAction(createdSwap)).rejects.toThrow(
       'Missing value in LI.FI swap context'
+    )
+  })
+
+  test('throw when token is not listed on fromNetwork', async () => {
+    const httpEmpty = {
+      get: jest.fn(async () => ({
+        symbol: 'USDC',
+        description: 'USD',
+        type: 'erc20' as const,
+        decimals: 6,
+        addresses: { 30: tokenOnNetwork1 }
+      }))
+    }
+    const strictClient = new LiFiClient('https://api.test', httpEmpty as any)
+    const expectedTxData: TxData = {
+      to: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE',
+      data: '0x4630a0d8000000000000000000000000',
+      value: '0x0'
+    }
+    const createdSwap: CreateSwapResult = {
+      swap: {
+        ...baseSwap,
+        fromNetwork: '1',
+        context: { publicContext: expectedTxData }
+      },
+      actionType: 'ERC20-PAYMENT'
+    }
+
+    await expect(strictClient.generateAction(createdSwap)).rejects.toThrow(
+      'is not available on 1'
     )
   })
 })
