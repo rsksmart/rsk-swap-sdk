@@ -40,7 +40,7 @@ export class SentryTelemetryProvider implements TelemetryProvider {
     const userBeforeSend = options?.beforeSend as ((event: unknown, hint?: unknown) => unknown) | undefined
     const beforeSend: (event: unknown, hint?: unknown) => unknown = (event, hint) => {
       const sanitized = sanitizeEvent(event)
-      return userBeforeSend ? userBeforeSend(sanitized, hint) ?? sanitized : sanitized
+      return userBeforeSend ? userBeforeSend(sanitized, hint) : sanitized
     }
     Sentry.init({
       ...options,

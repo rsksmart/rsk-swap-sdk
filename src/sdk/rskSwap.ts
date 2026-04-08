@@ -294,7 +294,15 @@ export class RskSwapSDK {
    * @returns { string } A Base64 data URL representing the generated QR image.
    */
   async getQrCode (args: GetQrCodeArgs): Promise<string> {
-    return getQrCode(args)
+    try {
+      return await getQrCode(args)
+    } catch (error) {
+      this.telemetry.captureException(normalizeError(error), {
+        operation: 'getQrCode',
+        env: this.envName
+      })
+      throw error
+    }
   }
 }
 
