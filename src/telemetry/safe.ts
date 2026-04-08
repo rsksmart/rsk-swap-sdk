@@ -19,21 +19,53 @@ export class SafeTelemetryProvider implements TelemetryProvider {
     }
   }
 
-  profile: TelemetryProvider['profile'] = ((name, fn) => {
+  profile<T> (name: string, fn: () => T): T
+  profile<T> (name: string, fn: () => Promise<T>): Promise<T>
+  profile<T> (name: string, fn: () => T | Promise<T>): T | Promise<T> {
     let invoked = false
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    const wrappedFn: () => unknown = () => {
+    let callbackThrew = false
+    let callbackError: unknown
+    let callbackResult: { value: T | Promise<T> } | undefined
+
+    const wrappedFn = (): T | Promise<T> => {
       invoked = true
-      return fn()
+      try {
+        const result = fn()
+        callbackResult = { value: result }
+        return result
+      } catch (error) {
+        callbackThrew = true
+        callbackError = error
+        throw error
+      }
+    }
+
+    const recoverOriginalOutcome = (): T | Promise<T> => {
+      if (!invoked) {
+        return wrappedFn()
+      }
+
+      if (callbackThrew) {
+        throw callbackError
+      }
+
+      if (callbackResult !== undefined) {
+        return callbackResult.value
+      }
+
+      return wrappedFn()
     }
 
     try {
-      return this.wrapped.profile(name, wrappedFn as () => any)
-    } catch (error) {
-      if (invoked) {
-        throw error
+      const telemetryResult = this.wrapped.profile(name, wrappedFn)
+
+      if (telemetryResult instanceof Promise) {
+        return telemetryResult.catch(recoverOriginalOutcome)
       }
-      return wrappedFn()
+
+      return telemetryResult
+    } catch {
+      return recoverOriginalOutcome()
     }
-  }) as TelemetryProvider['profile']
+  }
 }
