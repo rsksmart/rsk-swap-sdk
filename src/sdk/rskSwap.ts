@@ -38,17 +38,9 @@ import { LiFiClient } from '../providers/lifi/lifi'
 import { NoOpTelemetryProvider } from '../telemetry/noop'
 import { SafeTelemetryProvider } from '../telemetry/safe'
 import type { TelemetryProvider } from '../telemetry/types'
-import { SentryTelemetryProvider } from '../telemetry/sentry'
-
-export interface TelemetryInitOptions {
-  dsn: string
-  options?: Record<string, unknown>
-  tag?: string
-}
 
 export interface RskSwapSDKOptions {
   telemetry?: TelemetryProvider
-  telemetryInit?: TelemetryInitOptions
 }
 
 /** Class that represents the entrypoint to the RSK Swap SDK */
@@ -57,7 +49,7 @@ export class RskSwapSDK {
   private readonly environment: RskSwapEnvironment
   private connection: BlockchainConnection
   private readonly providerClientResolver: ProviderClientResolver
-  private telemetry: TelemetryProvider
+  private readonly telemetry: TelemetryProvider
   private readonly envName: RskSwapEnvironmentName
 
   /**
@@ -87,16 +79,6 @@ export class RskSwapSDK {
 
     if (options.telemetry) {
       this.telemetry = new SafeTelemetryProvider(options.telemetry)
-    } else if (options.telemetryInit?.dsn) {
-      SentryTelemetryProvider.create(
-        options.telemetryInit.dsn,
-        options.telemetryInit.options,
-        options.telemetryInit.tag
-      ).then((provider) => {
-        this.telemetry = new SafeTelemetryProvider(provider)
-      }).catch(() => {
-        // Telemetry init failures must never affect SDK behavior.
-      })
     }
   }
 

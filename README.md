@@ -90,28 +90,30 @@ This SDK only requires the [BlockchainConnection class](TODO url) instance and t
 ## Telemetry (Opt-In)
 The SDK supports optional error telemetry via Sentry. Telemetry is **disabled by default** and is designed to avoid sending sensitive data. The SDK only reports method-level errors and does not send swap objects, addresses, tx hashes, or request/response payloads.
 
-### Option A: Let the SDK initialize Sentry (DSN-based)
+### Option A: Create a Sentry telemetry provider from a DSN
 Use this when your app does not already use Sentry.
 ```javascript
 import { RskSwapSDK } from '@rsksmart/rsk-swap-sdk'
+import { SentryTelemetryProvider } from '@rsksmart/rsk-swap-sdk/telemetry/sentry'
 
-const sdk = new RskSwapSDK('Local', blockchainConnection, {
-  telemetryInit: {
-    dsn: '<your sentry dsn>',
-    options: {
-      environment: 'development'
-    }
+const telemetry = await SentryTelemetryProvider.create(
+  '<your sentry dsn>',
+  {
+    environment: 'development'
   }
-})
+)
+
+const sdk = new RskSwapSDK('Local', blockchainConnection, { telemetry })
 ```
 > This option requires installing `@sentry/browser` in your app.
-> Note: Sentry initialization is async. Errors that happen before init completes may not be captured.
+> Note: Create the telemetry provider before constructing the SDK. Errors that happen before init completes may not be captured.
 
 ### Option B: Inject a Sentry instance
 Use this when your app already initializes Sentry.
 ```javascript
 import * as Sentry from '@sentry/browser'
-import { RskSwapSDK, SentryTelemetryProvider } from '@rsksmart/rsk-swap-sdk'
+import { RskSwapSDK } from '@rsksmart/rsk-swap-sdk'
+import { SentryTelemetryProvider } from '@rsksmart/rsk-swap-sdk/telemetry/sentry'
 
 Sentry.init({ dsn: '<your sentry dsn>' })
 const telemetry = SentryTelemetryProvider.fromInstance(Sentry)

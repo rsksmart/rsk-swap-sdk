@@ -75,10 +75,11 @@ export class SentryTelemetryProvider implements TelemetryProvider {
     })
   }
 
-  // eslint-disable-next-line @typescript-eslint/promise-function-async
-  profile: TelemetryProvider['profile'] = ((name, fn) => {
-    return this.sentry.startSpan({ name, op: 'function' }, async () => fn())
-  }) as TelemetryProvider['profile']
+  profile<T> (name: string, fn: () => T): T
+  profile<T> (name: string, fn: () => Promise<T>): Promise<T>
+  profile<T> (name: string, fn: () => T | Promise<T>): T | Promise<T> {
+    return this.sentry.startSpan({ name, op: 'function' }, fn)
+  }
 
   static fromInstance (
     sentry: SentryLike,
@@ -94,11 +95,17 @@ function sanitizeEvent (event: unknown): Record<string, unknown> | null {
   }
 
   const safeEvent: Record<string, unknown> = { ...event }
+  const contexts = safeEvent.contexts as Record<string, unknown>
+  const rskSwapContext = contexts?.['rsk-swap']
   delete safeEvent.request
   delete safeEvent.user
   delete safeEvent.extra
-  delete safeEvent.contexts
   delete safeEvent.breadcrumbs
+  if (rskSwapContext && typeof rskSwapContext === 'object') {
+    safeEvent.contexts = { 'rsk-swap': { ...rskSwapContext } }
+  } else {
+    delete safeEvent.contexts
+  }
 
   return safeEvent
 }

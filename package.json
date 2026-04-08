@@ -4,13 +4,33 @@
   "description": "SDK to integrate with RSK Swap API which is a service that aggregates several providers to obtain RBTC",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js"
+    },
+    "./telemetry/sentry": {
+      "types": "./lib/telemetry/sentry.d.ts",
+      "import": "./lib/esm/telemetry/sentry.js",
+      "require": "./lib/cjs/telemetry/sentry.js"
+    }
+  },
   "private": false,
   "files": [
-    "./lib/cjs/index.js",
-    "./lib/esm/index.js",
-    "./lib/index.d.ts"
+    "./lib/cjs",
+    "./lib/esm",
+    "./lib/index.d.ts",
+    "./lib/telemetry"
   ],
   "types": "./lib/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "telemetry/sentry": [
+        "lib/telemetry/sentry.d.ts"
+      ]
+    }
+  },
   "keywords": [
     "swap",
     "erc20",
@@ -78,5 +98,10 @@
   },
   "peerDependencies": {
     "@sentry/browser": "^10.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@sentry/browser": {
+      "optional": true
+    }
   }
 }

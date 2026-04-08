@@ -8,16 +8,16 @@ import { string } from 'rollup-plugin-string'
 import resolve from '@rollup/plugin-node-resolve'
 import nodePolyfills from 'rollup-plugin-polyfill-node'
 
-const workerDir = 'src/workers';
-const files = glob.sync('**/*.ts', { cwd: workerDir });
+const workerDir = 'src/workers'
+const files = glob.sync('**/*.ts', { cwd: workerDir })
 const workerBundles = files.map(file => {
-  const filePath = path.join(workerDir, file);
+  const filePath = path.join(workerDir, file)
   return {
     input: filePath,
     output: {
       file: `lib/workers/${file.replace(/\.ts$/, '.js')}`,
       format: 'umd',
-      exports: 'named',
+      exports: 'named'
     },
     context: 'self',
     plugins: [
@@ -26,19 +26,21 @@ const workerBundles = files.map(file => {
       resolve({
         browser: true,
         preferBuiltins: false,
-        extensions: ['.mjs','.js','.cjs']
+        extensions: ['.mjs', '.js', '.cjs']
       }),
       commonjs(),
-      nodePolyfills(),
+      nodePolyfills()
     ]
-  };
+  }
 })
-
 
 export default [
   ...workerBundles,
   {
-    input: 'src/index.ts',
+    input: {
+      index: 'src/index.ts',
+      'telemetry/sentry': 'src/telemetry/sentry.ts'
+    },
     output: [
       {
         dir: 'lib/cjs',
@@ -53,7 +55,7 @@ export default [
     ],
     plugins: [
       string({
-        include: ['./lib/workers/**/*.js'],
+        include: ['./lib/workers/**/*.js']
       }),
       commonjs(),
       json(),
@@ -66,6 +68,14 @@ export default [
     input: 'lib/esm/index.d.ts',
     output: {
       file: 'lib/index.d.ts',
+      format: 'es'
+    },
+    plugins: [dts.default()]
+  },
+  {
+    input: 'lib/esm/telemetry/sentry.d.ts',
+    output: {
+      file: 'lib/telemetry/sentry.d.ts',
       format: 'es'
     },
     plugins: [dts.default()]
