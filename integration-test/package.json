@@ -4,8 +4,8 @@
     "description": "Integration tests for RskSwapSDK",
     "scripts": {
         "test:integration": "npm ci && jest --verbose --testPathPattern=test/boltz/submarine.test.ts",
-        "lint": "npx eslint --ignore-path .eslintignore --ext .ts --fix .",
-        "lint:validate": "npx eslint --ignore-path .eslintignore --ext .ts ."
+        "lint": "../node_modules/.bin/eslint --fix .",
+        "lint:validate": "../node_modules/.bin/eslint ."
     },
     "author": "Luis Chavez",
     "license": "ISC",

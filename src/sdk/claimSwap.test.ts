@@ -72,7 +72,7 @@ describe('claimSwap function should', () => {
     expect(providerClientMock.buildClaimTransaction).toHaveBeenCalledWith(swapMock.swap)
     expect(connectionMock.executeTransaction).toHaveBeenCalledTimes(1)
     expect(connectionMock.executeTransaction).toHaveBeenCalledWith(claimTx)
-    expect(providerClientMock.executeExternalClaim).not.toBeCalled()
+    expect(providerClientMock.executeExternalClaim).not.toHaveBeenCalled()
     expect(result).toEqual(txResult)
   })
   test("fail if swap doesn't require claim", async () => {
@@ -104,7 +104,7 @@ describe('claimSwap function should', () => {
     expect(providerClientMock.executeExternalClaim).toHaveBeenCalledTimes(1)
     expect(providerClientMock.executeExternalClaim).toHaveBeenCalledWith(externalSwapMock.swap)
     expect(connectionMock.executeTransaction).not.toHaveBeenCalled()
-    expect(providerClientMock.buildClaimTransaction).not.toBeCalled()
+    expect(providerClientMock.buildClaimTransaction).not.toHaveBeenCalled()
     expect(result).toEqual({ successful: true, txHash: 'btc tx hash' })
   })
   test("fail if the ProviderClient doesn't support any type of claim", async () => {
@@ -116,6 +116,6 @@ describe('claimSwap function should', () => {
     expect(providerResolver.get).toHaveBeenCalledWith(providerId)
     expect(providerClientMock.executeExternalClaim).not.toHaveBeenCalled()
     expect(connectionMock.executeTransaction).not.toHaveBeenCalled()
-    expect(providerClientMock.buildClaimTransaction).not.toBeCalled()
+    expect(providerClientMock.buildClaimTransaction).not.toHaveBeenCalled()
   })
 })

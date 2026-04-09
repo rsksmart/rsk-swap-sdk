@@ -35,7 +35,7 @@ describe('getPrices function', () => {
     const url = 'http://localhost:8080'
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const args = {} as GetPricesArgs
-    await expect(getPrices(url, httpClient, args)).rejects.toThrowError(
+    await expect(getPrices(url, httpClient, args)).rejects.toThrow(
       'Validation failed for object with following missing properties: currencies'
     )
   })

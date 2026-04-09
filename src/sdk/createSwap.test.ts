@@ -169,7 +169,7 @@ describe('createSwap function should', () => {
     for (const field in params) {
       const copy = structuredClone(params)
       delete copy[field as keyof CreateSwapArgs] // eslint-disable-line @typescript-eslint/no-dynamic-delete
-      await expect(createSwap(url, httpClient, providerResolver, copy)).rejects.toThrowError(`Validation failed for object with following missing properties: ${field}`)
+      await expect(createSwap(url, httpClient, providerResolver, copy)).rejects.toThrow(`Validation failed for object with following missing properties: ${field}`)
       totalFields++
     }
     expect(providerClientMock.createContext).toHaveBeenCalledTimes(totalFields)
@@ -270,6 +270,6 @@ describe('createSwap function should', () => {
     const manipulatedResult = structuredClone(mockResult);
     (manipulatedResult.swap.context as { publicKey: string }).publicKey = 'manipulated-key'
     httpClient.post = jest.fn<any>().mockResolvedValueOnce(manipulatedResult)
-    await expect(createSwap(url, httpClient, providerResolver, params)).rejects.toThrowError('The result returned with the API doesn\'t match with the request')
+    await expect(createSwap(url, httpClient, providerResolver, params)).rejects.toThrow('The result returned with the API doesn\'t match with the request')
   })
 })

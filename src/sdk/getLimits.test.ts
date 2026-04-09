@@ -51,7 +51,7 @@ describe('getLimits function should', () => {
     for (const [sdkField, queryField] of Object.entries(queryMapping)) {
       const copy = { ...params }
       delete copy[sdkField as keyof SwapLimitsArgs] // eslint-disable-line @typescript-eslint/no-dynamic-delete
-      await expect(getSwapLimits(url, httpClient, copy)).rejects.toThrowError(`Validation failed for object with following missing properties: ${queryField}`)
+      await expect(getSwapLimits(url, httpClient, copy)).rejects.toThrow(`Validation failed for object with following missing properties: ${queryField}`)
     }
   })
 })

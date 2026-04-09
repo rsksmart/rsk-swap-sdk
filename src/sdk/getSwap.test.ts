@@ -57,7 +57,7 @@ describe('getSwap function should', () => {
     for (const field in params) {
       const copy = { ...params }
       delete copy[field as keyof SwapId] // eslint-disable-line @typescript-eslint/no-dynamic-delete
-      await expect(getSwap(url, httpClient, copy)).rejects.toThrowError(`Validation failed for object with following missing properties: ${queryMapping[field]}`)
+      await expect(getSwap(url, httpClient, copy)).rejects.toThrow(`Validation failed for object with following missing properties: ${queryMapping[field]}`)
     }
   })
 })
