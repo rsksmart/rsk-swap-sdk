@@ -262,7 +262,7 @@ describe('ChainSwapIn', () => {
         }
       ]
       for (const context of partialContexts) {
-        expect(() => chainSwapIn.getClaimDetails({ ...mockSwap, context } as unknown as Swap)).toThrowError(/(Validation failed for object with following missing properties)+/)
+        expect(() => chainSwapIn.getClaimDetails({ ...mockSwap, context } as unknown as Swap)).toThrow(/(Validation failed for object with following missing properties)+/)
       }
     })
   })

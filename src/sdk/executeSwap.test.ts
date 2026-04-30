@@ -55,7 +55,11 @@ describe('executeSwap function should', () => {
     const result = await executeSwap(blockchainConnection, action)
     expect(result).toBe('a hash')
     expect(blockchainConnection.executeTransaction).toHaveBeenCalledTimes(1)
-    expect(blockchainConnection.executeTransaction).toHaveBeenCalledWith(action.data)
+    expect(blockchainConnection.executeTransaction).toHaveBeenCalledWith({
+      to: '0x9D93929A9099be4355fC2389FbF253982F9dF47c',
+      value: BigInt('500').toString(16),
+      data: '0x'
+    })
   })
 
   test('execute transaction on CONTRACT-INTERACTION', async () => {
@@ -72,7 +76,11 @@ describe('executeSwap function should', () => {
     const result = await executeSwap(blockchainConnection, action)
     expect(result).toBe('a hash')
     expect(blockchainConnection.executeTransaction).toHaveBeenCalledTimes(1)
-    expect(blockchainConnection.executeTransaction).toHaveBeenCalledWith(action.data)
+    expect(blockchainConnection.executeTransaction).toHaveBeenCalledWith({
+      to: '0x9D93929A9099be4355fC2389FbF253982F9dF47c',
+      value: BigInt('500').toString(16),
+      data: '0x'
+    })
   })
 
   test('fail if the tx to execute is not an object', async () => {
@@ -99,7 +107,11 @@ describe('executeSwap function should', () => {
     const result = await executeSwap(blockchainConnection, action)
     expect(result).toBe('a hash')
     expect(blockchainConnection.executeTransaction).toHaveBeenCalledTimes(1)
-    expect(blockchainConnection.executeTransaction).toHaveBeenCalledWith(action.data)
+    expect(blockchainConnection.executeTransaction).toHaveBeenCalledWith({
+      to: '0x9D93929A9099be4355fC2389FbF253982F9dF47c',
+      value: BigInt('500').toString(16),
+      data: '0xabcdef'
+    })
   })
 
   test('ERC20-PAYMENT runs executePreSteps before main tx when set', async () => {
