@@ -44,7 +44,7 @@ export async function createSwap (apiUrl: string, client: HttpClient, clientReso
 }
 
 function isValidApiResponse (request: CreateSwapRQ, result: CreateSwapResult): boolean {
-  for (const [key, value] of Object.entries(request.context)) {
+  for (const [key, value] of Object.entries(request.context ?? {})) {
     if (result.swap.context[key as keyof object] !== value) {
       return false
     }

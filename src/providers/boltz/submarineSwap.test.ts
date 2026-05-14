@@ -45,13 +45,11 @@ describe('SubmarineSwap class', () => {
       toToken: 'tBTC',
       usedFees: [
         {
-          type: 'PERCENTAGE',
-          description: 'Boltz fee',
+          type: 'PERCENTAGE_BOLTZ_FEE',
           amount: 0.25
         },
         {
-          type: 'FIXED',
-          description: 'Miner fee',
+          type: 'FIXED_MINER_FEE',
           amount: 38
         }
       ]

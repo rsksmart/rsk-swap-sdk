@@ -14,8 +14,7 @@ describe('estimateSwap function should', () => {
     mockResult = {
       fees: [{
         amount: BigInt(1),
-        type: 'FIXED',
-        description: 'a description'
+        type: 'FIXED_MOCK_FEE'
       }],
       total: BigInt(1),
       toToken: 'a token',

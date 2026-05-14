@@ -5,16 +5,19 @@ export type { SwapLimitsArgs } from './sdk/getLimits'
 export type { GetPricesArgs } from './sdk/getPrices'
 export type { CreateSwapArgs } from './sdk/createSwap'
 export type { TxData, SwapAction, SwapWithAction } from './providers/types'
-export type {
-  SwapEstimation,
-  Swap,
-  SwapProvider,
-  SwapPair,
-  SwapLimits,
-  Fee,
-  CoinPrice,
-  GetSwapArgs,
-  Token
+export {
+  type SwapEstimation,
+  type Swap,
+  type SwapProvider,
+  type SwapPair,
+  type SwapLimits,
+  type Fee,
+  type CoinPrice,
+  type GetSwapArgs,
+  type Token,
+  FeeType,
+  isPercentageFee,
+  isNetworkFee
 } from './api'
 export type {
   RskSwapEnvironmentName,

@@ -62,6 +62,10 @@ export namespace Api {
   export namespace SwapsControllerGetSwapEstimation {
     export type RequestParams = {};
     export type RequestQuery = {
+      /** The receiver address on the destination network (improves estimation accuracy for providers like LiFi) */
+      to_address?: string;
+      /** The sender address on the origin network (improves estimation accuracy for providers like LiFi) */
+      address?: string;
       /**
        * The amount of the origin network to swap, in the smallest unit for that token
        * @format int64

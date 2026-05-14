@@ -48,8 +48,7 @@ describe('createSwap function should', () => {
         usedFees: [
           {
             amount: BigInt(200),
-            description: 'fee 1',
-            type: 'FIXED'
+            type: 'FIXED_CHANGELLY_FEE'
           }
         ],
         context: { publicKey: 'k1' }
@@ -109,8 +108,7 @@ describe('createSwap function should', () => {
         usedFees: [
           {
             amount: BigInt(200),
-            description: 'fee 1',
-            type: 'FIXED'
+            type: 'FIXED_CHANGELLY_FEE'
           }
         ],
         context: {
