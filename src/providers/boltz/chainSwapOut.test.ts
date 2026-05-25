@@ -5,62 +5,69 @@ import { VALIDATION_CONSTANTS } from '../../constants/validation'
 import { type Connection } from '@rsksmart/bridges-core-sdk'
 import { type ECPairAPI } from 'ecpair'
 import { type Swap, type CreatedSwap } from '../../api'
-import { describe, expect, test, beforeEach, jest } from '@jest/globals'
-
-jest.mock('@rsksmart/bridges-core-sdk', () => {
-  const coreModule = jest.requireActual<any>('@rsksmart/bridges-core-sdk')
-  return {
-    ...coreModule,
-    ethers: {
-      utils: {
-        ...coreModule.ethers.utils,
-        randomBytes: jest.fn(),
-        sha256: jest.fn()
-      }
-    }
-  }
-})
+import { describe, expect, test, beforeEach, jest, beforeAll } from '@jest/globals'
+import { type BoltzChainSwapOutContext } from './types'
+import { deriveSwapKey, deriveSwapPreimage } from './rescueKey'
+import * as bip39 from 'bip39'
+import * as ecpair from 'ecpair'
+import { initEccLib } from 'bitcoinjs-lib'
+import * as ecc from 'tiny-secp256k1'
+import { arrayToHexKey } from '../../utils/conversion'
 
 describe('ChainSwapOut', () => {
   const mockConnection = {} as Connection // eslint-disable-line @typescript-eslint/consistent-type-assertions
-  const mockKeyFactory = {
-    makeRandom: jest.fn()
-  } as unknown as ECPairAPI
   const network = 'Testnet'
-  const chainSwapOut = new ChainSwapOut(network, mockConnection, mockKeyFactory)
+
+  let realKeyFactory: ECPairAPI
+  let chainSwapOut: ChainSwapOut
+
+  beforeAll(() => {
+    initEccLib(ecc)
+    realKeyFactory = ecpair.ECPairFactory(ecc)
+  })
 
   beforeEach(() => {
     jest.clearAllMocks()
+    chainSwapOut = new ChainSwapOut(network, mockConnection, realKeyFactory)
   })
 
   describe('createContext', () => {
-    test('should create a valid context', () => {
-      const mockPreimage = new Uint8Array([1, 2, 3])
-      const mockPreimageHash = 'abcdef'
-      const mockKeys = {
-        privateKey: new Uint8Array([4, 5, 6]),
-        publicKey: new Uint8Array([7, 8, 9])
-      };
+    test('should store a 12-word BIP39 rescue mnemonic in secretContext', () => {
+      const context = chainSwapOut.createContext() as BoltzChainSwapOutContext
+      expect(context.secretContext.rescueMnemonic).toBeDefined()
+      expect(context.secretContext.rescueMnemonic.split(' ')).toHaveLength(12)
+      expect(bip39.validateMnemonic(context.secretContext.rescueMnemonic)).toBe(true)
+    })
 
-      (ethers.utils.randomBytes as jest.Mock<any>).mockReturnValue(mockPreimage);
-      (ethers.utils.sha256 as jest.Mock<any>).mockReturnValue(mockPreimageHash);
-      (mockKeyFactory.makeRandom as jest.Mock<any>).mockReturnValue(mockKeys)
+    test('should derive claimPublicKey deterministically from the rescue mnemonic', () => {
+      const context = chainSwapOut.createContext() as BoltzChainSwapOutContext
+      const derivedKey = deriveSwapKey(context.secretContext.rescueMnemonic, realKeyFactory)
+      expect(context.publicContext.claimPublicKey).toBe(arrayToHexKey(derivedKey.publicKey))
+    })
 
-      const context = chainSwapOut.createContext()
+    test('should derive claimPrivateKey deterministically from the rescue mnemonic', () => {
+      const context = chainSwapOut.createContext() as BoltzChainSwapOutContext
+      const derivedKey = deriveSwapKey(context.secretContext.rescueMnemonic, realKeyFactory)
+      expect(context.secretContext.claimPrivateKey).toBe(arrayToHexKey(derivedKey.privateKey!))
+    })
 
-      expect(context).toEqual({
-        publicContext: {
-          preimageHash: mockPreimageHash.slice(2),
-          claimPublicKey: '070809'
-        },
-        secretContext: {
-          preimage: '010203',
-          claimPrivateKey: '040506'
-        }
-      })
-      expect(ethers.utils.randomBytes).toHaveBeenCalledWith(32)
-      expect(ethers.utils.sha256).toHaveBeenCalledWith(mockPreimage)
-      expect(mockKeyFactory.makeRandom).toHaveBeenCalled()
+    test('should derive preimage as sha256(privateKey) from the rescue mnemonic', () => {
+      const context = chainSwapOut.createContext() as BoltzChainSwapOutContext
+      const derivedPreimage = deriveSwapPreimage(context.secretContext.rescueMnemonic, realKeyFactory)
+      expect(context.secretContext.preimage).toBe(derivedPreimage.toString('hex'))
+    })
+
+    test('should derive preimageHash as sha256(preimage)', () => {
+      const context = chainSwapOut.createContext() as BoltzChainSwapOutContext
+      const preimageBytes = Buffer.from(context.secretContext.preimage, 'hex')
+      const expectedHash = ethers.utils.sha256(preimageBytes).slice(2)
+      expect(context.publicContext.preimageHash).toBe(expectedHash)
+    })
+
+    test('should generate a different mnemonic on each call', () => {
+      const ctx1 = chainSwapOut.createContext() as BoltzChainSwapOutContext
+      const ctx2 = chainSwapOut.createContext() as BoltzChainSwapOutContext
+      expect(ctx1.secretContext.rescueMnemonic).not.toBe(ctx2.secretContext.rescueMnemonic)
     })
   })
 
@@ -107,6 +114,7 @@ describe('ChainSwapOut', () => {
         requiresClaim: true
       })
     })
+
     test('fail on incomplete swap', async () => {
       const incompleteSwaps = [
         {
@@ -115,10 +123,7 @@ describe('ChainSwapOut', () => {
             context: {
               publicContext: {
                 preimageHash: 'abcdef',
-                lockupDetails: {
-                  claimAddress: '0x456',
-                  amount: 1000
-                }
+                lockupDetails: { claimAddress: '0x456', amount: 1000 }
               }
             }
           }
@@ -129,10 +134,7 @@ describe('ChainSwapOut', () => {
             context: {
               publicContext: {
                 preimageHash: 'abcdef',
-                lockupDetails: {
-                  claimAddress: '0x456',
-                  timeoutBlockHeight: 500
-                }
+                lockupDetails: { claimAddress: '0x456', timeoutBlockHeight: 500 }
               }
             }
           }
@@ -143,10 +145,7 @@ describe('ChainSwapOut', () => {
             context: {
               publicContext: {
                 preimageHash: 'abcdef',
-                lockupDetails: {
-                  amount: 1000,
-                  timeoutBlockHeight: 500
-                }
+                lockupDetails: { amount: 1000, timeoutBlockHeight: 500 }
               }
             }
           }
@@ -156,11 +155,7 @@ describe('ChainSwapOut', () => {
             paymentAddress: '0x123',
             context: {
               publicContext: {
-                lockupDetails: {
-                  claimAddress: '0x456',
-                  amount: 1000,
-                  timeoutBlockHeight: 500
-                }
+                lockupDetails: { claimAddress: '0x456', amount: 1000, timeoutBlockHeight: 500 }
               }
             }
           }
@@ -170,11 +165,7 @@ describe('ChainSwapOut', () => {
             context: {
               publicContext: {
                 preimageHash: 'abcdef',
-                lockupDetails: {
-                  claimAddress: '0x456',
-                  amount: 1000,
-                  timeoutBlockHeight: 500
-                }
+                lockupDetails: { claimAddress: '0x456', amount: 1000, timeoutBlockHeight: 500 }
               }
             }
           }

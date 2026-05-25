@@ -1,9 +1,10 @@
 import { assertTruthy, type Connection, ethers } from '@rsksmart/bridges-core-sdk'
 import { type Swap, type CreatedSwap } from '../../api'
 import { type ProviderContext, type SwapAction } from '../types'
-import { type BoltzAtomicSwap, type BoltzChainSwapOutContext, type ClaimDetails, PREIMAGE_LENGTH } from './types'
+import { type BoltzAtomicSwap, type BoltzChainSwapOutContext, type ClaimDetails } from './types'
 import { arrayToHexKey, satToWei } from '../../utils/conversion'
 import { type ECPairAPI } from 'ecpair'
+import { generateRescueMnemonic, deriveSwapKey, deriveSwapPreimage } from './rescueKey'
 import { VALIDATION_CONSTANTS } from '../../constants/validation'
 import { type RskSwapEnvironmentName } from '../../constants/environment'
 import { validateContractCode } from '../../utils/validation'
@@ -17,9 +18,10 @@ export class ChainSwapOut implements BoltzAtomicSwap {
   ) {}
 
   createContext (): ProviderContext {
-    const preimage = ethers.utils.randomBytes(PREIMAGE_LENGTH)
+    const mnemonic = generateRescueMnemonic()
+    const keys = deriveSwapKey(mnemonic, this.keyFactory)
+    const preimage = deriveSwapPreimage(mnemonic, this.keyFactory)
     const preimageHash = ethers.utils.sha256(preimage)
-    const keys = this.keyFactory.makeRandom()
     const privateKey = keys.privateKey
     assertTruthy(privateKey, 'Private key is undefined')
     return {
@@ -28,8 +30,9 @@ export class ChainSwapOut implements BoltzAtomicSwap {
         claimPublicKey: arrayToHexKey(keys.publicKey)
       },
       secretContext: {
-        preimage: ethers.utils.hexlify(preimage).slice(2),
-        claimPrivateKey: arrayToHexKey(privateKey)
+        preimage: preimage.toString('hex'),
+        claimPrivateKey: arrayToHexKey(privateKey),
+        rescueMnemonic: mnemonic
       }
     }
   }

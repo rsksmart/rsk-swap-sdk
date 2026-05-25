@@ -37,9 +37,12 @@ export async function createSwap (apiUrl: string, client: HttpClient, clientReso
   }
 
   const action = await swapProviderClient.generateAction(result)
+  const swapContext = result.swap.context as { secretContext?: { rescueMnemonic?: string } } | undefined
+  const rescueMnemonic = swapContext?.secretContext?.rescueMnemonic
   return {
     swap: result.swap,
-    action
+    action,
+    ...(rescueMnemonic !== undefined && { rescueMnemonic })
   }
 }
 
