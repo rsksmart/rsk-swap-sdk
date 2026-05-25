@@ -29,6 +29,10 @@ export interface SwapAction {
 export interface SwapWithAction {
   swap: Swap
   action: SwapAction
+  /** BIP39 rescue mnemonic for this swap. Present only for Boltz chain swaps (BTC ↔ RSK).
+   *  The consumer must present this to the user for download before they proceed.
+   *  If the swap fails, the user brings this mnemonic to the Boltz rescue UI to recover funds. */
+  rescueMnemonic?: string
 }
 
 export interface TxData {

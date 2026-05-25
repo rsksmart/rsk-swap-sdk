@@ -7,6 +7,9 @@ import * as ecpair from 'ecpair'
 import { initEccLib } from 'bitcoinjs-lib'
 import * as ecc from 'tiny-secp256k1'
 import { type BoltzChainSwapInContext } from './types'
+import { deriveSwapKey, deriveSwapPreimage } from './rescueKey'
+import * as bip39 from 'bip39'
+import { arrayToHexKey } from '../../utils/conversion'
 
 describe('ChainSwapIn', () => {
   let chainSwapIn: ChainSwapIn
@@ -19,22 +22,44 @@ describe('ChainSwapIn', () => {
   })
 
   describe('createContext', () => {
-    test('should create a valid context with preimage and keys', () => {
-      const context = chainSwapIn.createContext()
+    test('should store a 12-word BIP39 rescue mnemonic in secretContext', () => {
+      const context = chainSwapIn.createContext() as BoltzChainSwapInContext
+      expect(context.secretContext.rescueMnemonic).toBeDefined()
+      expect(context.secretContext.rescueMnemonic.split(' ')).toHaveLength(12)
+      expect(bip39.validateMnemonic(context.secretContext.rescueMnemonic)).toBe(true)
+    })
 
-      expect(context.publicContext).toHaveProperty('preimageHash')
-      expect(context.publicContext).toHaveProperty('refundPublicKey')
-      expect(context.secretContext).toHaveProperty('preimage')
-      expect(context.secretContext).toHaveProperty('privateKey')
-      const swapContext = context as BoltzChainSwapInContext
-      expect(swapContext.publicContext.preimageHash).toHaveLength(64)
-      expect(swapContext.secretContext.preimage).toHaveLength(64)
-      expect(swapContext.secretContext.privateKey).toHaveLength(64)
-      expect(swapContext.publicContext.refundPublicKey).toHaveLength(66)
-      expect(swapContext.secretContext.swapTree).toBe('')
-      expect(swapContext.secretContext.timeoutBlockHeight).toBe(0)
-      expect(swapContext.secretContext.claimPublicKey).toBe('')
-      expect(swapContext.secretContext.version).toBe(0)
+    test('should derive refundPublicKey deterministically from the rescue mnemonic', () => {
+      const context = chainSwapIn.createContext() as BoltzChainSwapInContext
+      const derivedKey = deriveSwapKey(context.secretContext.rescueMnemonic, keyFactory)
+      expect(context.publicContext.refundPublicKey).toBe(arrayToHexKey(derivedKey.publicKey))
+    })
+
+    test('should derive preimage as sha256(privateKey) from the rescue mnemonic', () => {
+      const context = chainSwapIn.createContext() as BoltzChainSwapInContext
+      const derivedPreimage = deriveSwapPreimage(context.secretContext.rescueMnemonic, keyFactory)
+      expect(context.secretContext.preimage).toBe(derivedPreimage.toString('hex'))
+    })
+
+    test('should derive preimageHash as sha256(preimage)', () => {
+      const context = chainSwapIn.createContext() as BoltzChainSwapInContext
+      const preimageBytes = Buffer.from(context.secretContext.preimage, 'hex')
+      const expectedHash = ethers.utils.sha256(preimageBytes).slice(2)
+      expect(context.publicContext.preimageHash).toBe(expectedHash)
+    })
+
+    test('should set correct placeholder values for fields filled by finalizeContext', () => {
+      const context = chainSwapIn.createContext() as BoltzChainSwapInContext
+      expect(context.secretContext.swapTree).toBe('')
+      expect(context.secretContext.timeoutBlockHeight).toBe(0)
+      expect(context.secretContext.claimPublicKey).toBe('')
+      expect(context.secretContext.version).toBe(0)
+    })
+
+    test('should generate a different mnemonic on each call', () => {
+      const ctx1 = chainSwapIn.createContext() as BoltzChainSwapInContext
+      const ctx2 = chainSwapIn.createContext() as BoltzChainSwapInContext
+      expect(ctx1.secretContext.rescueMnemonic).not.toBe(ctx2.secretContext.rescueMnemonic)
     })
   })
 

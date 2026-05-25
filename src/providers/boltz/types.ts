@@ -74,6 +74,7 @@ export interface BoltzChainSwapInContext {
     timeoutBlockHeight: number
     claimPublicKey: string
     version: number
+    rescueMnemonic: string
   }
 }
 
@@ -107,5 +108,6 @@ export interface BoltzChainSwapOutContext {
   secretContext: {
     preimage: string
     claimPrivateKey: string
+    rescueMnemonic: string
   }
 }

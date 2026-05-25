@@ -1,8 +1,9 @@
-import { type ClaimDetails, PREIMAGE_LENGTH, type BoltzAtomicSwap, type BoltzChainSwapInContext } from './types'
+import { type ClaimDetails, type BoltzAtomicSwap, type BoltzChainSwapInContext } from './types'
 import { type CreatedSwap, type Swap } from '../../api'
 import { type ProviderContext, type SwapAction } from '../types'
 import { assertTruthy, ethers, validateRequiredFields } from '@rsksmart/bridges-core-sdk'
 import { type ECPairAPI } from 'ecpair'
+import { generateRescueMnemonic, deriveSwapKey, deriveSwapPreimage } from './rescueKey'
 import { tapTweakHash, toHashTree } from 'bitcoinjs-lib/src/payments/bip341'
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371'
 import { type RskSwapEnvironmentName } from '../../constants/environment'
@@ -20,9 +21,10 @@ export class ChainSwapIn implements BoltzAtomicSwap {
   ) {}
 
   createContext (): ProviderContext {
-    const preimage = ethers.utils.randomBytes(PREIMAGE_LENGTH)
+    const mnemonic = generateRescueMnemonic()
+    const keys = deriveSwapKey(mnemonic, this.keyFactory)
+    const preimage = deriveSwapPreimage(mnemonic, this.keyFactory)
     const preimageHash = ethers.utils.sha256(preimage)
-    const keys = this.keyFactory.makeRandom()
     const privateKey = keys.privateKey
     assertTruthy(privateKey, 'Private key is undefined')
     return {
@@ -31,12 +33,13 @@ export class ChainSwapIn implements BoltzAtomicSwap {
         refundPublicKey: arrayToHexKey(keys.publicKey)
       },
       secretContext: {
-        preimage: ethers.utils.hexlify(preimage).slice(2),
+        preimage: preimage.toString('hex'),
         privateKey: arrayToHexKey(privateKey),
         swapTree: '',
         timeoutBlockHeight: 0,
         claimPublicKey: '',
-        version: 0
+        version: 0,
+        rescueMnemonic: mnemonic
       }
     }
   }
