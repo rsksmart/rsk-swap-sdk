@@ -66,15 +66,22 @@ export interface ErrorDto {
 export const ErrorDtoRequiredFields: string[] = ["code", "message", "context"];
 
 export interface FeeDTO {
-  /** Wether the fee depends on the amount being swapped or not */
-  type: "FIXED" | "PERCENTAGE";
-  /** Fee's concept */
-  description: string;
-  /** The amount of the fee, in the smallest unit of the destination currency */
+  type:
+    | "PERCENTAGE_BOLTZ_FEE"
+    | "FIXED_MINER_FEE"
+    | "FIXED_DESTINATION_NETWORK_FEE"
+    | "FIXED_CHANGELLY_FEE"
+    | "FIXED_GAS_FEE"
+    | "FIXED_LIFI_PROVIDER_FEE"
+    | "FIXED_NETWORK_FEE"
+    | "FIXED_SERVICE_FEE"
+    | "FIXED_MOCK_FEE";
   amount: bigint | number;
+  symbol?: string;
+  decimals?: number;
 }
 
-export const FeeDtoRequiredFields: string[] = ["type", "description", "amount"];
+export const FeeDtoRequiredFields: string[] = ["type", "amount"];
 
 export interface SwapEstimationRS {
   /** The provider ID that generated the estimation */
@@ -94,10 +101,10 @@ export interface SwapEstimationRS {
   total: bigint | number;
   /** The number of confirmations for the payment to be processed by the provider */
   requiredConfirmations: number;
+  /** The estimated time in seconds for the swap to complete (used by providers like LiFi) */
+  estimatedTime?: number;
   /** The fees that are charged in the swap by this provider */
   fees: FeeDTO[];
-  /** Estimated time in seconds for the swap to complete */
-  estimatedTime?: number;
 }
 
 export const SwapEstimationRsRequiredFields: string[] = [
@@ -126,6 +133,17 @@ export interface SwapLimitsRS {
 
 export const SwapLimitsRsRequiredFields: string[] = ["minAmount", "maxAmount"];
 
+export interface CreateSwapContext {
+  /** The preimage hash of the swap */
+  preimageHash?: string;
+  /** The refund public key of the swap */
+  refundPublicKey?: string;
+  /** The claim public key of the swap */
+  claimPublicKey?: string;
+  /** Slippage tolerance as an integer (e.g. 300 for 3%) */
+  slippage?: number;
+}
+
 export interface CreateSwapRQ {
   /** Id of the provider to execute the swap */
   providerId: string;
@@ -147,7 +165,7 @@ export interface CreateSwapRQ {
   /** The address to refund the amount in case of error. Must be of the origin network */
   refundAddress: string;
   /** The context of the swap, depends on the provider */
-  context: object;
+  context?: CreateSwapContext;
 }
 
 export const CreateSwapRqRequiredFields: string[] = [
@@ -159,7 +177,6 @@ export const CreateSwapRqRequiredFields: string[] = [
   "fromAmount",
   "address",
   "refundAddress",
-  "context",
 ];
 
 export interface SwapDTO {
@@ -187,15 +204,25 @@ export interface SwapDTO {
   /** The chain id of the destination network or BTC if the destination is Bitcoin */
   toNetwork: string;
   /** The status of the swap */
-  status: "CREATED" | "PENDING" | "EXPIRED" | "CLAIMED" | "REFUNDED" | "REFUND_PENDING" | "CLAIM_PENDING" | "UNKNOWN";
+  status:
+    | "CREATED"
+    | "PENDING"
+    | "EXPIRED"
+    | "CLAIMED"
+    | "REFUNDED"
+    | "REFUND_PENDING"
+    | "CLAIM_PENDING"
+    | "FAILED"
+    | "COMPLETED"
+    | "UNKNOWN";
   /** The number of confirmations for the payment to be processed by the provider */
   requiredConfirmations: number;
+  /** The estimated time in seconds for the swap to complete (used by providers like LiFi) */
+  estimatedTime?: number;
   /** The fees that are charged in the swap by this provider */
   usedFees: FeeDTO[];
   /** The context of the swap, depends on the provider */
   context: object;
-  /** Estimated time in seconds for the swap to complete */
-  estimatedTime?: number;
 }
 
 export const SwapDtoRequiredFields: string[] = [

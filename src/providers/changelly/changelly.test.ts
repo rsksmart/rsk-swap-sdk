@@ -52,8 +52,7 @@ describe('ChangellyClient should', () => {
         usedFees: [
           {
             amount: BigInt(10000000),
-            description: 'fee 1',
-            type: 'FIXED'
+            type: 'FIXED_CHANGELLY_FEE'
           }
         ],
         context: {}
@@ -91,8 +90,7 @@ describe('ChangellyClient should', () => {
         usedFees: [
           {
             amount: BigInt(10000000),
-            description: 'fee 1',
-            type: 'FIXED'
+            type: 'FIXED_CHANGELLY_FEE'
           }
         ],
         context: {}
@@ -133,8 +131,7 @@ describe('ChangellyClient should', () => {
         usedFees: [
           {
             amount: BigInt(10000000),
-            description: 'fee 1',
-            type: 'FIXED'
+            type: 'FIXED_CHANGELLY_FEE'
           }
         ],
         context: {}
@@ -172,8 +169,7 @@ describe('ChangellyClient should', () => {
         usedFees: [
           {
             amount: BigInt(10000000),
-            description: 'fee 1',
-            type: 'FIXED'
+            type: 'FIXED_CHANGELLY_FEE'
           }
         ],
         context: {}
