@@ -8,6 +8,7 @@ const lintedFiles = ['src/**/*.ts']
 export default defineConfig(
   globalIgnores([
     '**/node_modules/**',
+    '.yalc/**',
     'integration-test/**',
     'lib/**',
     'package/**',

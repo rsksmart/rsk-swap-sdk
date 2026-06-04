@@ -120,8 +120,7 @@ describe('SymbiosisClient should', () => {
         usedFees: [
           {
             amount: BigInt(5000000000000000),
-            description: 'Bridge fee',
-            type: 'FIXED'
+            type: 'FIXED_NETWORK_FEE'
           }
         ],
         context: { publicContext: context }

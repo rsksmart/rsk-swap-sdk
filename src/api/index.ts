@@ -26,6 +26,8 @@ export {
   SwapDtoRequiredFields as swapRequiredFields
 } from './bindings/data-contracts'
 
+export { FeeType, isPercentageFee, isNetworkFee } from './feeType'
+
 export const Routes = {
   swapLimits: '/swaps/limits',
   estimateSwap: '/swaps/estimate',
