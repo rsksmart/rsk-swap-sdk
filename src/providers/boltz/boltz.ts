@@ -184,7 +184,8 @@ export class BoltzClient implements SwapProviderClient {
 
     const swapTxs = await this.httpClient.get<{ serverLock: { transaction: { hex: string } } }>(`${this.providerUrl}/swap/chain/${swap.providerSwapId}/transactions`)
     const btcLockTx = Transaction.fromHex(swapTxs.serverLock.transaction.hex)
-    const lockOutput = detectSwap(tweakedKey, btcLockTx)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const lockOutput = detectSwap(tweakedKey, btcLockTx as any) as ReturnType<typeof detectSwap>
     assertTruthy(lockOutput, 'Swap lock output not found in transaction')
     const fees = await this.httpClient.get<{ BTC: number }>(`${this.providerUrl}/chain/fees`)
     const unsignedClaimTx = targetFee(fees.BTC, (fee) =>
@@ -196,14 +197,14 @@ export class BoltzClient implements SwapProviderClient {
             preimage: Buffer.from(context.secretContext.preimage, 'hex'),
             cooperative: true,
             type: OutputType.Taproot,
-            txHash: btcLockTx.getHash()
+            txHash: Buffer.from(btcLockTx.getHash())
           }
         ],
-        address.toOutputScript(swap.receiverAddress, this.network === 'Mainnet' ? networks.bitcoin : networks.testnet),
+        Buffer.from(address.toOutputScript(swap.receiverAddress, this.network === 'Mainnet' ? networks.bitcoin : networks.testnet)),
         fee
       )
     )
-    return { unsignedClaimTx, lockOutput }
+    return { unsignedClaimTx: unsignedClaimTx as unknown as Transaction, lockOutput }
   }
 
   private async signClaimTransactionCooperatively (args: {
@@ -230,10 +231,11 @@ export class BoltzClient implements SwapProviderClient {
       [serverPubKeyBuffer, Buffer.from(boltzSig.pubNonce, 'hex')]
     ])
     musig.initializeSession(
-      claimTx.hashForWitnessV1(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (claimTx as any).hashForWitnessV1(
         0,
-        [lockOutput.script],
-        [lockOutput.value],
+        [Buffer.from(lockOutput.script)],
+        [Number(lockOutput.value)],
         Transaction.SIGHASH_DEFAULT
       )
     )
