@@ -8,6 +8,7 @@ import { initEccLib } from 'bitcoinjs-lib'
 import * as ecc from 'tiny-secp256k1'
 import { type BoltzChainSwapInContext } from './types'
 import { deriveSwapKey, deriveSwapKeyAndPreimage } from './rescueKey'
+import { bytesToHex } from '@noble/hashes/utils'
 import * as bip39 from 'bip39'
 import { arrayToHexKey } from '../../utils/conversion'
 
@@ -38,7 +39,7 @@ describe('ChainSwapIn', () => {
     test('should derive preimage as sha256(privateKey) from the rescue mnemonic', () => {
       const context = chainSwapIn.createContext() as BoltzChainSwapInContext
       const { preimage: derivedPreimage } = deriveSwapKeyAndPreimage(context.secretContext.rescueMnemonic, keyFactory)
-      expect(context.secretContext.preimage).toBe(derivedPreimage.toString('hex'))
+      expect(context.secretContext.preimage).toBe(bytesToHex(derivedPreimage))
     })
 
     test('should derive preimageHash as sha256(preimage)', () => {

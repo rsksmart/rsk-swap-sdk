@@ -1,6 +1,7 @@
 import { describe, expect, test, beforeAll } from '@jest/globals'
 import { generateRescueMnemonic, deriveSwapKey, deriveSwapKeyAndPreimage } from './rescueKey'
 import { sha256 } from '@noble/hashes/sha256'
+import { bytesToHex } from '@noble/hashes/utils'
 import * as bip39 from 'bip39'
 import * as ecpair from 'ecpair'
 import { initEccLib } from 'bitcoinjs-lib'
@@ -65,7 +66,7 @@ describe('rescueKey', () => {
       const { keys, preimage } = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
       expect(keys.publicKey).toHaveLength(33)
       expect(keys.privateKey).toHaveLength(32)
-      expect(preimage).toBeInstanceOf(Buffer)
+      expect(preimage).toBeInstanceOf(Uint8Array)
       expect(preimage).toHaveLength(32)
     })
 
@@ -73,13 +74,13 @@ describe('rescueKey', () => {
       const r1 = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
       const r2 = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
       expect(Buffer.from(r1.keys.publicKey).toString('hex')).toBe(Buffer.from(r2.keys.publicKey).toString('hex'))
-      expect(r1.preimage.toString('hex')).toBe(r2.preimage.toString('hex'))
+      expect(bytesToHex(r1.preimage)).toBe(bytesToHex(r2.preimage))
     })
 
     test('preimage should equal sha256(privateKey) — Boltz required formula', () => {
       const { keys, preimage } = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
-      const expected = Buffer.from(sha256(keys.privateKey!))
-      expect(preimage.toString('hex')).toBe(Buffer.from(expected).toString('hex'))
+      const expected = sha256(keys.privateKey!)
+      expect(bytesToHex(preimage)).toBe(bytesToHex(expected))
     })
 
     test('should return different outputs for different mnemonics', () => {
@@ -87,7 +88,7 @@ describe('rescueKey', () => {
       const r1 = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
       const r2 = deriveSwapKeyAndPreimage(otherMnemonic, keyFactory)
       expect(Buffer.from(r1.keys.publicKey).toString('hex')).not.toBe(Buffer.from(r2.keys.publicKey).toString('hex'))
-      expect(r1.preimage.toString('hex')).not.toBe(r2.preimage.toString('hex'))
+      expect(bytesToHex(r1.preimage)).not.toBe(bytesToHex(r2.preimage))
     })
 
     test('throws on invalid mnemonic', () => {
@@ -109,7 +110,7 @@ describe('rescueKey', () => {
     test('deriveSwapKeyAndPreimage produces the expected key and preimage for KNOWN_MNEMONIC', () => {
       const { keys, preimage } = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
       expect(Buffer.from(keys.publicKey).toString('hex')).toBe(EXPECTED_PUBLIC_KEY)
-      expect(preimage.toString('hex')).toBe(EXPECTED_PREIMAGE)
+      expect(bytesToHex(preimage)).toBe(EXPECTED_PREIMAGE)
     })
   })
 })
