@@ -1,8 +1,7 @@
 import { describe, expect, test, beforeAll } from '@jest/globals'
-import { generateRescueMnemonic, deriveSwapKey, deriveSwapPreimage, deriveXpub } from './rescueKey'
+import { generateRescueMnemonic, deriveSwapKey, deriveSwapKeyAndPreimage } from './rescueKey'
 import { createHash } from 'crypto'
 import * as bip39 from 'bip39'
-import BIP32Factory from 'bip32'
 import * as ecpair from 'ecpair'
 import { initEccLib } from 'bitcoinjs-lib'
 import * as ecc from 'tiny-secp256k1'
@@ -55,64 +54,62 @@ describe('rescueKey', () => {
       const key2 = deriveSwapKey(otherMnemonic, keyFactory)
       expect(Buffer.from(key1.publicKey).toString('hex')).not.toBe(Buffer.from(key2.publicKey).toString('hex'))
     })
+
+    test('throws on invalid mnemonic', () => {
+      expect(() => deriveSwapKey('not a valid mnemonic', keyFactory)).toThrow('Invalid BIP39 mnemonic')
+    })
   })
 
-  describe('deriveSwapPreimage', () => {
-    test('should return a 32-byte Buffer', () => {
-      const preimage = deriveSwapPreimage(KNOWN_MNEMONIC, keyFactory)
+  describe('deriveSwapKeyAndPreimage', () => {
+    test('should return a valid EC key pair and 32-byte preimage', () => {
+      const { keys, preimage } = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
+      expect(keys.publicKey).toHaveLength(33)
+      expect(keys.privateKey).toHaveLength(32)
       expect(preimage).toBeInstanceOf(Buffer)
       expect(preimage).toHaveLength(32)
     })
 
-    test('should be deterministic — same mnemonic always yields same preimage', () => {
-      const p1 = deriveSwapPreimage(KNOWN_MNEMONIC, keyFactory)
-      const p2 = deriveSwapPreimage(KNOWN_MNEMONIC, keyFactory)
-      expect(p1.toString('hex')).toBe(p2.toString('hex'))
+    test('should be deterministic — same mnemonic always yields same output', () => {
+      const r1 = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
+      const r2 = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
+      expect(Buffer.from(r1.keys.publicKey).toString('hex')).toBe(Buffer.from(r2.keys.publicKey).toString('hex'))
+      expect(r1.preimage.toString('hex')).toBe(r2.preimage.toString('hex'))
     })
 
-    test('should equal sha256(privateKey) — Boltz required formula', () => {
-      const key = deriveSwapKey(KNOWN_MNEMONIC, keyFactory)
-      const expectedPreimage = createHash('sha256').update(key.privateKey!).digest()
-      const actualPreimage = deriveSwapPreimage(KNOWN_MNEMONIC, keyFactory)
-      expect(actualPreimage.toString('hex')).toBe(Buffer.from(expectedPreimage).toString('hex'))
+    test('preimage should equal sha256(privateKey) — Boltz required formula', () => {
+      const { keys, preimage } = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
+      const expected = createHash('sha256').update(keys.privateKey!).digest()
+      expect(preimage.toString('hex')).toBe(Buffer.from(expected).toString('hex'))
     })
 
-    test('should return different preimages for different mnemonics', () => {
+    test('should return different outputs for different mnemonics', () => {
       const otherMnemonic = 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'
-      const p1 = deriveSwapPreimage(KNOWN_MNEMONIC, keyFactory)
-      const p2 = deriveSwapPreimage(otherMnemonic, keyFactory)
-      expect(p1.toString('hex')).not.toBe(p2.toString('hex'))
+      const r1 = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
+      const r2 = deriveSwapKeyAndPreimage(otherMnemonic, keyFactory)
+      expect(Buffer.from(r1.keys.publicKey).toString('hex')).not.toBe(Buffer.from(r2.keys.publicKey).toString('hex'))
+      expect(r1.preimage.toString('hex')).not.toBe(r2.preimage.toString('hex'))
+    })
+
+    test('throws on invalid mnemonic', () => {
+      expect(() => deriveSwapKeyAndPreimage('not a valid mnemonic', keyFactory)).toThrow('Invalid BIP39 mnemonic')
     })
   })
 
-  describe('deriveXpub', () => {
-    test('should return a string starting with xpub', () => {
-      const xpub = deriveXpub(KNOWN_MNEMONIC)
-      expect(xpub).toMatch(/^xpub/)
+  describe('known-vector assertions (m/44/0/0/0/0 path)', () => {
+    // Hardcoded expected values for KNOWN_MNEMONIC at the Boltz derivation path.
+    // Any change to the path constant or derivation logic must update these vectors.
+    const EXPECTED_PUBLIC_KEY = '03ce83ae7b2ef20f50d7adab682b25111df74ee40121e021cd8b6cad8a93f78fec'
+    const EXPECTED_PREIMAGE = '03c0b3323daab895d806870bd1f050bdca624a24882d3e317b151d537fa75bb7'
+
+    test('deriveSwapKey produces the expected public key for KNOWN_MNEMONIC', () => {
+      const key = deriveSwapKey(KNOWN_MNEMONIC, keyFactory)
+      expect(Buffer.from(key.publicKey).toString('hex')).toBe(EXPECTED_PUBLIC_KEY)
     })
 
-    test('should be deterministic — same mnemonic always yields same xpub', () => {
-      const x1 = deriveXpub(KNOWN_MNEMONIC)
-      const x2 = deriveXpub(KNOWN_MNEMONIC)
-      expect(x1).toBe(x2)
-    })
-
-    test('should return different xpubs for different mnemonics', () => {
-      const otherMnemonic = 'zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo zoo wrong'
-      const x1 = deriveXpub(KNOWN_MNEMONIC)
-      const x2 = deriveXpub(otherMnemonic)
-      expect(x1).not.toBe(x2)
-    })
-
-    test('should be consistent with the swap key derivation', () => {
-      // The xpub at m/44/0/0/0 should produce the same child[0] public key as deriveSwapKey
-      const bip32 = BIP32Factory(ecc)
-      const seed = bip39.mnemonicToSeedSync(KNOWN_MNEMONIC)
-      const account = bip32.fromSeed(seed).derivePath('m/44/0/0/0')
-      const expectedPubKey = account.derive(0).publicKey
-
-      const swapKey = deriveSwapKey(KNOWN_MNEMONIC, keyFactory)
-      expect(Buffer.from(swapKey.publicKey).toString('hex')).toBe(Buffer.from(expectedPubKey).toString('hex'))
+    test('deriveSwapKeyAndPreimage produces the expected key and preimage for KNOWN_MNEMONIC', () => {
+      const { keys, preimage } = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
+      expect(Buffer.from(keys.publicKey).toString('hex')).toBe(EXPECTED_PUBLIC_KEY)
+      expect(preimage.toString('hex')).toBe(EXPECTED_PREIMAGE)
     })
   })
 })

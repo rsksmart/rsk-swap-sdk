@@ -10,3 +10,4 @@ lbc-code/
 .DS_Store
 .env
 .cursor
+.claude

@@ -6,7 +6,6 @@ import { type SwapProviderClient } from '../providers/types'
 import { ProviderClientResolver } from '../providers/resolver'
 import JSONbig from 'json-bigint'
 import { sanitizeSwap } from '../utils/sanitization'
-import * as bip39 from 'bip39'
 
 const serializer = JSONbig({ useNativeBigInt: true })
 
@@ -244,9 +243,8 @@ describe('createSwap function should', () => {
     expect(result.swap.context).toEqual(finalizedContext)
   })
 
-  test('should expose rescueMnemonic from secretContext when present', async () => {
+  test('should keep rescueMnemonic inside swap.context.secretContext when present', async () => {
     const url = 'http://localhost:8080'
-    // params must match mockResult swap fields to pass isValidApiResponse
     const params: CreateSwapArgs = {
       providerId: 'PROVIDER1',
       address: 'a-receiver-address',
@@ -269,30 +267,9 @@ describe('createSwap function should', () => {
       requiresClaim: true
     })
     const result = await createSwap(url, httpClient, providerResolver, params)
-    expect(result.rescueMnemonic).toBe(testMnemonic)
-    expect(bip39.validateMnemonic(result.rescueMnemonic!)).toBe(true)
-  })
-
-  test('should not set rescueMnemonic when secretContext does not contain it', async () => {
-    const url = 'http://localhost:8080'
-    const params: CreateSwapArgs = {
-      providerId: 'PROVIDER1',
-      address: 'a-receiver-address',
-      fromToken: 'ETH',
-      toToken: 'BTC',
-      fromAmount: BigInt(500),
-      refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
-      fromNetwork: '1',
-      toNetwork: 'BTC'
-    }
-    providerClientMock.validateAddress.mockResolvedValue(true)
-    providerClientMock.generateAction.mockResolvedValue({
-      type: 'ERC20-PAYMENT',
-      data: { to: 'a-payment-address', data: 'some-data', value: '0x02BC' },
-      requiresClaim: false
-    })
-    const result = await createSwap(url, httpClient, providerResolver, params)
-    expect(result.rescueMnemonic).toBeUndefined()
+    const secretContext = (result.swap.context as { secretContext: { rescueMnemonic?: string } }).secretContext
+    expect(secretContext.rescueMnemonic).toBe(testMnemonic)
+    expect((result as unknown as { rescueMnemonic?: string }).rescueMnemonic).toBeUndefined()
   })
 
   test('fail on manipulated context', async () => {
