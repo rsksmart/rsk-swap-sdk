@@ -1,6 +1,6 @@
 import { describe, expect, test, beforeAll } from '@jest/globals'
 import { generateRescueMnemonic, deriveSwapKey, deriveSwapKeyAndPreimage } from './rescueKey'
-import { createHash } from 'crypto'
+import { sha256 } from '@noble/hashes/sha256'
 import * as bip39 from 'bip39'
 import * as ecpair from 'ecpair'
 import { initEccLib } from 'bitcoinjs-lib'
@@ -78,7 +78,7 @@ describe('rescueKey', () => {
 
     test('preimage should equal sha256(privateKey) — Boltz required formula', () => {
       const { keys, preimage } = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
-      const expected = createHash('sha256').update(keys.privateKey!).digest()
+      const expected = Buffer.from(sha256(keys.privateKey!))
       expect(preimage.toString('hex')).toBe(Buffer.from(expected).toString('hex'))
     })
 
