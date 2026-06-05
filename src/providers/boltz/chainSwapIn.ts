@@ -4,6 +4,7 @@ import { type ProviderContext, type SwapAction } from '../types'
 import { assertTruthy, ethers, validateRequiredFields } from '@rsksmart/bridges-core-sdk'
 import { type ECPairAPI } from 'ecpair'
 import { generateRescueMnemonic, deriveSwapKeyAndPreimage } from './rescueKey'
+import { bytesToHex } from '@noble/hashes/utils'
 import { tapTweakHash, toHashTree } from 'bitcoinjs-lib/src/payments/bip341'
 import { toXOnly } from 'bitcoinjs-lib/src/psbt/bip371'
 import { type RskSwapEnvironmentName } from '../../constants/environment'
@@ -32,7 +33,7 @@ export class ChainSwapIn implements BoltzAtomicSwap {
         refundPublicKey: arrayToHexKey(keys.publicKey)
       },
       secretContext: {
-        preimage: preimage.toString('hex'),
+        preimage: bytesToHex(preimage),
         privateKey: arrayToHexKey(privateKey),
         swapTree: '',
         timeoutBlockHeight: 0,

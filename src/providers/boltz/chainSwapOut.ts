@@ -5,6 +5,7 @@ import { type BoltzAtomicSwap, type BoltzChainSwapOutContext, type ClaimDetails 
 import { arrayToHexKey, satToWei } from '../../utils/conversion'
 import { type ECPairAPI } from 'ecpair'
 import { generateRescueMnemonic, deriveSwapKeyAndPreimage } from './rescueKey'
+import { bytesToHex } from '@noble/hashes/utils'
 import { VALIDATION_CONSTANTS } from '../../constants/validation'
 import { type RskSwapEnvironmentName } from '../../constants/environment'
 import { validateContractCode } from '../../utils/validation'
@@ -29,7 +30,7 @@ export class ChainSwapOut implements BoltzAtomicSwap {
         claimPublicKey: arrayToHexKey(keys.publicKey)
       },
       secretContext: {
-        preimage: preimage.toString('hex'),
+        preimage: bytesToHex(preimage),
         claimPrivateKey: arrayToHexKey(privateKey),
         rescueMnemonic: mnemonic
       }

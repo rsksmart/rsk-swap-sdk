@@ -8,6 +8,7 @@ import { type Swap, type CreatedSwap } from '../../api'
 import { describe, expect, test, beforeEach, jest, beforeAll } from '@jest/globals'
 import { type BoltzChainSwapOutContext } from './types'
 import { deriveSwapKey, deriveSwapKeyAndPreimage } from './rescueKey'
+import { bytesToHex } from '@noble/hashes/utils'
 import * as bip39 from 'bip39'
 import * as ecpair from 'ecpair'
 import { initEccLib } from 'bitcoinjs-lib'
@@ -54,7 +55,7 @@ describe('ChainSwapOut', () => {
     test('should derive preimage as sha256(privateKey) from the rescue mnemonic', () => {
       const context = chainSwapOut.createContext() as BoltzChainSwapOutContext
       const { preimage: derivedPreimage } = deriveSwapKeyAndPreimage(context.secretContext.rescueMnemonic, realKeyFactory)
-      expect(context.secretContext.preimage).toBe(derivedPreimage.toString('hex'))
+      expect(context.secretContext.preimage).toBe(bytesToHex(derivedPreimage))
     })
 
     test('should derive preimageHash as sha256(preimage)', () => {
