@@ -43,7 +43,8 @@ export default [
       {
         dir: 'lib/cjs',
         format: 'cjs',
-        exports: 'named'
+        exports: 'named',
+        interop: 'auto'
       },
       {
         dir: 'lib/esm',
