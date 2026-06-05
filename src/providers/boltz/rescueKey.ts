@@ -9,12 +9,20 @@ import { type ECPairInterface, type ECPairAPI } from 'ecpair'
 const BOLTZ_ACCOUNT_PATH = 'm/44/0/0/0'
 const SWAP_KEY_INDEX = 0
 
+const bip32 = BIP32Factory(ecc)
+
+function assertValidMnemonic (mnemonic: string): void {
+  if (!bip39.validateMnemonic(mnemonic)) {
+    throw new Error('Invalid BIP39 mnemonic')
+  }
+}
+
 export function generateRescueMnemonic (): string {
   return bip39.generateMnemonic(128) // 128-bit entropy → 12 words
 }
 
 export function deriveSwapKey (mnemonic: string, keyFactory: ECPairAPI): ECPairInterface {
-  const bip32 = BIP32Factory(ecc)
+  assertValidMnemonic(mnemonic)
   const seed = bip39.mnemonicToSeedSync(mnemonic)
   const root = bip32.fromSeed(seed)
   const child = root.derivePath(`${BOLTZ_ACCOUNT_PATH}/${SWAP_KEY_INDEX}`)
@@ -24,18 +32,12 @@ export function deriveSwapKey (mnemonic: string, keyFactory: ECPairAPI): ECPairI
   return keyFactory.fromPrivateKey(child.privateKey)
 }
 
-export function deriveSwapPreimage (mnemonic: string, keyFactory: ECPairAPI): Buffer {
-  const key = deriveSwapKey(mnemonic, keyFactory)
-  if (key.privateKey === undefined || key.privateKey === null) {
+export function deriveSwapKeyAndPreimage (mnemonic: string, keyFactory: ECPairAPI): { keys: ECPairInterface, preimage: Buffer } {
+  const keys = deriveSwapKey(mnemonic, keyFactory)
+  if (keys.privateKey === undefined || keys.privateKey === null) {
     throw new Error('Missing private key for preimage derivation')
   }
   // Boltz required formula: preimage = sha256(privateKey)
-  return Buffer.from(createHash('sha256').update(key.privateKey).digest())
-}
-
-export function deriveXpub (mnemonic: string): string {
-  const bip32 = BIP32Factory(ecc)
-  const seed = bip39.mnemonicToSeedSync(mnemonic)
-  const root = bip32.fromSeed(seed)
-  return root.derivePath(BOLTZ_ACCOUNT_PATH).neutered().toBase58()
+  const preimage = createHash('sha256').update(keys.privateKey).digest()
+  return { keys, preimage }
 }
