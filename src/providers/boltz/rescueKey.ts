@@ -1,4 +1,4 @@
-import { createHash } from 'crypto'
+import { sha256 } from '@noble/hashes/sha256'
 import * as bip39 from 'bip39'
 import BIP32Factory from 'bip32'
 import * as ecc from 'tiny-secp256k1'
@@ -38,6 +38,6 @@ export function deriveSwapKeyAndPreimage (mnemonic: string, keyFactory: ECPairAP
     throw new Error('Missing private key for preimage derivation')
   }
   // Boltz required formula: preimage = sha256(privateKey)
-  const preimage = createHash('sha256').update(keys.privateKey).digest()
+  const preimage = Buffer.from(sha256(keys.privateKey))
   return { keys, preimage }
 }
