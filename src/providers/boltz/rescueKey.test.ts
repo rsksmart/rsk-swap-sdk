@@ -2,6 +2,7 @@ import { describe, expect, test, beforeAll } from '@jest/globals'
 import { generateRescueMnemonic, deriveSwapKey, deriveSwapKeyAndPreimage } from './rescueKey'
 import { sha256 } from '@noble/hashes/sha256'
 import { bytesToHex } from '@noble/hashes/utils'
+import { ethers } from '@rsksmart/bridges-core-sdk'
 import * as bip39 from 'bip39'
 import * as ecpair from 'ecpair'
 import { initEccLib } from 'bitcoinjs-lib'
@@ -96,21 +97,22 @@ describe('rescueKey', () => {
     })
   })
 
-  describe('known-vector assertions (m/44/0/0/0/0 path)', () => {
-    // Hardcoded expected values for KNOWN_MNEMONIC at the Boltz derivation path.
-    // Any change to the path constant or derivation logic must update these vectors.
-    const EXPECTED_PUBLIC_KEY = '03ce83ae7b2ef20f50d7adab682b25111df74ee40121e021cd8b6cad8a93f78fec'
-    const EXPECTED_PREIMAGE = '03c0b3323daab895d806870bd1f050bdca624a24882d3e317b151d537fa75bb7'
+  describe('known-vector assertions — cross-checked against ethers HDNode (m/44/0/0/0/0)', () => {
+    // ethers.utils.HDNode is a completely independent BIP32 implementation.
+    // Cross-checking here catches a wrong derivation path, wrong index, or wrong preimage formula.
 
-    test('deriveSwapKey produces the expected public key for KNOWN_MNEMONIC', () => {
+    test('deriveSwapKey public key matches ethers HDNode at Boltz path', () => {
+      const ref = ethers.utils.HDNode.fromMnemonic(KNOWN_MNEMONIC).derivePath('m/44/0/0/0/0')
       const key = deriveSwapKey(KNOWN_MNEMONIC, keyFactory)
-      expect(Buffer.from(key.publicKey).toString('hex')).toBe(EXPECTED_PUBLIC_KEY)
+      expect(Buffer.from(key.publicKey).toString('hex')).toBe(ref.publicKey.slice(2))
     })
 
-    test('deriveSwapKeyAndPreimage produces the expected key and preimage for KNOWN_MNEMONIC', () => {
+    test('deriveSwapKeyAndPreimage matches ethers-derived sha256(privateKey) at Boltz path', () => {
+      const ref = ethers.utils.HDNode.fromMnemonic(KNOWN_MNEMONIC).derivePath('m/44/0/0/0/0')
+      const expectedPreimage = ethers.utils.sha256(ref.privateKey).slice(2)
       const { keys, preimage } = deriveSwapKeyAndPreimage(KNOWN_MNEMONIC, keyFactory)
-      expect(Buffer.from(keys.publicKey).toString('hex')).toBe(EXPECTED_PUBLIC_KEY)
-      expect(bytesToHex(preimage)).toBe(EXPECTED_PREIMAGE)
+      expect(Buffer.from(keys.publicKey).toString('hex')).toBe(ref.publicKey.slice(2))
+      expect(bytesToHex(preimage)).toBe(expectedPreimage)
     })
   })
 })
