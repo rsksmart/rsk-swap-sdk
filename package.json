@@ -76,6 +76,9 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.58.1"
   },
+  "engines": {
+    "npm": ">=11.17.0"
+  },
   "allowScripts": {
     "secp256k1@4.0.4": true,
     "fsevents@2.3.3": true,
