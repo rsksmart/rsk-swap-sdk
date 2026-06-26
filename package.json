@@ -75,5 +75,13 @@
     "typedoc-plugin-markdown": "^3.15.3",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.58.1"
+  },
+  "engines": {
+    "npm": ">=11.17.0 <12"
+  },
+  "allowScripts": {
+    "secp256k1@4.0.4": true,
+    "fsevents@2.3.3": true,
+    "unrs-resolver@1.11.1": true
   }
 }
