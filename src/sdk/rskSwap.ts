@@ -1,6 +1,7 @@
 import {
   assertTruthy,
   type BlockchainConnection,
+  type CaptchaTokenResolver,
   getHttpClient,
   type HttpClient
 } from '@rsksmart/bridges-core-sdk'
@@ -36,6 +37,17 @@ import { DefaultBoltzAtomicSwapFactory } from '../providers/boltz/factory'
 import { getQrCode, type GetQrCodeArgs } from './getQrCode'
 import { LiFiClient } from '../providers/lifi/lifi'
 
+/** Options to customize the {@link RskSwapSDK} instance. */
+export interface RskSwapSDKOptions {
+  /**
+   * Resolver invoked to obtain a fresh reCAPTCHA token for each swap creation.
+   * The SDK attaches the returned token as the `X-Captcha-Token` header. When
+   * omitted, an empty token is sent; the API only verifies it when its captcha
+   * feature flag is enabled.
+   */
+  captchaTokenResolver?: CaptchaTokenResolver
+}
+
 /** Class that represents the entrypoint to the RSK Swap SDK */
 export class RskSwapSDK {
   private readonly httpClient: HttpClient
@@ -48,13 +60,17 @@ export class RskSwapSDK {
    *
    * @param { RskSwapEnvironmentName } envName Name of the network environment to use.
    * @param { BlockchainConnection } connection Connection to the blockchain where the payments will be executed.
+   * @param { RskSwapSDKOptions } options Optional SDK configuration (e.g. a captcha token resolver).
    */
   constructor (
     envName: RskSwapEnvironmentName,
-    connection: BlockchainConnection
+    connection: BlockchainConnection,
+    options?: RskSwapSDKOptions
   ) {
     this.connection = connection
-    this.httpClient = getHttpClient(async () => Promise.resolve(''))
+    this.httpClient = getHttpClient(
+      options?.captchaTokenResolver ?? (async () => Promise.resolve(''))
+    )
     const environment = RskSwapEnvironments[envName]
     assertTruthy(environment, `Environment ${envName} not found`)
     this.environment = environment

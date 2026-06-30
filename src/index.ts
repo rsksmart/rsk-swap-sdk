@@ -1,4 +1,5 @@
-export { RskSwapSDK } from './sdk/rskSwap'
+export { RskSwapSDK, type RskSwapSDKOptions } from './sdk/rskSwap'
+export type { CaptchaTokenResolver } from '@rsksmart/bridges-core-sdk'
 export type { SwapEstimationArgs } from './sdk/estimateSwap'
 export type { SwapId } from './sdk/getSwap'
 export type { SwapLimitsArgs } from './sdk/getLimits'
