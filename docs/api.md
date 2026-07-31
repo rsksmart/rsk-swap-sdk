@@ -44,13 +44,13 @@ Re-exported from the generated API bindings ([`src/api/bindings/data-contracts.t
 | [`Fee`](../src/api/bindings/data-contracts.ts) | interface | A single fee charged for a swap: its `FeeType` and amount. |
 | [`Token`](../src/api/bindings/data-contracts.ts) | interface | A supported token's symbol, type, decimals, and per-network addresses. |
 | [`CoinPrice`](../src/api/bindings/data-contracts.ts) | interface | The USD price of a named cryptocurrency, as returned by `RskSwapSDK.getPrices`. |
-| [`GetSwapArgs`](../src/api/index.ts) | type | Raw (snake_case) query shape for the swap-status endpoint. **Not** the type accepted by `RskSwapSDK.getSwapStatus` — that method takes `SwapId` instead; this export appears unused by the SDK's own public surface (see report caveat). |
+| [`GetSwapArgs`](../src/api/index.ts) | type | Raw (snake_case) query shape for the swap-status endpoint. **Not** the type accepted by `RskSwapSDK.getSwapStatus` — that method takes `SwapId` instead. This export doesn't back any method on `RskSwapSDK`'s current public surface. |
 
 ## Fees
 
 | Export | Kind | Description |
 |---|---|---|
-| [`FeeType`](../src/api/feeType.ts) | type | The possible fee type identifiers a `Fee` can have, as returned by the API. |
+| [`FeeType`](../src/api/feeType.ts) | const + type (same name) | Both a frozen runtime object of fee-type string constants (e.g. `FeeType.PERCENTAGE_BOLTZ_FEE`) and the type alias for a `Fee`'s `type` field. Re-exported as a value (not `export type`) all the way through `index.ts`, so both the runtime object and the type are usable from the package entry point. |
 | [`isPercentageFee`](../src/api/feeType.ts) | function | Checks whether a fee type is the percentage-based Boltz provider fee. |
 | [`isNetworkFee`](../src/api/feeType.ts) | function | Checks whether a fee type represents a fixed network/miner fee (miner fee, destination network fee, or gas fee). |
 
@@ -60,7 +60,7 @@ Re-exported from the generated API bindings ([`src/api/bindings/data-contracts.t
 |---|---|---|
 | [`RskSwapEnvironmentName`](../src/constants/environment.ts) | type | Available environment for the RskSwapSDK — `'Local' \| 'Development' \| 'Testnet' \| 'Mainnet'`. |
 | [`RskSwapEnvironment`](../src/constants/environment.ts) | interface | Configuration for a network environment the SDK can target (currently just its API base URL). |
-| [`RskSwapEnvironments`](../src/constants/environment.ts) | const | The concrete `RskSwapEnvironmentName -> RskSwapEnvironment` map — see [`setup.md`](./setup.md) for the base URL table. |
+| [`RskSwapEnvironments`](../src/constants/environment.ts) | type-only (declared as a `const`, but re-exported via `export type`) | The concrete `RskSwapEnvironmentName -> RskSwapEnvironment` map (see [`setup.md`](./setup.md) for the base URL table) — but since `index.ts` re-exports it with `export type { RskSwapEnvironments }`, it's usable only in type positions from the package entry point (e.g. `typeof RskSwapEnvironments`), not as a runtime value, despite being a `const` in `src/constants/environment.ts`. |
 
 ## Extension point
 
