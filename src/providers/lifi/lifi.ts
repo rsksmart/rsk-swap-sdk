@@ -4,6 +4,7 @@ import { type CreateSwapArgs } from '../../sdk/createSwap'
 import { type CreateSwapResult, type Swap, type Token, Routes } from '../../api'
 import { createApprovalHandler } from '../symbiosis/approval'
 
+/** {@link SwapProviderClient} implementation for LI.FI. Its swaps never require a claim, so it only implements the required contract methods; for ERC20 payments it attaches an approval step via `executePreSteps`. */
 export class LiFiClient implements SwapProviderClient {
   constructor (
     private readonly apiUrl: string,

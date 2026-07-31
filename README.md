@@ -96,7 +96,7 @@ If you want to contribute to the SDK or build it from source, you'll need to set
 Before setting up the project locally, ensure you have the following requirements:
 
 #### Node.js Version
-This project uses Node.js version **19.6.0** as specified in the `.nvmrc` file. To install and use the correct version:
+This project uses the Node.js version pinned in the `.nvmrc` file (currently **v24.14.1**). To install and use the correct version:
 
 1. If you're using `nvm` (Node Version Manager), run:
    ```bash
@@ -104,7 +104,7 @@ This project uses Node.js version **19.6.0** as specified in the `.nvmrc` file. 
    ```
    This will automatically switch to the version specified in `.nvmrc`.
 
-2. Alternatively, you can manually install Node.js v19.6.0 from [nodejs.org](https://nodejs.org/).
+2. Alternatively, you can manually install the matching Node.js version from [nodejs.org](https://nodejs.org/).
 
 #### Python 3
 The `prepare` script requires Python 3 to install and configure pre-commit hooks. Ensure Python 3 is installed on your system:
@@ -152,4 +152,23 @@ npm login --scope=@rsksmart --auth-type=legacy --registry=https://npm.pkg.github
 You'll need to provide your GitHub username and the classic token with `read:packages` scope mentioned in the [Development Prerequisites](#development-prerequisites) section above.
 
 ## Application Programming Interface
-To see the full API of this package please refer to the [the docs folder](./docs/) of this project
+This SDK's public surface is the [`RskSwapSDK`](./src/sdk/rskSwap.ts) class. See [`docs/api.md`](./docs/api.md) for the full table of exports.
+
+## Testing
+
+| Command | Purpose |
+|---|---|
+| `npm test` | Build the SDK, then run the Jest unit test suite |
+| `npm run test:coverage` | Same, with coverage collected from `./src/**` |
+| `npm run test:integration` | Run the integration test suite in [`integration-test/`](./integration-test) against a real Boltz submarine swap |
+
+## Documentation
+
+See [`docs/`](./docs/) for more:
+- [`docs/setup.md`](./docs/setup.md) — prerequisites, build/test commands, and the SDK's external dependencies (the RSK Swap API per environment, and `BlockchainConnection`)
+- [`docs/api.md`](./docs/api.md) — full table of the package's public exports
+- [`docs/providers.md`](./docs/providers.md) — the `SwapProviderClient` extension point, its bundled implementations (Boltz, Changelly, Symbiosis, LI.FI), and how to add a new one
+
+## Contributing
+
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for how to contribute to this project.

@@ -24,6 +24,10 @@ import { getSecp256k1 } from './secp256k1'
 import { type BoltzAtomicSwapFactory } from './factory'
 import { RSK_SWAP_ERROR_CODES } from '../../error/codes'
 
+/**
+ * {@link SwapProviderClient} implementation for Boltz, handling atomic swaps between Bitcoin, Lightning, and Rootstock.
+ * Routes each swap to the matching atomic-swap strategy (reverse swap, submarine swap, chain-swap-in, chain-swap-out) based on the origin/destination networks, and is the only bundled provider that implements the claim-related optional methods (`finalizeContext`, `buildClaimTransaction`, `executeExternalClaim`).
+ */
 export class BoltzClient implements SwapProviderClient {
   private readonly reverseSwap: ReverseSwap
   private readonly submarineSwap: SubmarineSwap

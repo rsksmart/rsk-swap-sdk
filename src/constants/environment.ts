@@ -1,6 +1,8 @@
 import { deepFreeze } from '@rsksmart/bridges-core-sdk'
 
+/** Configuration for a network environment the SDK can target. */
 export interface RskSwapEnvironment {
+  /** Base URL of the RSK Swap API for this environment. */
   api: string
 }
 
