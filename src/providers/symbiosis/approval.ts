@@ -27,18 +27,21 @@ export function createApprovalHandler (params: ApprovalParams): (connection: Blo
     const provider = abstraction.provider
     assertTruthy(provider, 'Signer must have a provider to check allowance')
 
+    // ethers only accepts EIP-55 addresses
+    const normalizedTokenAddress = tokenAddress.toLowerCase()
+    const normalizedSpender = spender.toLowerCase()
     const userAddress = await abstraction.getAddress()
     const requiredAmount = ethers.BigNumber.from(amount)
-    const tokenContract = new ethers.Contract(tokenAddress, ERC20_INTERFACE, provider)
+    const tokenContract = new ethers.Contract(normalizedTokenAddress, ERC20_INTERFACE, provider)
 
-    const currentAllowance: ethers.BigNumber = await tokenContract.allowance(userAddress, spender)
+    const currentAllowance: ethers.BigNumber = await tokenContract.allowance(userAddress, normalizedSpender)
     if (currentAllowance.gte(requiredAmount)) {
       return
     }
 
-    const approveData = ERC20_INTERFACE.encodeFunctionData('approve', [spender, requiredAmount])
+    const approveData = ERC20_INTERFACE.encodeFunctionData('approve', [normalizedSpender, requiredAmount])
     await connection.executeTransaction({
-      to: tokenAddress,
+      to: normalizedTokenAddress,
       data: approveData,
       value: '0x0'
     })
