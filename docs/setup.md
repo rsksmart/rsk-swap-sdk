@@ -4,18 +4,11 @@
 
 - **Node.js**: version pinned in [`.nvmrc`](../.nvmrc) (currently `v24.14.1`). If you use `nvm`, run `nvm use` from the project root.
 - **Python 3**: required by the `prepare` npm script, which installs and configures `pre-commit` hooks on `npm i`.
-- **GitHub personal access token** (only if installing a private version of the package from the GitHub npm registry): a **classic** token with the `read:packages` scope. Fine-grained tokens aren't supported.
 
 ## Install
 
 ```bash
 npm install @rsksmart/rsk-swap-sdk
-```
-
-To install a private version from the GitHub registry instead, authenticate first:
-
-```bash
-npm login --scope=@rsksmart --auth-type=legacy --registry=https://npm.pkg.github.com
 ```
 
 ## Build from source
