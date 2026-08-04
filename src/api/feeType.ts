@@ -12,8 +12,10 @@ export const FeeType = {
   FIXED_MOCK_FEE: 'FIXED_MOCK_FEE'
 } as const satisfies Record<FeeDTO['type'], FeeDTO['type']>
 
+/** The possible fee type identifiers a {@link Fee} can have, as returned by the API. */
 export type FeeType = FeeDTO['type']
 
+/** Checks whether a fee type is the percentage-based Boltz provider fee. */
 export const isPercentageFee = (t: FeeType): boolean =>
   t === FeeType.PERCENTAGE_BOLTZ_FEE
 
@@ -24,4 +26,5 @@ const NETWORK_FEE_TYPES: ReadonlySet<FeeType> = new Set<FeeType>([
   FeeType.FIXED_NETWORK_FEE
 ])
 
+/** Checks whether a fee type represents a fixed network/miner fee (miner fee, destination network fee, or gas fee). */
 export const isNetworkFee = (t: FeeType): boolean => NETWORK_FEE_TYPES.has(t)

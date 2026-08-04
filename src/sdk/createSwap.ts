@@ -4,6 +4,7 @@ import { type SwapWithAction } from '../providers/types'
 import { type ProviderClientResolver } from '../providers/resolver'
 import { RskSwapError } from '../error/error'
 
+/** Arguments to create a new swap with a specific provider (see {@link RskSwapSDK.createNewSwap}). The provider-specific `context` is generated internally by the SDK and can't be passed in. */
 export type CreateSwapArgs = Omit<CreateSwapRQ, 'context'>
 
 export async function createSwap (apiUrl: string, client: HttpClient, clientResolver: ProviderClientResolver, args: CreateSwapArgs): Promise<SwapWithAction> {

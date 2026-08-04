@@ -1,6 +1,8 @@
 import { toDataURL } from 'qrcode'
 
+/** Arguments for a Lightning (BOLT11) QR code. */
 export interface LightningQrCodeArgs {
+  /** The BOLT11 payment request string to encode as-is in the QR code. */
   lnPaymentString: string
 }
 
