@@ -16,7 +16,7 @@ export async function createSwap (apiUrl: string, client: HttpClient, clientReso
   }
   const url = new URL(apiUrl + Routes.createSwap)
   validateRequiredFields(request, ...createSwapArgsRequiredFields)
-  const result: CreateSwapResult = await client.post(url.toString(), request, { includeCaptcha: false })
+  const result: CreateSwapResult = await client.post(url.toString(), request, { includeCaptcha: true })
 
   if (!isValidApiResponse(request, result)) {
     throw RskSwapError.invalidApiResponse(request, result)

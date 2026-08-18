@@ -140,7 +140,7 @@ describe('createSwap function should', () => {
         toNetwork: 'BTC',
         context: { publicKey: 'k1' }
       },
-      { includeCaptcha: false }
+      { includeCaptcha: true }
     )
     expect(httpClient.post).toHaveBeenCalledTimes(1)
     expect(providerClientMock.createContext).toHaveBeenCalledTimes(1)
@@ -206,7 +206,7 @@ describe('createSwap function should', () => {
         toNetwork: 'BTC',
         context: { publicKey: 'k1' }
       },
-      { includeCaptcha: false }
+      { includeCaptcha: true }
     )
     expect(httpClient.post).toHaveBeenCalledTimes(1)
     expect(providerClientMock.createContext).toHaveBeenCalledTimes(1)

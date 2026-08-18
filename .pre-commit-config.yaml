@@ -29,6 +29,14 @@ repos:
       pass_filenames: false
 - repo: local
   hooks:
+    - id: sync-integration-lockfile
+      name: Sync integration-test lockfile
+      entry: npm install --package-lock-only --prefix integration-test
+      language: system
+      files: ^package\.json$
+      pass_filenames: false
+- repo: local
+  hooks:
     - id: unit-tests
       name: Project Unit Tests
       entry: npm run test
