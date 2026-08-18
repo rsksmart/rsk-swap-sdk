@@ -25,6 +25,7 @@ export type SymbiosisContext =
   | SymbiosisEvmContext
   | SymbiosisBtcContext
 
+/** {@link SwapProviderClient} implementation for Symbiosis. Its swaps never require a claim, so it only implements the required contract methods; for EVM contract-interaction swaps that need an ERC20 approval, it attaches an approval step via `executePreSteps`. */
 export class SymbiosisClient implements SwapProviderClient {
   constructor (
     private readonly apiUrl: string,

@@ -3,6 +3,7 @@ import { type Swap, type Token, type CreateSwapResult, Routes } from '../../api'
 import { type SwapAction, type ProviderContext, type SwapProviderClient } from '../../providers/types'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
 
+/** {@link SwapProviderClient} implementation for Changelly. Its swaps never require a claim, so it only implements the required contract methods. */
 export class ChangellyClient implements SwapProviderClient {
   private readonly ERC20_INTERFACE = new ethers.utils.Interface(['function transfer(address _to, uint _value) public'])
   constructor (
