@@ -25,5 +25,9 @@ export const RSK_SWAP_ERROR_CODES = deepFreeze({
   UNSUPPORTED_ACTION: {
     code: 'RskSwap-SDK-005',
     description: 'Unsupported action type'
+  },
+  INSUFFICIENT_BALANCE: {
+    code: 'RskSwap-SDK-006',
+    description: 'Insufficient balance to cover the swap amount'
   }
 } as const)
