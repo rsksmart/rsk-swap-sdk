@@ -2,7 +2,7 @@ import { type HttpClient, ethers, assertTruthy } from '@rsksmart/bridges-core-sd
 import { type Swap, type Token, type CreateSwapResult, Routes } from '../../api'
 import { type SwapAction, type ProviderContext, type SwapProviderClient } from '../../providers/types'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
-import { createApprovalHandler } from './approval'
+import { createApprovalHandler } from '../approval'
 
 export interface SymbiosisEvmContext {
   chainId: number
@@ -85,7 +85,8 @@ export class SymbiosisClient implements SwapProviderClient {
           action.executePreSteps = createApprovalHandler({
             tokenAddress: contextTokenAddress,
             spender: context.approveTo,
-            amount: context.approveAmount ?? swap.fromAmount.toString()
+            amount: context.approveAmount ?? swap.fromAmount.toString(),
+            transferAmount: swap.fromAmount.toString()
           })
         }
 

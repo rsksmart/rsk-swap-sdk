@@ -1,7 +1,7 @@
 import { describe, expect, test, jest, beforeEach } from '@jest/globals'
 import { type BlockchainConnection, ethers } from '@rsksmart/bridges-core-sdk'
-import { RskSwapError } from '../../error/error'
-import { RSK_SWAP_ERROR_CODES } from '../../error/codes'
+import { RskSwapError } from '../error/error'
+import { RSK_SWAP_ERROR_CODES } from '../error/codes'
 import { createApprovalHandler } from './approval'
 
 const BALANCE_OF = '0x70a08231'
@@ -41,7 +41,8 @@ describe('createApprovalHandler should', () => {
     } as unknown as BlockchainConnection
   })
 
-  const handler = (): Promise<void> => createApprovalHandler({ tokenAddress, spender, amount: amount.toString() })(connection)
+  const handler = (approveAmount: ethers.BigNumber = amount): Promise<void> =>
+    createApprovalHandler({ tokenAddress, spender, amount: approveAmount.toString(), transferAmount: amount.toString() })(connection)
 
   test('reject with INSUFFICIENT_BALANCE before requesting any approval when the balance is too low', async () => {
     balance = amount.sub(1)
@@ -66,5 +67,15 @@ describe('createApprovalHandler should', () => {
     await handler()
 
     expect(executeTransaction).not.toHaveBeenCalled()
+  })
+
+  test('check the balance against the transfer amount, not the approval amount', async () => {
+    const unlimited = ethers.constants.MaxUint256
+
+    await handler(unlimited)
+
+    expect(executeTransaction).toHaveBeenCalledTimes(1)
+    const approveData = (executeTransaction.mock.calls[0]?.[0] as { data: string }).data
+    expect(approveData.endsWith(unlimited.toHexString().slice(2))).toBe(true)
   })
 })
