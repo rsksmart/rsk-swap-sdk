@@ -110,7 +110,10 @@ describe('ChangellyClient should', () => {
     expect(httpMock.get).toHaveBeenCalledTimes(1)
     expect(httpMock.get).toHaveBeenCalledWith(apiUrl + '/tokens/USDT')
   })
-  test('generate action for EVM-NATIVE-PAYMENT', async () => {
+  test.each([
+    ['a bigint', BigInt('1255000000000000000')],
+    ['a decimal string', '1255000000000000000']
+  ])('generate action for EVM-NATIVE-PAYMENT with fromAmount as %s', async (_, fromAmount) => {
     httpMock.get.mockResolvedValueOnce({
       decimals: 18
     })
@@ -119,7 +122,7 @@ describe('ChangellyClient should', () => {
         providerSwapId: '123',
         refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         providerId: 'CHANGELLY',
-        fromAmount: BigInt('1255000000000000000'),
+        fromAmount: fromAmount as bigint,
         paymentAddress: '0xd5f00abfbea7a0b193836cac6833c2ad9d06cea8',
         receiverAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
         fromToken: 'ETH',

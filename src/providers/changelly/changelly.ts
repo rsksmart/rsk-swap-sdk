@@ -55,7 +55,7 @@ export class ChangellyClient implements SwapProviderClient {
           type: actionType,
           data: {
             to: swap.paymentAddress,
-            value: '0x' + swap.fromAmount.toString(16),
+            value: ethers.utils.hexValue(ethers.BigNumber.from(swap.fromAmount)),
             data: '0x'
           }
         }
