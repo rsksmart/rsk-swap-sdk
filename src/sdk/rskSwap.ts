@@ -36,6 +36,8 @@ import { claimSwap } from './claimSwap'
 import { DefaultBoltzAtomicSwapFactory } from '../providers/boltz/factory'
 import { getQrCode, type GetQrCodeArgs } from './getQrCode'
 import { LiFiClient } from '../providers/lifi/lifi'
+import { type Network } from 'bitcoinjs-lib'
+import { getBitcoinNetwork } from '../utils/chain'
 
 /** Options to customize the {@link RskSwapSDK} instance. */
 export interface RskSwapSDKOptions {
@@ -52,6 +54,7 @@ export interface RskSwapSDKOptions {
 export class RskSwapSDK {
   private readonly httpClient: HttpClient
   private readonly environment: RskSwapEnvironment
+  private readonly bitcoinNetwork: Network
   private connection: BlockchainConnection
   private readonly providerClientResolver: ProviderClientResolver
 
@@ -74,10 +77,11 @@ export class RskSwapSDK {
     const environment = RskSwapEnvironments[envName]
     assertTruthy(environment, `Environment ${envName} not found`)
     this.environment = environment
+    this.bitcoinNetwork = getBitcoinNetwork(this.environment)
     this.providerClientResolver = new ProviderClientResolver()
       .register('BOLTZ', new BoltzClient('Mainnet', connection, this.httpClient, new DefaultBoltzAtomicSwapFactory()))
-      .register('CHANGELLY', new ChangellyClient(this.environment.api, this.httpClient))
-      .register('SYMBIOSIS', new SymbiosisClient(this.environment.api, this.httpClient))
+      .register('CHANGELLY', new ChangellyClient(this.environment.api, this.httpClient, this.bitcoinNetwork))
+      .register('SYMBIOSIS', new SymbiosisClient(this.environment.api, this.httpClient, this.bitcoinNetwork))
       .register('LIFI', new LiFiClient(this.environment.api, this.httpClient))
   }
 
@@ -207,8 +211,10 @@ export class RskSwapSDK {
    *
    * @param { GetQrCodeArgs } args The QR-code type and payload.
    * @returns { string } A Base64 data URL representing the generated QR image.
+   *
+   * @throws { Error } For `BIP-21`, when the address is not a valid Bitcoin address for the SDK environment's network.
    */
   async getQrCode (args: GetQrCodeArgs): Promise<string> {
-    return getQrCode(args)
+    return getQrCode(args, this.bitcoinNetwork)
   }
 }

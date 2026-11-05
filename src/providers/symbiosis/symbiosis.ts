@@ -3,6 +3,9 @@ import { type Swap, type Token, type CreateSwapResult, Routes } from '../../api'
 import { type SwapAction, type ProviderContext, type SwapProviderClient } from '../../providers/types'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
 import { createApprovalHandler } from './approval'
+import { type Network } from 'bitcoinjs-lib'
+import { buildBip21Uri } from '../../utils/bip21'
+import { BTC_DECIMALS } from '../../constants/tokens'
 
 export interface SymbiosisEvmContext {
   chainId: number
@@ -29,7 +32,8 @@ export type SymbiosisContext =
 export class SymbiosisClient implements SwapProviderClient {
   constructor (
     private readonly apiUrl: string,
-    private readonly httpClient: HttpClient
+    private readonly httpClient: HttpClient,
+    private readonly bitcoinNetwork: Network
   ) {}
 
   createContext (_args: CreateSwapArgs): ProviderContext {
@@ -45,19 +49,18 @@ export class SymbiosisClient implements SwapProviderClient {
 
   async generateAction (createdSwap: CreateSwapResult): Promise<SwapAction> {
     const { swap, actionType } = createdSwap
-    const tokenInfo = await this.httpClient.get<Token>(this.apiUrl + Routes.getToken + swap.fromToken)
-
     switch (actionType) {
       case 'BIP21': {
         const { publicContext: context } = swap.context as { publicContext: SymbiosisBtcContext }
         assertTruthy(context.depositAddress, 'Missing deposit address in Symbiosis swap context')
         return {
           type: actionType,
-          data: `bitcoin:${context.depositAddress}?amount=${ethers.utils.formatUnits(swap.fromAmount, tokenInfo.decimals)}`,
+          data: buildBip21Uri({ address: context.depositAddress, amountInDecimal: ethers.utils.formatUnits(swap.fromAmount, BTC_DECIMALS) }, this.bitcoinNetwork),
           requiresClaim: false
         }
       }
       case 'CONTRACT-INTERACTION': {
+        const tokenInfo = await this.httpClient.get<Token>(this.apiUrl + Routes.getToken + swap.fromToken)
         const { publicContext: context } = swap.context as { publicContext: SymbiosisEvmContext }
         assertTruthy(context?.to, 'Missing "to" address in Symbiosis swap context')
         assertTruthy(context?.data, 'Missing transaction data in Symbiosis swap context')

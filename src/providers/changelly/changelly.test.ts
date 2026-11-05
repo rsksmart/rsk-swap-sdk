@@ -2,6 +2,7 @@ import { describe, expect, test, beforeEach, jest } from '@jest/globals'
 import { type HttpClient } from '@rsksmart/bridges-core-sdk'
 import { type CreatedSwap } from '../../api/index'
 import { ChangellyClient } from './changelly'
+import { networks } from 'bitcoinjs-lib'
 
 describe('ChangellyClient should', () => {
   const apiUrl = 'http://localhost:8080/api'
@@ -14,7 +15,7 @@ describe('ChangellyClient should', () => {
       post: jest.fn(),
       getCaptchaToken: jest.fn()
     } as jest.Mocked<HttpClient>
-    client = new ChangellyClient(apiUrl, httpMock)
+    client = new ChangellyClient(apiUrl, httpMock, networks.bitcoin)
   })
 
   test('create Changelly context', async () => {
@@ -33,20 +34,20 @@ describe('ChangellyClient should', () => {
       secretContext: {}
     })
   })
-  test('generate action for BIP21', async () => {
-    httpMock.get.mockResolvedValueOnce({ decimals: 8 })
-    const swap: CreatedSwap = {
+
+  function bip21Swap (address: string): CreatedSwap {
+    return {
       swap: {
         providerSwapId: '123',
         refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         providerId: 'CHANGELLY',
         fromAmount: BigInt(100000000),
-        paymentAddress: 'paymentAddress',
+        paymentAddress: address,
         receiverAddress: 'receiverAddress',
         fromToken: 'BTC',
         toToken: 'ETH',
-        fromNetwork: '1',
-        toNetwork: 'BTC',
+        fromNetwork: 'BTC',
+        toNetwork: '1',
         status: 'CREATED',
         requiredConfirmations: 3,
         usedFees: [
@@ -59,14 +60,25 @@ describe('ChangellyClient should', () => {
       },
       actionType: 'BIP21'
     }
-    const action = await client.generateAction(swap)
+  }
+
+  test('generate action for BIP21', async () => {
+    httpMock.get.mockResolvedValueOnce({ decimals: 5 })
+    const action = await client.generateAction(bip21Swap('bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq'))
     expect(action).toEqual({
       requiresClaim: false,
       type: 'BIP21',
-      data: 'bitcoin:paymentAddress?amount=1.0'
+      data: 'bitcoin:bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq?amount=1.0'
     })
-    expect(httpMock.get).toHaveBeenCalledTimes(1)
-    expect(httpMock.get).toHaveBeenCalledWith(apiUrl + '/tokens/BTC')
+    expect(httpMock.get).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    ['an address with a query string', 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq?amount=0.019&x='],
+    ['a testnet address', 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx']
+  ])('fail to generate BIP21 action for %s', async (_, address) => {
+    const swap = bip21Swap(address)
+    await expect(client.generateAction(swap)).rejects.toThrow(`Invalid Bitcoin address: ${address}`)
   })
   test('generate action for ERC20-PAYMENT', async () => {
     httpMock.get.mockResolvedValueOnce({
@@ -111,9 +123,6 @@ describe('ChangellyClient should', () => {
     expect(httpMock.get).toHaveBeenCalledWith(apiUrl + '/tokens/USDT')
   })
   test('generate action for EVM-NATIVE-PAYMENT', async () => {
-    httpMock.get.mockResolvedValueOnce({
-      decimals: 18
-    })
     const swap: CreatedSwap = {
       swap: {
         providerSwapId: '123',
@@ -148,8 +157,7 @@ describe('ChangellyClient should', () => {
         data: '0x'
       }
     })
-    expect(httpMock.get).toHaveBeenCalledTimes(1)
-    expect(httpMock.get).toHaveBeenCalledWith(apiUrl + '/tokens/ETH')
+    expect(httpMock.get).not.toHaveBeenCalled()
   })
   test('fail if actionType is not supported by Changelly', async () => {
     const swap: CreatedSwap = {

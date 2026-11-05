@@ -2,6 +2,7 @@ import { describe, expect, test, beforeEach, jest } from '@jest/globals'
 import { type HttpClient } from '@rsksmart/bridges-core-sdk'
 import { type CreatedSwap } from '../../api/index'
 import { SymbiosisClient, type SymbiosisEvmContext } from './symbiosis'
+import { networks } from 'bitcoinjs-lib'
 
 function createHttpMock (): jest.Mocked<HttpClient> {
   return {
@@ -18,7 +19,7 @@ describe('SymbiosisClient should', () => {
 
   beforeEach(() => {
     httpMock = createHttpMock()
-    client = new SymbiosisClient(apiUrl, httpMock)
+    client = new SymbiosisClient(apiUrl, httpMock, networks.bitcoin)
   })
 
   test('create empty context', () => {
@@ -58,9 +59,8 @@ describe('SymbiosisClient should', () => {
     expect(result).toBe(true)
   })
 
-  test('generate action for BIP21', async () => {
-    httpMock.get.mockResolvedValueOnce({ decimals: 8 })
-    const swap: CreatedSwap = {
+  function bip21Swap (address: string): CreatedSwap {
+    return {
       swap: {
         providerSwapId: '123',
         refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
@@ -77,23 +77,33 @@ describe('SymbiosisClient should', () => {
         usedFees: [],
         context: {
           publicContext: {
-            depositAddress: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
+            depositAddress: address,
             expiresAt: '2026-02-03T00:00:00Z'
           }
         }
       },
       actionType: 'BIP21'
     }
-    const action = await client.generateAction(swap)
+  }
+
+  test('generate action for BIP21', async () => {
+    httpMock.get.mockResolvedValueOnce({ decimals: 5 })
+    const action = await client.generateAction(bip21Swap('bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq'))
     expect(action).toEqual({
       requiresClaim: false,
       type: 'BIP21',
       data: 'bitcoin:bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq?amount=1.0'
     })
-    expect(httpMock.get).toHaveBeenCalledTimes(1)
-    expect(httpMock.get).toHaveBeenCalledWith(apiUrl + '/tokens/BTC')
+    expect(httpMock.get).not.toHaveBeenCalled()
   })
 
+  test.each([
+    ['an address with a query string', 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq?amount=0.019&x='],
+    ['a testnet address', 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx']
+  ])('fail to generate BIP21 action for %s', async (_, address) => {
+    const swap = bip21Swap(address)
+    await expect(client.generateAction(swap)).rejects.toThrow(`Invalid Bitcoin address: ${address}`)
+  })
   test('generate action for CONTRACT-INTERACTION', async () => {
     httpMock.get.mockResolvedValueOnce({ decimals: 18, type: 'native-evm', symbol: 'RBTC', addresses: {} })
     const context: SymbiosisEvmContext = {

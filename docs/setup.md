@@ -34,14 +34,14 @@ npm run build:clean # removes lib/ and node_modules, reinstalls, and builds
 
 This SDK is a client library — it has no server or database of its own to stand up. At runtime it depends on:
 
-- **The RSK Swap API** — the aggregator service this SDK talks to. Selected via the `envName` argument passed to the [`RskSwapSDK`](../src/sdk/rskSwap.ts) constructor (see [`api.md`](./api.md)), which maps to one of the base URLs below (see [`src/constants/environment.ts`](../src/constants/environment.ts)):
+- **The RSK Swap API** — the aggregator service this SDK talks to. Selected via the `envName` argument passed to the [`RskSwapSDK`](../src/sdk/rskSwap.ts) constructor (see [`api.md`](./api.md)), which maps to one of the base URLs and Bitcoin networks below (see [`src/constants/environment.ts`](../src/constants/environment.ts)):
 
-  | Environment | API base URL |
-  |---|---|
-  | `Local` | `http://localhost:8080/api` |
-  | `Development` | `https://rskswap.dev.flyover.rif.technology/api` |
-  | `Testnet` | `https://rskswap.testnet.flyover.rif.technology/api` |
-  | `Mainnet` | `https://rskswap.mainnet.flyover.rif.technology/api` |
+  | Environment | API base URL | Bitcoin network |
+  |---|---|---|
+  | `Local` | `http://localhost:8080/api` | `mainnet` |
+  | `Development` | `https://rskswap.dev.flyover.rif.technology/api` | `mainnet` |
+  | `Testnet` | `https://rskswap.testnet.flyover.rif.technology/api` | `testnet` |
+  | `Mainnet` | `https://rskswap.mainnet.flyover.rif.technology/api` | `mainnet` |
 
 - **A `BlockchainConnection`** (from [`@rsksmart/bridges-core-sdk`](https://github.com/rsksmart/bridges-core-sdk)) — passed into the `RskSwapSDK` constructor and used to broadcast EVM transactions during `executeSwap`/`claimSwap`. It must not be read-only.
 - **Third-party swap providers** (Boltz, Changelly, Symbiosis, LI.FI) — reached indirectly through the RSK Swap API and, for Boltz, directly for cooperative claim signing. See [`providers.md`](./providers.md).

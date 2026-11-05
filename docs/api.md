@@ -59,7 +59,7 @@ Re-exported from the generated API bindings ([`src/api/bindings/data-contracts.t
 | Export | Kind | Description |
 |---|---|---|
 | [`RskSwapEnvironmentName`](../src/constants/environment.ts) | type | Available environment for the RskSwapSDK — `'Local' \| 'Development' \| 'Testnet' \| 'Mainnet'`. |
-| [`RskSwapEnvironment`](../src/constants/environment.ts) | interface | Configuration for a network environment the SDK can target (currently just its API base URL). |
+| [`RskSwapEnvironment`](../src/constants/environment.ts) | interface | Configuration for a network environment the SDK can target: its API base URL and the Bitcoin network (`mainnet`, `testnet` or `regtest`) that BIP21 payment addresses are validated against. |
 | [`RskSwapEnvironments`](../src/constants/environment.ts) | type-only (declared as a `const`, but re-exported via `export type`) | The concrete `RskSwapEnvironmentName -> RskSwapEnvironment` map (see [`setup.md`](./setup.md) for the base URL table) — but since `index.ts` re-exports it with `export type { RskSwapEnvironments }`, it's usable only in type positions from the package entry point (e.g. `typeof RskSwapEnvironments`), not as a runtime value, despite being a `const` in `src/constants/environment.ts`. |
 
 ## Extension point
