@@ -8,12 +8,18 @@ on:
 permissions: read-all
 
 jobs:
-  publish:
+  build:
     permissions:
-      id-token: write
       contents: read
 
     runs-on: ubuntu-latest
+
+    outputs:
+      PACKAGE_NAME: ${{ steps.get_package_info.outputs.NPM_PACKAGE_NAME }}
+      PACKAGE_VERSION: ${{ steps.get_package_info.outputs.NPM_PACKAGE_VERSION }}
+      NODE_VERSION: ${{ steps.get_package_info.outputs.NODE_VERSION }}
+      TARBALL: ${{ steps.pack.outputs.TARBALL }}
+      PRE_UPLOAD_HASH: ${{ steps.pack.outputs.PRE_UPLOAD_HASH }}
 
     steps:
       - name: Checkout
@@ -35,6 +41,9 @@ jobs:
           echo PACKAGE_NAME=$(cat package.json | jq -r .name | cut -f2 -d"\"" | cut -f2 -d"@") >> $GITHUB_OUTPUT
           echo PACKAGE_VERSION="refs/tags/v"$(cat package.json | jq -r .version) >> $GITHUB_OUTPUT
           echo PACKAGE_REPOSITORY=$(cat package.json | jq -r .repository.url | sed 's/\+https//') >> $GITHUB_OUTPUT
+          echo NPM_PACKAGE_NAME=$(cat package.json | jq -r .name) >> $GITHUB_OUTPUT
+          echo NPM_PACKAGE_VERSION=$(cat package.json | jq -r .version) >> $GITHUB_OUTPUT
+          echo NODE_VERSION=$(cat .nvmrc) >> $GITHUB_OUTPUT
         id: get_package_info
 
       - name: Print outputs for debugging
@@ -45,6 +54,7 @@ jobs:
           echo "Package Version: ${{ steps.get_package_info.outputs.PACKAGE_VERSION }}"
           echo "GitHub Repository URL: ${{ github.repositoryUrl }}"
           echo "Package Repository: ${{ steps.get_package_info.outputs.PACKAGE_REPOSITORY }}"
+          echo "Node Version: ${{ steps.get_package_info.outputs.NODE_VERSION }}"
 
       - name: Check if package_name matches with repository name
         if: github.repository != steps.get_package_info.outputs.PACKAGE_NAME
@@ -65,10 +75,6 @@ jobs:
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e #v6.4.0
         with:
           node-version-file: '.nvmrc'
-          registry-url: https://registry.npmjs.org
-
-      - name: Update npm
-        run: npm install -g npm@latest
 
       - name: Clean install dependencies
         run: |
@@ -77,18 +83,62 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Pre upload validation
+      - name: Pack
         id: pack
         run: |
           rm -f *.tgz
-          PRE_UPLOAD_HASH=$(npm pack --dry-run 2>&1 | grep 'shasum:' | awk '{print $NF}')
+          TARBALL=$(npm pack --json | jq -r '.[0].filename')
+          PRE_UPLOAD_HASH=$(sha1sum "$TARBALL" | awk '{print $1}')
+          echo "TARBALL=$TARBALL" >> $GITHUB_OUTPUT
           echo "PRE_UPLOAD_HASH=$PRE_UPLOAD_HASH" >> $GITHUB_OUTPUT
+          echo "TARBALL: $TARBALL"
           echo "PRE_UPLOAD_HASH: $PRE_UPLOAD_HASH"
+
+      - name: Upload package tarball
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: package-tarball
+          path: ${{ steps.pack.outputs.TARBALL }}
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: build
+
+    environment: npm-publish
+
+    permissions:
+      id-token: write
+      contents: read
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download package tarball
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: package-tarball
+
+      - name: Verify downloaded tarball
+        run: |
+          DOWNLOADED_HASH=$(sha1sum "${{ needs.build.outputs.TARBALL }}" | awk '{print $1}')
+          echo "DOWNLOADED_HASH: $DOWNLOADED_HASH"
+          echo "PRE_UPLOAD_HASH: ${{ needs.build.outputs.PRE_UPLOAD_HASH }}"
+          if [ "$DOWNLOADED_HASH" != "${{ needs.build.outputs.PRE_UPLOAD_HASH }}" ]; then
+            echo "Hash mismatch detected!"
+            exit 1
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e #v6.4.0
+        with:
+          node-version: ${{ needs.build.outputs.NODE_VERSION }}
+          registry-url: https://registry.npmjs.org
 
       - name: Check if version is already published
         run: |
-          PACKAGE_NAME=$(cat package.json | jq -r .name)
-          PACKAGE_VERSION=$(cat package.json | jq -r .version)
+          PACKAGE_NAME="${{ needs.build.outputs.PACKAGE_NAME }}"
+          PACKAGE_VERSION="${{ needs.build.outputs.PACKAGE_VERSION }}"
 
           if npm view $PACKAGE_NAME@$PACKAGE_VERSION > /dev/null 2>&1; then
             echo "Version $PACKAGE_VERSION of $PACKAGE_NAME is already published."
@@ -99,19 +149,16 @@ jobs:
 
       - name: Upload beta package
         if: github.event_name == 'release' && github.event.release.prerelease == true
-        run: npm publish --tag beta
+        run: npm publish "./${{ needs.build.outputs.TARBALL }}" --tag beta
 
       - name: Upload package
         if: github.event_name == 'release' && github.event.release.prerelease == false
-        run: npm publish
+        run: npm publish "./${{ needs.build.outputs.TARBALL }}"
 
       - name: Post upload validation
         id: unpack
         run: |
-          # Get the package name and version
-          PACKAGE_NAME=$(cat package.json | jq -r .name)
-          PACKAGE_VERSION=$(cat package.json | jq -r .version)
-          FULL_PACKAGE_NAME="${PACKAGE_NAME}@${PACKAGE_VERSION}"
+          FULL_PACKAGE_NAME="${{ needs.build.outputs.PACKAGE_NAME }}@${{ needs.build.outputs.PACKAGE_VERSION }}"
 
           # Wait for package propagation
           echo "Waiting for package propagation..."
@@ -125,10 +172,10 @@ jobs:
       - name: Pre and Post Upload validation
         run: |
           echo "Comparing hashes..."
-          echo "PRE_UPLOAD_HASH: '${{ steps.pack.outputs.PRE_UPLOAD_HASH }}'"
+          echo "PRE_UPLOAD_HASH: '${{ needs.build.outputs.PRE_UPLOAD_HASH }}'"
           echo "POST_UPLOAD_HASH: '${{ steps.unpack.outputs.POST_UPLOAD_HASH }}'"
 
-          if [ "${{ steps.pack.outputs.PRE_UPLOAD_HASH }}" != "${{ steps.unpack.outputs.POST_UPLOAD_HASH }}" ]; then
+          if [ "${{ needs.build.outputs.PRE_UPLOAD_HASH }}" != "${{ steps.unpack.outputs.POST_UPLOAD_HASH }}" ]; then
             echo "Hash mismatch detected!"
             exit 1
           fi
