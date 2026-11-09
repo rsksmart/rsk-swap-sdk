@@ -120,11 +120,23 @@ jobs:
           name: package-tarball
 
       - name: Verify downloaded tarball
+        env:
+          TARBALL: ${{ needs.build.outputs.TARBALL }}
+          PRE_UPLOAD_HASH: ${{ needs.build.outputs.PRE_UPLOAD_HASH }}
         run: |
-          DOWNLOADED_HASH=$(sha1sum "${{ needs.build.outputs.TARBALL }}" | awk '{print $1}')
+          set -euo pipefail
+          if [[ ! "$TARBALL" =~ ^[A-Za-z0-9._-]+\.tgz$ ]] || [ ! -f "$TARBALL" ] || [ -L "$TARBALL" ]; then
+            echo "Invalid tarball: '$TARBALL'"
+            exit 1
+          fi
+          if [[ ! "$PRE_UPLOAD_HASH" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Invalid PRE_UPLOAD_HASH: '$PRE_UPLOAD_HASH'"
+            exit 1
+          fi
+          DOWNLOADED_HASH=$(sha1sum "$TARBALL" | awk '{print $1}')
           echo "DOWNLOADED_HASH: $DOWNLOADED_HASH"
-          echo "PRE_UPLOAD_HASH: ${{ needs.build.outputs.PRE_UPLOAD_HASH }}"
-          if [ "$DOWNLOADED_HASH" != "${{ needs.build.outputs.PRE_UPLOAD_HASH }}" ]; then
+          echo "PRE_UPLOAD_HASH: $PRE_UPLOAD_HASH"
+          if [ "$DOWNLOADED_HASH" != "$PRE_UPLOAD_HASH" ]; then
             echo "Hash mismatch detected!"
             exit 1
           fi
@@ -136,11 +148,11 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Check if version is already published
+        env:
+          PACKAGE_NAME: ${{ needs.build.outputs.PACKAGE_NAME }}
+          PACKAGE_VERSION: ${{ needs.build.outputs.PACKAGE_VERSION }}
         run: |
-          PACKAGE_NAME="${{ needs.build.outputs.PACKAGE_NAME }}"
-          PACKAGE_VERSION="${{ needs.build.outputs.PACKAGE_VERSION }}"
-
-          if npm view $PACKAGE_NAME@$PACKAGE_VERSION > /dev/null 2>&1; then
+          if npm view "$PACKAGE_NAME@$PACKAGE_VERSION" > /dev/null 2>&1; then
             echo "Version $PACKAGE_VERSION of $PACKAGE_NAME is already published."
             exit 0
           fi
@@ -149,33 +161,43 @@ jobs:
 
       - name: Upload beta package
         if: github.event_name == 'release' && github.event.release.prerelease == true
-        run: npm publish "./${{ needs.build.outputs.TARBALL }}" --tag beta
+        env:
+          TARBALL: ${{ needs.build.outputs.TARBALL }}
+        run: npm publish "./$TARBALL" --tag beta
 
       - name: Upload package
         if: github.event_name == 'release' && github.event.release.prerelease == false
-        run: npm publish "./${{ needs.build.outputs.TARBALL }}"
+        env:
+          TARBALL: ${{ needs.build.outputs.TARBALL }}
+        run: npm publish "./$TARBALL"
 
       - name: Post upload validation
         id: unpack
+        env:
+          PACKAGE_NAME: ${{ needs.build.outputs.PACKAGE_NAME }}
+          PACKAGE_VERSION: ${{ needs.build.outputs.PACKAGE_VERSION }}
         run: |
-          FULL_PACKAGE_NAME="${{ needs.build.outputs.PACKAGE_NAME }}@${{ needs.build.outputs.PACKAGE_VERSION }}"
+          FULL_PACKAGE_NAME="$PACKAGE_NAME@$PACKAGE_VERSION"
 
           # Wait for package propagation
           echo "Waiting for package propagation..."
           sleep 15
 
           # Fetch the shasum from npm
-          POST_UPLOAD_HASH=$(npm view $FULL_PACKAGE_NAME dist.shasum)
+          POST_UPLOAD_HASH=$(npm view "$FULL_PACKAGE_NAME" dist.shasum)
           echo "POST_UPLOAD_HASH=$POST_UPLOAD_HASH" >> $GITHUB_OUTPUT
           echo "POST_UPLOAD_HASH: $POST_UPLOAD_HASH"
 
       - name: Pre and Post Upload validation
+        env:
+          PRE_UPLOAD_HASH: ${{ needs.build.outputs.PRE_UPLOAD_HASH }}
+          POST_UPLOAD_HASH: ${{ steps.unpack.outputs.POST_UPLOAD_HASH }}
         run: |
           echo "Comparing hashes..."
-          echo "PRE_UPLOAD_HASH: '${{ needs.build.outputs.PRE_UPLOAD_HASH }}'"
-          echo "POST_UPLOAD_HASH: '${{ steps.unpack.outputs.POST_UPLOAD_HASH }}'"
+          echo "PRE_UPLOAD_HASH: '$PRE_UPLOAD_HASH'"
+          echo "POST_UPLOAD_HASH: '$POST_UPLOAD_HASH'"
 
-          if [ "${{ needs.build.outputs.PRE_UPLOAD_HASH }}" != "${{ steps.unpack.outputs.POST_UPLOAD_HASH }}" ]; then
+          if [ "$PRE_UPLOAD_HASH" != "$POST_UPLOAD_HASH" ]; then
             echo "Hash mismatch detected!"
             exit 1
           fi
