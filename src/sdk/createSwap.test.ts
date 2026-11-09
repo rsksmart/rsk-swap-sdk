@@ -325,6 +325,16 @@ describe('createSwap function should', () => {
       expect(providerClientMock.generateAction).not.toHaveBeenCalled()
     })
 
+    test('as an unsafe integer number matching the request, fail', async () => {
+      const unsafeAmount = 9007199254740992 // Number.MAX_SAFE_INTEGER + 1
+      const result = structuredClone(mockResult)
+      result.swap.fromAmount = unsafeAmount
+      httpClient.post = jest.fn<any>().mockResolvedValueOnce(result)
+      await expect(createSwap('http://localhost:8080', httpClient, providerResolver, { ...params, fromAmount: BigInt(unsafeAmount) })).rejects.toThrow('The result returned with the API doesn\'t match with the request')
+      expect(providerClientMock.validateAddress).not.toHaveBeenCalled()
+      expect(providerClientMock.generateAction).not.toHaveBeenCalled()
+    })
+
     test('as a number, return it as the request bigint', async () => {
       const result = structuredClone(mockResult)
       result.swap.fromAmount = 500
