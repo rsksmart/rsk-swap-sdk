@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Integration tests for RskSwapSDK",
     "scripts": {
-        "test:integration": "npm ci && jest --verbose --testPathPattern=test/changelly.test.ts",
+        "test:integration": "npm ci && jest --verbose",
         "lint": "npx eslint --fix .",
         "lint:validate": "npx eslint ."
     },
