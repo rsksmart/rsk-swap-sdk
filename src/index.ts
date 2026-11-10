@@ -17,7 +17,6 @@ export {
   type GetSwapArgs,
   type Token,
   FeeType,
-  isPercentageFee,
   isNetworkFee
 } from './api'
 export type {
@@ -28,6 +27,5 @@ export type {
 export type {
   GetQrCodeArgs,
   Bip21QrCodeArgs,
-  Eip681QrCodeArgs,
-  LightningQrCodeArgs
+  Eip681QrCodeArgs
 } from './sdk/getQrCode'

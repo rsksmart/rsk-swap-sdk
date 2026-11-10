@@ -87,8 +87,7 @@ describe('createSwap function should', () => {
         to: 'a-payment-address',
         data: 'some-data',
         value: '0x02BC'
-      },
-      requiresClaim: false
+      }
     })
     const result = await createSwap(url, httpClient, providerResolver, params)
     expect(serializer.stringify(result)).toEqual(serializer.stringify({
@@ -122,8 +121,7 @@ describe('createSwap function should', () => {
           to: 'a-payment-address',
           data: 'some-data',
           value: '0x02BC'
-        },
-        requiresClaim: false
+        }
       }
     })
     )
@@ -215,63 +213,6 @@ describe('createSwap function should', () => {
     expect(providerClientMock.validateAddress).toHaveBeenCalledWith(mockResult.swap)
   })
 
-  test('call finalizeContext when defined and use its result as swap context', async () => {
-    const url = 'http://localhost:8080'
-    const params: CreateSwapArgs = {
-      providerId: 'PROVIDER1',
-      address: 'a-receiver-address',
-      fromToken: 'ETH',
-      toToken: 'BTC',
-      fromAmount: BigInt(500),
-      refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
-      fromNetwork: '1',
-      toNetwork: 'BTC'
-    }
-    const finalizedContext = {
-      publicContext: { publicKey: 'k1' },
-      secretContext: { privateKey: 'k2', swapTree: '{}', timeoutBlockHeight: 100, claimPublicKey: 'serverKey', version: 3 }
-    }
-    providerClientMock.finalizeContext = jest.fn<any>().mockReturnValue(finalizedContext)
-    providerClientMock.validateAddress.mockResolvedValue(true)
-    providerClientMock.generateAction.mockResolvedValue({
-      type: 'ERC20-PAYMENT',
-      data: { to: 'a-payment-address', data: 'some-data', value: '0x02BC' },
-      requiresClaim: false
-    })
-    const result = await createSwap(url, httpClient, providerResolver, params)
-    expect(providerClientMock.finalizeContext).toHaveBeenCalledTimes(1)
-    expect(result.swap.context).toEqual(finalizedContext)
-  })
-
-  test('should keep rescueMnemonic inside swap.context.secretContext when present', async () => {
-    const url = 'http://localhost:8080'
-    const params: CreateSwapArgs = {
-      providerId: 'PROVIDER1',
-      address: 'a-receiver-address',
-      fromToken: 'ETH',
-      toToken: 'BTC',
-      fromAmount: BigInt(500),
-      refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
-      fromNetwork: '1',
-      toNetwork: 'BTC'
-    }
-    const testMnemonic = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about'
-    providerClientMock.createContext.mockReturnValue({
-      publicContext: { publicKey: 'k1' },
-      secretContext: { privateKey: 'k2', rescueMnemonic: testMnemonic }
-    })
-    providerClientMock.validateAddress.mockResolvedValue(true)
-    providerClientMock.generateAction.mockResolvedValue({
-      type: 'BIP21',
-      data: 'bitcoin:someaddress?amount=0.000005',
-      requiresClaim: true
-    })
-    const result = await createSwap(url, httpClient, providerResolver, params)
-    const secretContext = (result.swap.context as { secretContext: { rescueMnemonic?: string } }).secretContext
-    expect(secretContext.rescueMnemonic).toBe(testMnemonic)
-    expect((result as unknown as { rescueMnemonic?: string }).rescueMnemonic).toBeUndefined()
-  })
-
   test('fail on manipulated context', async () => {
     const url = 'http://localhost:8080'
     const params: CreateSwapArgs = {
@@ -291,8 +232,7 @@ describe('createSwap function should', () => {
         to: 'a-payment-address',
         data: 'some-data',
         value: '0x02BC'
-      },
-      requiresClaim: false
+      }
     })
     const manipulatedResult = structuredClone(mockResult);
     (manipulatedResult.swap.context as { publicKey: string }).publicKey = 'manipulated-key'

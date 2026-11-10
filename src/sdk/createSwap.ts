@@ -30,7 +30,7 @@ export async function createSwap (apiUrl: string, client: HttpClient, clientReso
     },
     secretContext: context.secretContext
   }
-  result.swap.context = swapProviderClient.finalizeContext?.(baseContext, result.swap) ?? baseContext
+  result.swap.context = baseContext
 
   const isValidAddress = await swapProviderClient.validateAddress(result.swap)
   if (!isValidAddress) {

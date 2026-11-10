@@ -86,7 +86,6 @@ describe('SymbiosisClient should', () => {
     }
     const action = await client.generateAction(swap)
     expect(action).toEqual({
-      requiresClaim: false,
       type: 'BIP21',
       data: 'bitcoin:bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq?amount=1.0'
     })
@@ -129,7 +128,6 @@ describe('SymbiosisClient should', () => {
     }
     const action = await client.generateAction(swap)
     expect(action).toEqual({
-      requiresClaim: false,
       type: 'CONTRACT-INTERACTION',
       data: {
         to: '0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8',
@@ -174,7 +172,6 @@ describe('SymbiosisClient should', () => {
     }
     const action = await client.generateAction(swap)
     expect(action).toEqual({
-      requiresClaim: false,
       type: 'CONTRACT-INTERACTION',
       data: {
         to: '0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8',
@@ -273,7 +270,6 @@ describe('SymbiosisClient should', () => {
     }
     const action = await client.generateAction(swap)
     expect(action.type).toBe('CONTRACT-INTERACTION')
-    expect(action.requiresClaim).toBe(false)
     expect(action.data).toEqual({
       to: '0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8',
       data: '0xabcdef1234567890',
@@ -319,7 +315,6 @@ describe('SymbiosisClient should', () => {
     }
     const action = await client.generateAction(swap)
     expect(action.type).toBe('CONTRACT-INTERACTION')
-    expect(action.requiresClaim).toBe(false)
     expect(action.data).toEqual({
       to: '0x7057ab3fb2bee9c18e0cde4240de4ff7f159e365',
       data: '0xabcdef1234567890',

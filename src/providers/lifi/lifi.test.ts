@@ -50,7 +50,6 @@ describe('LiFiClient should', () => {
     const action = await client.generateAction(createdSwap)
 
     expect(action.type).toBe('ERC20-PAYMENT')
-    expect(action.requiresClaim).toBe(false)
     expect(action.data).toEqual(expectedTxData)
     expect(httpClient.get).toHaveBeenCalled()
     expect(action.executePreSteps).toBeDefined()
@@ -73,7 +72,6 @@ describe('LiFiClient should', () => {
     const action = await client.generateAction(createdSwap)
 
     expect(action.type).toBe('EVM-NATIVE-PAYMENT')
-    expect(action.requiresClaim).toBe(false)
     expect(action.data).toEqual(expectedTxData)
     expect(action.executePreSteps).toBeUndefined()
   })
@@ -86,17 +84,6 @@ describe('LiFiClient should', () => {
 
     await expect(client.generateAction(createdSwap)).rejects.toThrow(
       'Action type BIP21 not supported for LI.FI'
-    )
-  })
-
-  test('reject unsupported BOLT11 action type', async () => {
-    const createdSwap: CreateSwapResult = {
-      swap: baseSwap,
-      actionType: 'BOLT11'
-    }
-
-    await expect(client.generateAction(createdSwap)).rejects.toThrow(
-      'Action type BOLT11 not supported for LI.FI'
     )
   })
 

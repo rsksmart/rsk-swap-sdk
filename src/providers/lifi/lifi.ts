@@ -4,7 +4,7 @@ import { type CreateSwapArgs } from '../../sdk/createSwap'
 import { type CreateSwapResult, type Swap, type Token, Routes } from '../../api'
 import { createApprovalHandler } from '../symbiosis/approval'
 
-/** {@link SwapProviderClient} implementation for LI.FI. Its swaps never require a claim, so it only implements the required contract methods; for ERC20 payments it attaches an approval step via `executePreSteps`. */
+/** {@link SwapProviderClient} implementation for LI.FI. It only implements the required contract methods; for ERC20 payments it attaches an approval step via `executePreSteps`. */
 export class LiFiClient implements SwapProviderClient {
   constructor (
     private readonly apiUrl: string,
@@ -35,7 +35,7 @@ export class LiFiClient implements SwapProviderClient {
         if (swap.paymentAddress && ethers.utils.getAddress(swap.paymentAddress) !== ethers.utils.getAddress(to)) {
           throw new Error(`LI.FI payment address mismatch: ${swap.paymentAddress} !== ${to}`)
         }
-        const action: SwapAction = { type: actionType, data: { to, data, value }, requiresClaim: false }
+        const action: SwapAction = { type: actionType, data: { to, data, value } }
         if (actionType === 'ERC20-PAYMENT') {
           const tokenInfo = await this.httpClient.get<Token>(this.apiUrl + Routes.getToken + swap.fromToken)
           const tokenAddress = tokenInfo.addresses[swap.fromNetwork]

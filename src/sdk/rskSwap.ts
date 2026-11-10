@@ -29,11 +29,8 @@ import { getPrices, type GetPricesArgs } from './getPrices'
 import { listTokens } from './listTokens'
 import { type SwapAction, type SwapWithAction } from '../providers/types'
 import { ProviderClientResolver } from '../providers/resolver'
-import { BoltzClient } from '../providers/boltz/boltz'
 import { ChangellyClient } from '../providers/changelly/changelly'
 import { SymbiosisClient } from '../providers/symbiosis/symbiosis'
-import { claimSwap } from './claimSwap'
-import { DefaultBoltzAtomicSwapFactory } from '../providers/boltz/factory'
 import { getQrCode, type GetQrCodeArgs } from './getQrCode'
 import { LiFiClient } from '../providers/lifi/lifi'
 
@@ -75,7 +72,6 @@ export class RskSwapSDK {
     assertTruthy(environment, `Environment ${envName} not found`)
     this.environment = environment
     this.providerClientResolver = new ProviderClientResolver()
-      .register('BOLTZ', new BoltzClient('Mainnet', connection, this.httpClient, new DefaultBoltzAtomicSwapFactory()))
       .register('CHANGELLY', new ChangellyClient(this.environment.api, this.httpClient))
       .register('SYMBIOSIS', new SymbiosisClient(this.environment.api, this.httpClient))
       .register('LIFI', new LiFiClient(this.environment.api, this.httpClient))
@@ -152,7 +148,6 @@ export class RskSwapSDK {
   /**
    * Execute the payment of a swap. Depending on the action, this method will behave differently.
    * - Bitcoin payment: The method will return a BIP21 string for the user to pay.
-   * - Lightning payment: The method will return a BOLT11 string for the user to pay.
    * - Native EVM token payment: The method will try to execute the payment transaction using the current {@link BlockchainConnection} and return the transaction hash.
    * - ERC20 token payment: The method will try to execute the payment transaction using the current {@link BlockchainConnection} and return the transaction hash. It will format the transaction data and destination accordingly.
    *
@@ -161,19 +156,6 @@ export class RskSwapSDK {
    */
   async executeSwap (action: SwapAction): Promise<string> {
     return executeSwap(this.connection, action)
-  }
-
-  /**
-   * Claims an existing swap if applicable. It will execute the claim transaction on the blockchain.
-   *
-   * @param { SwapWithAction } swap The swap to claim
-   * @returns { string } The transaction hash of the claim transaction
-   *
-   * @throws { RskSwapError } If the swap does not require a claim
-   */
-  async claimSwap (swap: SwapWithAction): Promise<string> {
-    const result = await claimSwap(this.providerClientResolver, swap, this.connection)
-    return result.txHash
   }
 
   /**
@@ -203,7 +185,6 @@ export class RskSwapSDK {
    * Supports:
    * - `BIP-21` for Bitcoin payments.
    * - `EIP-681` for EVM native-token and ERC20 payments.
-   * - `BOLT11` for Lightning invoices.
    *
    * @param { GetQrCodeArgs } args The QR-code type and payload.
    * @returns { string } A Base64 data URL representing the generated QR image.

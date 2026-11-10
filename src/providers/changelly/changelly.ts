@@ -3,7 +3,7 @@ import { type Swap, type Token, type CreateSwapResult, Routes } from '../../api'
 import { type SwapAction, type ProviderContext, type SwapProviderClient } from '../../providers/types'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
 
-/** {@link SwapProviderClient} implementation for Changelly. Its swaps never require a claim, so it only implements the required contract methods. */
+/** {@link SwapProviderClient} implementation for Changelly. It only implements the required contract methods. */
 export class ChangellyClient implements SwapProviderClient {
   private readonly ERC20_INTERFACE = new ethers.utils.Interface(['function transfer(address _to, uint _value) public'])
   constructor (
@@ -30,14 +30,12 @@ export class ChangellyClient implements SwapProviderClient {
       case 'BIP21':
         return {
           type: actionType,
-          data: `bitcoin:${swap.paymentAddress}?amount=${ethers.utils.formatUnits(swap.fromAmount, tokenInfo.decimals)}`,
-          requiresClaim: false
+          data: `bitcoin:${swap.paymentAddress}?amount=${ethers.utils.formatUnits(swap.fromAmount, tokenInfo.decimals)}`
         }
       case 'ERC20-PAYMENT': {
         const tokenAddress = tokenInfo.addresses[swap.fromNetwork]
         assertTruthy(tokenAddress, `Token ${tokenInfo.symbol} is not available on ${swap.fromNetwork}`)
         return {
-          requiresClaim: false,
           type: actionType,
           data: {
             to: tokenAddress,
@@ -51,7 +49,6 @@ export class ChangellyClient implements SwapProviderClient {
       }
       case 'EVM-NATIVE-PAYMENT':
         return {
-          requiresClaim: false,
           type: actionType,
           data: {
             to: swap.paymentAddress,

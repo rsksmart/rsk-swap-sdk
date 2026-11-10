@@ -28,7 +28,7 @@ npm run build:clean # removes lib/ and node_modules, reinstalls, and builds
 |---|---|
 | `npm test` | Builds the SDK, then runs the Jest unit test suite (`--verbose`) |
 | `npm run test:coverage` | Same, with coverage collected from `./src/**` |
-| `npm run test:integration` | Runs the suite in [`integration-test/`](../integration-test), a separate npm package that installs this SDK from the local `lib` build and exercises it against a real Boltz submarine swap |
+| `npm run test:integration` | Runs the suite in [`integration-test/`](../integration-test), a separate npm package that installs this SDK from the local `lib` build and exercises it against a running RSK Swap API |
 
 ## External dependencies
 
@@ -43,5 +43,5 @@ This SDK is a client library — it has no server or database of its own to stan
   | `Testnet` | `https://rskswap.testnet.flyover.rif.technology/api` |
   | `Mainnet` | `https://rskswap.mainnet.flyover.rif.technology/api` |
 
-- **A `BlockchainConnection`** (from [`@rsksmart/bridges-core-sdk`](https://github.com/rsksmart/bridges-core-sdk)) — passed into the `RskSwapSDK` constructor and used to broadcast EVM transactions during `executeSwap`/`claimSwap`. It must not be read-only.
-- **Third-party swap providers** (Boltz, Changelly, Symbiosis, LI.FI) — reached indirectly through the RSK Swap API and, for Boltz, directly for cooperative claim signing. See [`providers.md`](./providers.md).
+- **A `BlockchainConnection`** (from [`@rsksmart/bridges-core-sdk`](https://github.com/rsksmart/bridges-core-sdk)) — passed into the `RskSwapSDK` constructor and used to broadcast EVM transactions during `executeSwap`. It must not be read-only.
+- **Third-party swap providers** (Changelly, Symbiosis, LI.FI) — reached through the RSK Swap API. See [`providers.md`](./providers.md).

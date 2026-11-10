@@ -1,5 +1,5 @@
 import { describe, expect, test, beforeEach, jest } from '@jest/globals'
-import { getQrCode, type GetQrCodeArgs, type Bip21QrCodeArgs, type Eip681QrCodeArgs, type LightningQrCodeArgs } from './getQrCode'
+import { getQrCode, type GetQrCodeArgs, type Bip21QrCodeArgs, type Eip681QrCodeArgs } from './getQrCode'
 
 // Get the mocked function after jest.mock is called
 import { toDataURL } from 'qrcode'
@@ -203,41 +203,6 @@ describe('getQrCode function', () => {
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb?value=250000000000000000')
-    })
-  })
-
-  describe('BOLT11 (Lightning Network Payment Requests)', () => {
-    test('generates QR code for Lightning payment invoice', async () => {
-      const bolt11Invoice = 'lnbc1u1pn6l3w9pp5sqc4rzksna7s9hywvq68dql9dgkezy2v98jy6mp93e2nhp55hemssp5v63fszy4rg07jr9wq3j77jrdlkpukgh7jhpa6s4pnwvm56mpwv4sdqqcqzynxqyz5vq9qlzqqqqqqqqqqqqqqqqqqqqqqqqqq9qsqfppqae00zxdre6mkvc7elsr73pkrn8dm52dqrzjq2gyp9za7vc7vd8m59fvu63pu00u4pak35n4upuv4mhyw5l586dvh7rv45jtam8pusqqqqqpqqqqqzsqqc82cvkfhff3k9n5mz2d9lvkjar3xp3nc26jspjhetpdqan96765pju2qqge8glf3fyycvdw5lc7d3gs6vcpwqtl8qfecztut0r2glslspp8yq3v'
-      const data: LightningQrCodeArgs = {
-        lnPaymentString: bolt11Invoice
-      }
-      const args: GetQrCodeArgs = {
-        type: 'BOLT11',
-        data
-      }
-
-      const result = await getQrCode(args)
-
-      expect(result).toBe(mockQrCodeDataUrl)
-      expect(mockedToDataURL).toHaveBeenCalledWith(bolt11Invoice)
-      expect(mockedToDataURL).toHaveBeenCalledTimes(1)
-    })
-
-    test('generates QR code for a shorter Lightning invoice', async () => {
-      const bolt11Invoice = 'lnbc100n1pn6l3w9pp5sqc4rzksna7s9hywvq68dql9dgkezy2v98jy6mp93e2nhp55hemssp5v63fszy4rg07jr9wq3j77jrdlkpukgh7jhpa6s4pnwvm56mpwv4sdqqcqzynxqyz5vq9qlzqqqqqqqqqqqqqqqqqqqqqqqqqq9qsqfppqae00zxdre6mkvc7elsr73pkrn8dm52dqrzjq2gyp9za7vc7vd8m59fvu63pu00u4pak35n4upuv4mhyw5l586dvh7rv45jtam8pusqqqqqpqqqqqzsqqc82cvkfhff3k9n5mz2d9lvkjar3xp3nc26jspjhetpdqan96765pju2qqge8glf3fyycvdw5lc7d3gs6vcpwqtl8qfecztut0r2glslspp8yq3v'
-      const data: LightningQrCodeArgs = {
-        lnPaymentString: bolt11Invoice
-      }
-      const args: GetQrCodeArgs = {
-        type: 'BOLT11',
-        data
-      }
-
-      const result = await getQrCode(args)
-
-      expect(result).toBe(mockQrCodeDataUrl)
-      expect(mockedToDataURL).toHaveBeenCalledWith(bolt11Invoice)
     })
   })
 

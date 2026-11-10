@@ -8,8 +8,6 @@ export async function executeSwap (connection: BlockchainConnection, action: Swa
       return ''
     case 'BIP21':
       return returnQrCodeData(action)
-    case 'BOLT11':
-      return returnQrCodeData(action)
     case 'EVM-NATIVE-PAYMENT':
     case 'ERC20-PAYMENT':
       await action.executePreSteps?.(connection)
@@ -23,7 +21,7 @@ export async function executeSwap (connection: BlockchainConnection, action: Swa
 }
 
 /**
- * Use this function if the action type is a string that should be shown as a QR code (BIP21, BOLT11)
+ * Use this function if the action type is a string that should be shown as a QR code (BIP21)
  * @param action The action to execute
  * @returns The data to show in a QR code
  */
