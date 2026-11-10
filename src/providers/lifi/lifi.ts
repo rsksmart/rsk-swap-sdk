@@ -1,4 +1,4 @@
-import { ethers, assertTruthy, type HttpClient } from '@rsksmart/bridges-core-sdk'
+import { assertTruthy, type HttpClient } from '@rsksmart/bridges-core-sdk'
 import { type SwapProviderClient, type ProviderContext, type SwapAction, type TxData } from '../types'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
 import { type CreateSwapResult, type Swap, type Token, Routes } from '../../api'
@@ -34,10 +34,11 @@ export class LiFiClient implements SwapProviderClient {
         assertTruthy(context?.publicContext?.value, 'Missing value in LI.FI swap context')
         const { to, data, value, chainId } = context.publicContext
         const spender = validateEvmSwapTransaction('LIFI', swap, { to, value, chainId })
-        if (swap.paymentAddress && ethers.utils.getAddress(swap.paymentAddress) !== ethers.utils.getAddress(to)) {
+        if (swap.paymentAddress && swap.paymentAddress.toLowerCase() !== to.toLowerCase()) {
           throw new Error(`LI.FI payment address mismatch: ${swap.paymentAddress} !== ${to}`)
         }
-        const action: SwapAction = { type: actionType, data: { to, data, value }, requiresClaim: false, chainId: Number(swap.fromNetwork) }
+        // ethers only accepts EIP-55 addresses
+        const action: SwapAction = { type: actionType, data: { to: to.toLowerCase(), data, value }, requiresClaim: false, chainId: Number(swap.fromNetwork) }
         if (actionType === 'ERC20-PAYMENT') {
           const tokenInfo = await this.httpClient.get<Token>(this.apiUrl + Routes.getToken + swap.fromToken)
           const tokenAddress = tokenInfo.addresses[swap.fromNetwork]

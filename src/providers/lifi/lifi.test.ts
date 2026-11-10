@@ -58,7 +58,7 @@ describe('LiFiClient should', () => {
 
     expect(action.type).toBe('ERC20-PAYMENT')
     expect(action.requiresClaim).toBe(false)
-    expect(action.data).toEqual(expectedTxData)
+    expect(action.data).toEqual({ ...expectedTxData, to: expectedTxData.to.toLowerCase() })
     expect(httpClient.get).toHaveBeenCalled()
     expect(action.executePreSteps).toBeDefined()
   })
@@ -81,7 +81,7 @@ describe('LiFiClient should', () => {
 
     expect(action.type).toBe('EVM-NATIVE-PAYMENT')
     expect(action.requiresClaim).toBe(false)
-    expect(action.data).toEqual(expectedTxData)
+    expect(action.data).toEqual({ ...expectedTxData, to: expectedTxData.to.toLowerCase() })
     expect(action.executePreSteps).toBeUndefined()
   })
 
@@ -269,6 +269,23 @@ describe('LiFiClient should', () => {
       spender: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE',
       amount: '1000000'
     })
+  })
+
+  test('accept the pinned router with an RSK checksum', async () => {
+    const rskChecksummedRouter = '0x1231deb6f5749eF6CE6943a275a1D3e7486F4EAe'
+    const createdSwap: CreateSwapResult = {
+      swap: {
+        ...baseSwap,
+        fromToken: 'RBTC',
+        fromNetwork: '30',
+        paymentAddress: rskChecksummedRouter,
+        context: { publicContext: { to: rskChecksummedRouter, data: '0x4630a0d8', value: '0x0', chainId: 30 } }
+      },
+      actionType: 'EVM-NATIVE-PAYMENT'
+    }
+    const action = await client.generateAction(createdSwap)
+    expect(action.data).toEqual({ to: rskChecksummedRouter.toLowerCase(), data: '0x4630a0d8', value: '0x0' })
+    expect(action.chainId).toBe(30)
   })
 
   test('reject a transaction to a contract other than the pinned router', async () => {
