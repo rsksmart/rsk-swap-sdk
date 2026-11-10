@@ -1,7 +1,14 @@
 import { describe, expect, test, beforeEach, jest } from '@jest/globals'
 import { type HttpClient } from '@rsksmart/bridges-core-sdk'
 import { type CreatedSwap } from '../../api/index'
+import { RSK_SWAP_ERROR_CODES } from '../../error/codes'
 import { SymbiosisClient, type SymbiosisEvmContext } from './symbiosis'
+import { createApprovalHandler } from './approval'
+
+jest.mock('./approval', () => {
+  const actual = jest.requireActual<typeof import('./approval')>('./approval')
+  return { createApprovalHandler: jest.fn(actual.createApprovalHandler) }
+})
 
 function createHttpMock (): jest.Mocked<HttpClient> {
   return {
@@ -98,7 +105,7 @@ describe('SymbiosisClient should', () => {
     httpMock.get.mockResolvedValueOnce({ decimals: 18, type: 'native-evm', symbol: 'RBTC', addresses: {} })
     const context: SymbiosisEvmContext = {
       chainId: 30,
-      to: '0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8',
+      to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
       from: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
       data: '0x1234567890abcdef',
       value: '0x38d7ea4c68000'
@@ -109,7 +116,7 @@ describe('SymbiosisClient should', () => {
         refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         providerId: 'SYMBIOSIS',
         fromAmount: BigInt('1000000000000000'),
-        paymentAddress: '0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8',
+        paymentAddress: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
         receiverAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
         fromToken: 'RBTC',
         toToken: 'ETH',
@@ -130,9 +137,10 @@ describe('SymbiosisClient should', () => {
     const action = await client.generateAction(swap)
     expect(action).toEqual({
       requiresClaim: false,
+      chainId: 30,
       type: 'CONTRACT-INTERACTION',
       data: {
-        to: '0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8',
+        to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
         data: '0x1234567890abcdef',
         value: '0x38d7ea4c68000'
       }
@@ -148,7 +156,7 @@ describe('SymbiosisClient should', () => {
     })
     const context: SymbiosisEvmContext = {
       chainId: 30,
-      to: '0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8',
+      to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
       from: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
       data: '0xabcdef1234567890',
       value: ''
@@ -159,7 +167,7 @@ describe('SymbiosisClient should', () => {
         refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         providerId: 'SYMBIOSIS',
         fromAmount: BigInt('500000000000000000'),
-        paymentAddress: '0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8',
+        paymentAddress: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
         receiverAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
         fromToken: 'USDC',
         toToken: 'USDT',
@@ -175,9 +183,10 @@ describe('SymbiosisClient should', () => {
     const action = await client.generateAction(swap)
     expect(action).toEqual({
       requiresClaim: false,
+      chainId: 30,
       type: 'CONTRACT-INTERACTION',
       data: {
-        to: '0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8',
+        to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
         data: '0xabcdef1234567890',
         value: ''
       }
@@ -244,11 +253,11 @@ describe('SymbiosisClient should', () => {
     })
     const context: SymbiosisEvmContext = {
       chainId: 30,
-      to: '0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8',
+      to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
       from: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
       data: '0xabcdef1234567890',
       value: '0x0',
-      approveTo: '0xRouterContractAddress1234567890123456',
+      approveTo: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
       tokenAddress: '0xUsdcTokenAddress12345678901234567890',
       approveAmount: '1000000000000000000'
     }
@@ -258,7 +267,7 @@ describe('SymbiosisClient should', () => {
         refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         providerId: 'SYMBIOSIS',
         fromAmount: BigInt('1000000000000000000'),
-        paymentAddress: '0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8',
+        paymentAddress: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
         receiverAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
         fromToken: 'USDC',
         toToken: 'USDT',
@@ -275,7 +284,7 @@ describe('SymbiosisClient should', () => {
     expect(action.type).toBe('CONTRACT-INTERACTION')
     expect(action.requiresClaim).toBe(false)
     expect(action.data).toEqual({
-      to: '0xb8f275fBf7A959F4BCE59999A2EF122A099e81A8',
+      to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
       data: '0xabcdef1234567890',
       value: '0x0'
     })
@@ -326,5 +335,87 @@ describe('SymbiosisClient should', () => {
       value: '0x0'
     })
     expect(action.executePreSteps).toBeInstanceOf(Function)
+  })
+
+  describe('for an ERC20 CONTRACT-INTERACTION', () => {
+    const router = '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421'
+    const usdt0Address = '0x779Ded0c9e1022225f8E0630b35a9b54bE713736'
+    const buildSwap = (context: Partial<SymbiosisEvmContext>): CreatedSwap => ({
+      swap: {
+        providerSwapId: '1001',
+        refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
+        providerId: 'SYMBIOSIS',
+        fromAmount: BigInt('1000000'),
+        paymentAddress: router,
+        receiverAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
+        fromToken: 'USDT0',
+        toToken: 'USDC',
+        fromNetwork: '30',
+        toNetwork: '1',
+        status: 'CREATED',
+        requiredConfirmations: 1,
+        usedFees: [],
+        context: {
+          publicContext: {
+            chainId: 30,
+            to: router,
+            from: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
+            data: '0xabcdef',
+            value: '0',
+            approveTo: router,
+            tokenAddress: usdt0Address,
+            approveAmount: '1000000',
+            ...context
+          }
+        }
+      },
+      actionType: 'CONTRACT-INTERACTION'
+    })
+
+    beforeEach(() => {
+      httpMock.get.mockResolvedValue({ decimals: 6, type: 'erc20', symbol: 'USDT0', addresses: { 30: usdt0Address } })
+    })
+
+    test('grant the approval to the pinned spender for at most fromAmount', async () => {
+      const action = await client.generateAction(buildSwap({ approveAmount: '400000' }))
+      expect(action.chainId).toBe(30)
+      expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: router, amount: '400000' })
+    })
+
+    test('grant the approval to the gateway of the metarouter that uses one', async () => {
+      const metaRouter = '0x7057ab3fb2bee9c18e0cde4240de4ff7f159e365'
+      const gateway = '0xfffdb2a69abcbbf55ecb2f6b348e0bd3d0f9f2e1'
+      await client.generateAction(buildSwap({ to: metaRouter, approveTo: gateway }))
+      expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: gateway, amount: '1000000' })
+    })
+
+    test('accept router and spender addresses with an RSK checksum', async () => {
+      await client.generateAction(buildSwap({ to: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421', approveTo: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421' }))
+      expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: router, amount: '1000000' })
+      await client.generateAction(buildSwap({ to: '0x7057ab3fb2bee9c18e0cde4240de4ff7f159e365', approveTo: '0xFFfDb2A69AbCbBF55ecB2F6B348E0bd3d0f9f2E1' }))
+      expect(createApprovalHandler).toHaveBeenLastCalledWith({ tokenAddress: usdt0Address, spender: '0xfffdb2a69abcbbf55ecb2f6b348e0bd3d0f9f2e1', amount: '1000000' })
+    })
+
+    test('reject an approval to a spender other than the pinned one', async () => {
+      await expect(client.generateAction(buildSwap({ approveTo: '0x79568c2989232dCa1840087D73d403602364c0D4' })))
+        .rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.UNTRUSTED_ADDRESS.code })
+      expect(createApprovalHandler).not.toHaveBeenCalled()
+    })
+
+    test('reject an approval above fromAmount', async () => {
+      await expect(client.generateAction(buildSwap({ approveAmount: '1000001' })))
+        .rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.MANIPULATED_API_RESPONSE.code })
+      expect(createApprovalHandler).not.toHaveBeenCalled()
+    })
+
+    test('reject a transaction to a contract other than the pinned router', async () => {
+      await expect(client.generateAction(buildSwap({ to: usdt0Address })))
+        .rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.UNTRUSTED_ADDRESS.code })
+    })
+
+    test('reject a transaction carrying native value above the fee allowance', async () => {
+      await expect(client.generateAction(buildSwap({ value: '1000000000000001' })))
+        .rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.MANIPULATED_API_RESPONSE.code })
+    })
   })
 })

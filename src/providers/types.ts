@@ -46,6 +46,8 @@ export interface SwapAction {
   requiresClaim: boolean
   /** Optional steps (e.g. an ERC20 approval) that must be executed on the connected blockchain before the action itself, such as an ERC20 `approve` call. */
   executePreSteps?: (connection: BlockchainConnection) => Promise<void>
+  /** EVM chain id the action's transactions must be sent on. When set, {@link RskSwapSDK.executeSwap} only sends them while connected to that chain. */
+  chainId?: number
 }
 
 /** A swap paired with the action required to pay for it. */

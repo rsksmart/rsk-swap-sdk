@@ -1,7 +1,14 @@
 import { describe, expect, test, jest } from '@jest/globals'
 import { type CreateSwapResult } from '../../api/index'
 import { type TxData } from '../types'
+import { RSK_SWAP_ERROR_CODES } from '../../error/codes'
 import { LiFiClient } from './lifi'
+import { createApprovalHandler } from '../symbiosis/approval'
+
+jest.mock('../symbiosis/approval', () => {
+  const actual = jest.requireActual<typeof import('../symbiosis/approval')>('../symbiosis/approval')
+  return { createApprovalHandler: jest.fn(actual.createApprovalHandler) }
+})
 
 describe('LiFiClient should', () => {
   const tokenOnNetwork1 = '0x0000000000000000000000000000000000000abc'
@@ -42,7 +49,7 @@ describe('LiFiClient should', () => {
     const createdSwap: CreateSwapResult = {
       swap: {
         ...baseSwap,
-        context: { publicContext: expectedTxData }
+        context: { publicContext: { ...expectedTxData, chainId: 1 } }
       },
       actionType: 'ERC20-PAYMENT'
     }
@@ -65,7 +72,7 @@ describe('LiFiClient should', () => {
     const createdSwap: CreateSwapResult = {
       swap: {
         ...baseSwap,
-        context: { publicContext: expectedTxData }
+        context: { publicContext: { ...expectedTxData, chainId: 1 } }
       },
       actionType: 'EVM-NATIVE-PAYMENT'
     }
@@ -155,7 +162,7 @@ describe('LiFiClient should', () => {
       swap: {
         ...baseSwap,
         paymentAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
-        context: { publicContext: expectedTxData }
+        context: { publicContext: { ...expectedTxData, chainId: 1 } }
       },
       actionType: 'ERC20-PAYMENT'
     }
@@ -189,7 +196,7 @@ describe('LiFiClient should', () => {
       swap: {
         ...baseSwap,
         paymentAddress: '0x1231deb6f5749ef6ce6943a275a1d3e7486f4eae',
-        context: { publicContext: expectedTxData }
+        context: { publicContext: { ...expectedTxData, chainId: 1 } }
       },
       actionType: 'ERC20-PAYMENT'
     }
@@ -236,7 +243,7 @@ describe('LiFiClient should', () => {
       swap: {
         ...baseSwap,
         fromNetwork: '1',
-        context: { publicContext: expectedTxData }
+        context: { publicContext: { ...expectedTxData, chainId: 1 } }
       },
       actionType: 'ERC20-PAYMENT'
     }
@@ -244,5 +251,61 @@ describe('LiFiClient should', () => {
     await expect(strictClient.generateAction(createdSwap)).rejects.toThrow(
       'is not available on 1'
     )
+  })
+
+  test('grant the ERC20 approval to the pinned router and bind the action to the origin chain', async () => {
+    const createdSwap: CreateSwapResult = {
+      swap: {
+        ...baseSwap,
+        paymentAddress: '0x1231deb6f5749ef6ce6943a275a1d3e7486f4eae',
+        context: { publicContext: { to: '0x1231deb6f5749ef6ce6943a275a1d3e7486f4eae', data: '0x4630a0d8', value: '0x0', chainId: 1 } }
+      },
+      actionType: 'ERC20-PAYMENT'
+    }
+    const action = await client.generateAction(createdSwap)
+    expect(action.chainId).toBe(1)
+    expect(createApprovalHandler).toHaveBeenCalledWith({
+      tokenAddress: tokenOnNetwork1,
+      spender: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE',
+      amount: '1000000'
+    })
+  })
+
+  test('reject a transaction to a contract other than the pinned router', async () => {
+    const otherContract = '0x79568c2989232dCa1840087D73d403602364c0D4'
+    const createdSwap: CreateSwapResult = {
+      swap: {
+        ...baseSwap,
+        paymentAddress: otherContract,
+        context: { publicContext: { to: otherContract, data: '0x4630a0d8', value: '0x0', chainId: 1 } }
+      },
+      actionType: 'ERC20-PAYMENT'
+    }
+    await expect(client.generateAction(createdSwap)).rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.UNTRUSTED_ADDRESS.code })
+    expect(createApprovalHandler).not.toHaveBeenCalled()
+  })
+
+  test('reject a native payment above fromAmount plus the fee allowance', async () => {
+    const createdSwap: CreateSwapResult = {
+      swap: {
+        ...baseSwap,
+        fromToken: 'ETH',
+        fromAmount: BigInt('10000000000000000'),
+        context: { publicContext: { to: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE', data: '0x4630a0d8', value: '0x2b5e3af16b1880000', chainId: 1 } }
+      },
+      actionType: 'EVM-NATIVE-PAYMENT'
+    }
+    await expect(client.generateAction(createdSwap)).rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.MANIPULATED_API_RESPONSE.code })
+  })
+
+  test('reject a transaction for a chain other than the origin network', async () => {
+    const createdSwap: CreateSwapResult = {
+      swap: {
+        ...baseSwap,
+        context: { publicContext: { to: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE', data: '0x4630a0d8', value: '0x0', chainId: 56 } }
+      },
+      actionType: 'ERC20-PAYMENT'
+    }
+    await expect(client.generateAction(createdSwap)).rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.MANIPULATED_API_RESPONSE.code })
   })
 })

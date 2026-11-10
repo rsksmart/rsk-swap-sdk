@@ -1,6 +1,8 @@
 import { type HttpClient, ethers, assertTruthy } from '@rsksmart/bridges-core-sdk'
 import { type Swap, type Token, type CreateSwapResult, Routes } from '../../api'
 import { type SwapAction, type ProviderContext, type SwapProviderClient } from '../../providers/types'
+import { RskSwapError } from '../../error/error'
+import { validateEvmSwapTransaction } from '../evmTransaction'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
 import { createApprovalHandler } from './approval'
 
@@ -61,15 +63,18 @@ export class SymbiosisClient implements SwapProviderClient {
         const { publicContext: context } = swap.context as { publicContext: SymbiosisEvmContext }
         assertTruthy(context?.to, 'Missing "to" address in Symbiosis swap context')
         assertTruthy(context?.data, 'Missing transaction data in Symbiosis swap context')
+        const value = context.value === '0' ? '0x0' : context.value
+        const spender = validateEvmSwapTransaction('SYMBIOSIS', swap, { to: context.to, value, chainId: context.chainId })
 
         const action: SwapAction = {
           type: actionType,
           data: {
             to: context.to,
             data: context.data,
-            value: context.value === '0' ? '0x0' : context.value
+            value
           },
-          requiresClaim: false
+          requiresClaim: false,
+          chainId: Number(swap.fromNetwork)
         }
 
         if (context.approveTo) {
@@ -82,10 +87,18 @@ export class SymbiosisClient implements SwapProviderClient {
             `Token address mismatch: context=${contextTokenAddress}, api=${apiTokenAddress}`
           )
 
+          if (context.approveTo.toLowerCase() !== spender.toLowerCase()) {
+            throw RskSwapError.untrustedAddress(swap)
+          }
+          const approveAmount = ethers.BigNumber.from(context.approveAmount ?? swap.fromAmount.toString())
+          if (approveAmount.gt(swap.fromAmount.toString())) {
+            throw RskSwapError.invalidApiResponse({ fromAmount: swap.fromAmount.toString() }, { approveAmount: context.approveAmount })
+          }
+
           action.executePreSteps = createApprovalHandler({
             tokenAddress: contextTokenAddress,
-            spender: context.approveTo,
-            amount: context.approveAmount ?? swap.fromAmount.toString()
+            spender,
+            amount: approveAmount.toString()
           })
         }
 

@@ -12,9 +12,11 @@ export async function executeSwap (connection: BlockchainConnection, action: Swa
       return returnQrCodeData(action)
     case 'EVM-NATIVE-PAYMENT':
     case 'ERC20-PAYMENT':
+      await assertConnectedChain(connection, action)
       await action.executePreSteps?.(connection)
       return executeEvmTransaction(connection, action)
     case 'CONTRACT-INTERACTION':
+      await assertConnectedChain(connection, action)
       await action.executePreSteps?.(connection)
       return executeEvmTransaction(connection, action)
     default:
@@ -32,6 +34,16 @@ function returnQrCodeData (action: SwapAction): string {
     throw new Error(`Received a wrong value to show in a QR code: ${JSON.stringify(action.data)}`)
   }
   return action.data
+}
+
+async function assertConnectedChain (connection: BlockchainConnection, action: SwapAction): Promise<void> {
+  if (action.chainId === undefined) {
+    return
+  }
+  const connectedChainId = await connection.getChainId()
+  if (connectedChainId !== action.chainId) {
+    throw new Error(`Connected to chain ${connectedChainId}, but this swap must be paid on chain ${action.chainId}`)
+  }
 }
 
 /**
