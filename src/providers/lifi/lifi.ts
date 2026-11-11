@@ -1,17 +1,13 @@
-import { assertTruthy, type HttpClient } from '@rsksmart/bridges-core-sdk'
+import { assertTruthy } from '@rsksmart/bridges-core-sdk'
 import { type SwapProviderClient, type ProviderContext, type SwapAction, type TxData } from '../types'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
-import { type CreateSwapResult, type Swap, type Token, Routes } from '../../api'
+import { type CreateSwapResult, type Swap } from '../../api'
 import { createApprovalHandler } from '../symbiosis/approval'
 import { validateEvmSwapTransaction } from '../evmTransaction'
+import { TOKEN_REGISTRY } from '../../constants/tokens'
 
 /** {@link SwapProviderClient} implementation for LI.FI. Its swaps never require a claim, so it only implements the required contract methods; for ERC20 payments it attaches an approval step via `executePreSteps`. */
 export class LiFiClient implements SwapProviderClient {
-  constructor (
-    private readonly apiUrl: string,
-    private readonly httpClient: HttpClient
-  ) {}
-
   createContext (_args: CreateSwapArgs): ProviderContext {
     return {
       publicContext: {},
@@ -40,9 +36,8 @@ export class LiFiClient implements SwapProviderClient {
         // ethers only accepts EIP-55 addresses
         const action: SwapAction = { type: actionType, data: { to: to.toLowerCase(), data, value }, requiresClaim: false, chainId: Number(swap.fromNetwork) }
         if (actionType === 'ERC20-PAYMENT') {
-          const tokenInfo = await this.httpClient.get<Token>(this.apiUrl + Routes.getToken + swap.fromToken)
-          const tokenAddress = tokenInfo.addresses[swap.fromNetwork]
-          assertTruthy(tokenAddress, `Token ${tokenInfo.symbol} is not available on ${swap.fromNetwork}`)
+          const tokenAddress = TOKEN_REGISTRY[swap.fromNetwork]?.[swap.fromToken]?.address
+          assertTruthy(tokenAddress, `Token ${swap.fromToken} is not available on ${swap.fromNetwork}`)
           action.executePreSteps = createApprovalHandler({
             tokenAddress,
             spender,

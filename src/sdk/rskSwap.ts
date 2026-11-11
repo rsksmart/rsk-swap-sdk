@@ -76,9 +76,9 @@ export class RskSwapSDK {
     this.environment = environment
     this.providerClientResolver = new ProviderClientResolver()
       .register('BOLTZ', new BoltzClient('Mainnet', connection, this.httpClient, new DefaultBoltzAtomicSwapFactory()))
-      .register('CHANGELLY', new ChangellyClient(this.environment.api, this.httpClient))
-      .register('SYMBIOSIS', new SymbiosisClient(this.environment.api, this.httpClient))
-      .register('LIFI', new LiFiClient(this.environment.api, this.httpClient))
+      .register('CHANGELLY', new ChangellyClient())
+      .register('SYMBIOSIS', new SymbiosisClient())
+      .register('LIFI', new LiFiClient())
   }
 
   /**

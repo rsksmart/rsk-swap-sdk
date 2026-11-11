@@ -1,5 +1,4 @@
-import { describe, expect, test, beforeEach, jest } from '@jest/globals'
-import { type HttpClient } from '@rsksmart/bridges-core-sdk'
+import { describe, expect, test, jest } from '@jest/globals'
 import { type CreatedSwap } from '../../api/index'
 import { RSK_SWAP_ERROR_CODES } from '../../error/codes'
 import { SymbiosisClient, type SymbiosisEvmContext } from './symbiosis'
@@ -10,23 +9,9 @@ jest.mock('./approval', () => {
   return { createApprovalHandler: jest.fn(actual.createApprovalHandler) }
 })
 
-function createHttpMock (): jest.Mocked<HttpClient> {
-  return {
-    get: jest.fn<any>(),
-    post: jest.fn<any>(),
-    getCaptchaToken: jest.fn<HttpClient['getCaptchaToken']>()
-  }
-}
-
 describe('SymbiosisClient should', () => {
-  const apiUrl = 'http://localhost:8080/api'
-  let client: SymbiosisClient
-  let httpMock: jest.Mocked<HttpClient>
-
-  beforeEach(() => {
-    httpMock = createHttpMock()
-    client = new SymbiosisClient(apiUrl, httpMock)
-  })
+  const usdt0Address = '0x779Ded0c9e1022225f8E0630b35a9b54bE713736'
+  const client = new SymbiosisClient()
 
   test('create empty context', () => {
     const context = client.createContext({
@@ -66,7 +51,6 @@ describe('SymbiosisClient should', () => {
   })
 
   test('generate action for BIP21', async () => {
-    httpMock.get.mockResolvedValueOnce({ decimals: 8 })
     const swap: CreatedSwap = {
       swap: {
         providerSwapId: '123',
@@ -97,12 +81,9 @@ describe('SymbiosisClient should', () => {
       type: 'BIP21',
       data: 'bitcoin:bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq?amount=1.0'
     })
-    expect(httpMock.get).toHaveBeenCalledTimes(1)
-    expect(httpMock.get).toHaveBeenCalledWith(apiUrl + '/tokens/BTC')
   })
 
   test('generate action for CONTRACT-INTERACTION', async () => {
-    httpMock.get.mockResolvedValueOnce({ decimals: 18, type: 'native-evm', symbol: 'RBTC', addresses: {} })
     const context: SymbiosisEvmContext = {
       chainId: 30,
       to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
@@ -148,12 +129,6 @@ describe('SymbiosisClient should', () => {
   })
 
   test('generate action without approval when approveTo is not provided', async () => {
-    httpMock.get.mockResolvedValueOnce({
-      decimals: 6,
-      type: 'erc20',
-      symbol: 'USDC',
-      addresses: { 30: '0xUsdcTokenAddress' }
-    })
     const context: SymbiosisEvmContext = {
       chainId: 30,
       to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
@@ -169,7 +144,7 @@ describe('SymbiosisClient should', () => {
         fromAmount: BigInt('500000000000000000'),
         paymentAddress: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
         receiverAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
-        fromToken: 'USDC',
+        fromToken: 'USDT0',
         toToken: 'USDT',
         fromNetwork: '30',
         toNetwork: '1',
@@ -245,12 +220,6 @@ describe('SymbiosisClient should', () => {
   })
 
   test('generate action with executePreSteps for ERC20 swaps when approveTo is provided', async () => {
-    httpMock.get.mockResolvedValueOnce({
-      decimals: 6,
-      type: 'erc20',
-      symbol: 'USDC',
-      addresses: { 30: '0xUsdcTokenAddress12345678901234567890' }
-    })
     const context: SymbiosisEvmContext = {
       chainId: 30,
       to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
@@ -258,7 +227,7 @@ describe('SymbiosisClient should', () => {
       data: '0xabcdef1234567890',
       value: '0x0',
       approveTo: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
-      tokenAddress: '0xUsdcTokenAddress12345678901234567890',
+      tokenAddress: usdt0Address,
       approveAmount: '1000000000000000000'
     }
     const swap: CreatedSwap = {
@@ -269,7 +238,7 @@ describe('SymbiosisClient should', () => {
         fromAmount: BigInt('1000000000000000000'),
         paymentAddress: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
         receiverAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
-        fromToken: 'USDC',
+        fromToken: 'USDT0',
         toToken: 'USDT',
         fromNetwork: '30',
         toNetwork: '1',
@@ -292,12 +261,6 @@ describe('SymbiosisClient should', () => {
   })
 
   test('generate action with executePreSteps for ERC677 tokens (like RIF)', async () => {
-    httpMock.get.mockResolvedValueOnce({
-      decimals: 18,
-      type: 'erc677',
-      symbol: 'RIF',
-      addresses: { 30: '0x2acc95758f8b5f583470ba265eb685a8f45fc9d5' }
-    })
     const context: SymbiosisEvmContext = {
       chainId: 30,
       to: '0x7057ab3fb2bee9c18e0cde4240de4ff7f159e365',
@@ -339,7 +302,6 @@ describe('SymbiosisClient should', () => {
 
   describe('for an ERC20 CONTRACT-INTERACTION', () => {
     const router = '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421'
-    const usdt0Address = '0x779Ded0c9e1022225f8E0630b35a9b54bE713736'
     const buildSwap = (context: Partial<SymbiosisEvmContext>): CreatedSwap => ({
       swap: {
         providerSwapId: '1001',
@@ -370,10 +332,6 @@ describe('SymbiosisClient should', () => {
         }
       },
       actionType: 'CONTRACT-INTERACTION'
-    })
-
-    beforeEach(() => {
-      httpMock.get.mockResolvedValue({ decimals: 6, type: 'erc20', symbol: 'USDT0', addresses: { 30: usdt0Address } })
     })
 
     test('grant the approval to the pinned spender for at most fromAmount', async () => {

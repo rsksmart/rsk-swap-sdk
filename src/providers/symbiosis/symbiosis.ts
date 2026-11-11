@@ -1,10 +1,11 @@
-import { type HttpClient, ethers, assertTruthy } from '@rsksmart/bridges-core-sdk'
-import { type Swap, type Token, type CreateSwapResult, Routes } from '../../api'
+import { ethers, assertTruthy } from '@rsksmart/bridges-core-sdk'
+import { type Swap, type CreateSwapResult } from '../../api'
 import { type SwapAction, type ProviderContext, type SwapProviderClient } from '../../providers/types'
 import { RskSwapError } from '../../error/error'
 import { validateEvmSwapTransaction } from '../evmTransaction'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
 import { createApprovalHandler } from './approval'
+import { TOKEN_REGISTRY } from '../../constants/tokens'
 
 export interface SymbiosisEvmContext {
   chainId: number
@@ -29,11 +30,6 @@ export type SymbiosisContext =
 
 /** {@link SwapProviderClient} implementation for Symbiosis. Its swaps never require a claim, so it only implements the required contract methods; for EVM contract-interaction swaps that need an ERC20 approval, it attaches an approval step via `executePreSteps`. */
 export class SymbiosisClient implements SwapProviderClient {
-  constructor (
-    private readonly apiUrl: string,
-    private readonly httpClient: HttpClient
-  ) {}
-
   createContext (_args: CreateSwapArgs): ProviderContext {
     return {
       publicContext: {},
@@ -47,7 +43,8 @@ export class SymbiosisClient implements SwapProviderClient {
 
   async generateAction (createdSwap: CreateSwapResult): Promise<SwapAction> {
     const { swap, actionType } = createdSwap
-    const tokenInfo = await this.httpClient.get<Token>(this.apiUrl + Routes.getToken + swap.fromToken)
+    const tokenInfo = TOKEN_REGISTRY[swap.fromNetwork]?.[swap.fromToken]
+    assertTruthy(tokenInfo, `Token ${swap.fromToken} is not supported on ${swap.fromNetwork}`)
 
     switch (actionType) {
       case 'BIP21': {
@@ -79,12 +76,12 @@ export class SymbiosisClient implements SwapProviderClient {
 
         if (context.approveTo) {
           const contextTokenAddress = context.tokenAddress
-          const apiTokenAddress = tokenInfo.addresses?.[swap.fromNetwork]
+          const pinnedTokenAddress = tokenInfo.address
           assertTruthy(contextTokenAddress, `Token address not found in context for ${swap.fromToken}`)
-          assertTruthy(apiTokenAddress, `Token address not found in API for ${swap.fromToken} on ${swap.fromNetwork}`)
+          assertTruthy(pinnedTokenAddress, `Token address not found for ${swap.fromToken} on ${swap.fromNetwork}`)
           assertTruthy(
-            contextTokenAddress.toLowerCase() === apiTokenAddress.toLowerCase(),
-            `Token address mismatch: context=${contextTokenAddress}, api=${apiTokenAddress}`
+            contextTokenAddress.toLowerCase() === pinnedTokenAddress.toLowerCase(),
+            `Token address mismatch: context=${contextTokenAddress}, expected=${pinnedTokenAddress}`
           )
 
           if (context.approveTo.toLowerCase() !== spender.toLowerCase()) {

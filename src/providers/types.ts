@@ -48,6 +48,8 @@ export interface SwapAction {
   executePreSteps?: (connection: BlockchainConnection) => Promise<void>
   /** EVM chain id the action's transactions must be sent on. When set, {@link RskSwapSDK.executeSwap} only sends them while connected to that chain. */
   chainId?: number
+  /** Network the swap is paid from. {@link RskSwapSDK.executeSwap} only sends EVM transactions when it is an EVM network. */
+  fromNetwork?: string
 }
 
 /** A swap paired with the action required to pay for it. */

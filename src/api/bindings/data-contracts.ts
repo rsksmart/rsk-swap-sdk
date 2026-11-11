@@ -263,7 +263,7 @@ export interface TokenDTO {
    */
   description: string;
   /** Type of the asset */
-  type: "native-evm" | "erc20" | "native-btc" | "oft";
+  type: "native-evm" | "erc20" | "erc677" | "native-btc" | "oft";
   /**
    * Decimal precision of the asset
    * @example 18

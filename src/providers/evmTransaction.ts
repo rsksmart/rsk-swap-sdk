@@ -1,6 +1,7 @@
 import { ethers } from '@rsksmart/bridges-core-sdk'
 import { type Swap } from '../api'
-import { NATIVE_CURRENCY, NATIVE_FEE_ALLOWANCE, PROVIDER_ROUTERS } from '../constants/routers'
+import { NATIVE_FEE_ALLOWANCE, PROVIDER_ROUTERS } from '../constants/routers'
+import { TOKEN_REGISTRY } from '../constants/tokens'
 import { RskSwapError } from '../error/error'
 
 interface EvmSwapTransaction {
@@ -24,7 +25,7 @@ export function validateEvmSwapTransaction (providerId: string, swap: Swap, tx: 
   if (tx.chainId === undefined || tx.chainId.toString() !== swap.fromNetwork) {
     throw RskSwapError.invalidApiResponse({ fromNetwork: swap.fromNetwork }, { chainId: tx.chainId })
   }
-  const isNativePayment = NATIVE_CURRENCY[swap.fromNetwork] === swap.fromToken
+  const isNativePayment = TOKEN_REGISTRY[swap.fromNetwork]?.[swap.fromToken]?.type === 'native-evm'
   const maxValue = ethers.BigNumber.from(feeAllowance).add(isNativePayment ? swap.fromAmount.toString() : 0)
   if (ethers.BigNumber.from(tx.value || '0').gt(maxValue)) {
     throw RskSwapError.invalidApiResponse({ maxValue: maxValue.toString() }, { value: tx.value })

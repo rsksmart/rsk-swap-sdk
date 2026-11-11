@@ -11,17 +11,8 @@ jest.mock('../symbiosis/approval', () => {
 })
 
 describe('LiFiClient should', () => {
-  const tokenOnNetwork1 = '0x0000000000000000000000000000000000000abc'
-  const httpClient = {
-    get: jest.fn(async () => ({
-      symbol: 'USDC',
-      description: 'USD',
-      type: 'erc20' as const,
-      decimals: 6,
-      addresses: { 1: tokenOnNetwork1 }
-    }))
-  }
-  const client = new LiFiClient('https://api.test', httpClient as any)
+  const usdcOnNetwork1 = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+  const client = new LiFiClient()
 
   const baseSwap: any = {
     providerSwapId: 'lifi-123',
@@ -59,7 +50,6 @@ describe('LiFiClient should', () => {
     expect(action.type).toBe('ERC20-PAYMENT')
     expect(action.requiresClaim).toBe(false)
     expect(action.data).toEqual({ ...expectedTxData, to: expectedTxData.to.toLowerCase() })
-    expect(httpClient.get).toHaveBeenCalled()
     expect(action.executePreSteps).toBeDefined()
   })
 
@@ -224,16 +214,6 @@ describe('LiFiClient should', () => {
   })
 
   test('throw when token is not listed on fromNetwork', async () => {
-    const httpEmpty = {
-      get: jest.fn(async () => ({
-        symbol: 'USDC',
-        description: 'USD',
-        type: 'erc20' as const,
-        decimals: 6,
-        addresses: { 30: tokenOnNetwork1 }
-      }))
-    }
-    const strictClient = new LiFiClient('https://api.test', httpEmpty as any)
     const expectedTxData: TxData = {
       to: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE',
       data: '0x4630a0d8000000000000000000000000',
@@ -242,13 +222,14 @@ describe('LiFiClient should', () => {
     const createdSwap: CreateSwapResult = {
       swap: {
         ...baseSwap,
+        fromToken: 'RIF',
         fromNetwork: '1',
         context: { publicContext: { ...expectedTxData, chainId: 1 } }
       },
       actionType: 'ERC20-PAYMENT'
     }
 
-    await expect(strictClient.generateAction(createdSwap)).rejects.toThrow(
+    await expect(client.generateAction(createdSwap)).rejects.toThrow(
       'is not available on 1'
     )
   })
@@ -265,7 +246,7 @@ describe('LiFiClient should', () => {
     const action = await client.generateAction(createdSwap)
     expect(action.chainId).toBe(1)
     expect(createApprovalHandler).toHaveBeenCalledWith({
-      tokenAddress: tokenOnNetwork1,
+      tokenAddress: usdcOnNetwork1,
       spender: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE',
       amount: '1000000'
     })

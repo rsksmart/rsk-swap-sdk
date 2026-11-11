@@ -1,21 +1,9 @@
-import { describe, expect, test, beforeEach, jest } from '@jest/globals'
-import { type HttpClient } from '@rsksmart/bridges-core-sdk'
+import { describe, expect, test } from '@jest/globals'
 import { type CreatedSwap } from '../../api/index'
 import { ChangellyClient } from './changelly'
 
 describe('ChangellyClient should', () => {
-  const apiUrl = 'http://localhost:8080/api'
-  let client: ChangellyClient
-  let httpMock: jest.Mocked<HttpClient>
-
-  beforeEach(() => {
-    httpMock = { // eslint-disable-line @typescript-eslint/consistent-type-assertions
-      get: jest.fn(),
-      post: jest.fn(),
-      getCaptchaToken: jest.fn()
-    } as jest.Mocked<HttpClient>
-    client = new ChangellyClient(apiUrl, httpMock)
-  })
+  const client = new ChangellyClient()
 
   test('create Changelly context', async () => {
     const context = client.createContext({
@@ -34,7 +22,6 @@ describe('ChangellyClient should', () => {
     })
   })
   test('generate action for BIP21', async () => {
-    httpMock.get.mockResolvedValueOnce({ decimals: 8 })
     const swap: CreatedSwap = {
       swap: {
         providerSwapId: '123',
@@ -45,8 +32,8 @@ describe('ChangellyClient should', () => {
         receiverAddress: 'receiverAddress',
         fromToken: 'BTC',
         toToken: 'ETH',
-        fromNetwork: '1',
-        toNetwork: 'BTC',
+        fromNetwork: 'BTC',
+        toNetwork: '1',
         status: 'CREATED',
         requiredConfirmations: 3,
         usedFees: [
@@ -65,14 +52,8 @@ describe('ChangellyClient should', () => {
       type: 'BIP21',
       data: 'bitcoin:paymentAddress?amount=1.0'
     })
-    expect(httpMock.get).toHaveBeenCalledTimes(1)
-    expect(httpMock.get).toHaveBeenCalledWith(apiUrl + '/tokens/BTC')
   })
   test('generate action for ERC20-PAYMENT', async () => {
-    httpMock.get.mockResolvedValueOnce({
-      decimals: 6,
-      addresses: { 1: '0xdac17f958d2ee523a2206206994597c13d831ec7' }
-    })
     const swap: CreatedSwap = {
       swap: {
         providerSwapId: '123',
@@ -102,18 +83,13 @@ describe('ChangellyClient should', () => {
       requiresClaim: false,
       type: 'ERC20-PAYMENT',
       data: {
-        to: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+        to: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
         value: '0x0',
         data: '0xa9059cbb000000000000000000000000d5f00abfbea7a0b193836cac6833c2ad9d06cea8000000000000000000000000000000000000000000000000000000000269fb20'
       }
     })
-    expect(httpMock.get).toHaveBeenCalledTimes(1)
-    expect(httpMock.get).toHaveBeenCalledWith(apiUrl + '/tokens/USDT')
   })
   test('generate action for EVM-NATIVE-PAYMENT', async () => {
-    httpMock.get.mockResolvedValueOnce({
-      decimals: 18
-    })
     const swap: CreatedSwap = {
       swap: {
         providerSwapId: '123',
@@ -148,8 +124,6 @@ describe('ChangellyClient should', () => {
         data: '0x'
       }
     })
-    expect(httpMock.get).toHaveBeenCalledTimes(1)
-    expect(httpMock.get).toHaveBeenCalledWith(apiUrl + '/tokens/ETH')
   })
   test('fail if actionType is not supported by Changelly', async () => {
     const swap: CreatedSwap = {
@@ -162,8 +136,8 @@ describe('ChangellyClient should', () => {
         receiverAddress: 'receiverAddress',
         fromToken: 'BTC',
         toToken: 'ETH',
-        fromNetwork: '1',
-        toNetwork: 'BTC',
+        fromNetwork: 'BTC',
+        toNetwork: '1',
         status: 'CREATED',
         requiredConfirmations: 3,
         usedFees: [
@@ -182,5 +156,52 @@ describe('ChangellyClient should', () => {
     } catch (e: any) {
       expect(e.message).toBe('Action type NONE not supported for Changelly')
     }
+  })
+
+  test('pay an ERC20 swap to the pinned token contract of the origin network', async () => {
+    const swap: CreatedSwap = {
+      swap: {
+        providerSwapId: '123',
+        refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
+        providerId: 'CHANGELLY',
+        fromAmount: BigInt('100000000000000000000'),
+        paymentAddress: '0xd5f00abfbea7a0b193836cac6833c2ad9d06cea8',
+        receiverAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
+        fromToken: 'USDC',
+        toToken: 'RBTC',
+        fromNetwork: '56',
+        toNetwork: '30',
+        status: 'CREATED',
+        requiredConfirmations: 3,
+        usedFees: [],
+        context: {}
+      },
+      actionType: 'ERC20-PAYMENT'
+    }
+    const action = await client.generateAction(swap)
+    expect((action.data as { to: string }).to).toBe('0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d')
+  })
+
+  test('fail for a token that is not supported on the origin network', async () => {
+    const swap: CreatedSwap = {
+      swap: {
+        providerSwapId: '123',
+        refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
+        providerId: 'CHANGELLY',
+        fromAmount: BigInt(100),
+        paymentAddress: '0xd5f00abfbea7a0b193836cac6833c2ad9d06cea8',
+        receiverAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
+        fromToken: 'BTCB',
+        toToken: 'RBTC',
+        fromNetwork: '56',
+        toNetwork: '30',
+        status: 'CREATED',
+        requiredConfirmations: 3,
+        usedFees: [],
+        context: {}
+      },
+      actionType: 'ERC20-PAYMENT'
+    }
+    await expect(client.generateAction(swap)).rejects.toThrow('Token BTCB is not supported on 56')
   })
 })
