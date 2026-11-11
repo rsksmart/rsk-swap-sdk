@@ -140,7 +140,7 @@ describe('SymbiosisClient should', () => {
       chainId: 30,
       type: 'CONTRACT-INTERACTION',
       data: {
-        to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
+        to: '0x7f6fb9f3ce785f3d85772c038fda58ec9432d421',
         data: '0x1234567890abcdef',
         value: '0x38d7ea4c68000'
       }
@@ -186,7 +186,7 @@ describe('SymbiosisClient should', () => {
       chainId: 30,
       type: 'CONTRACT-INTERACTION',
       data: {
-        to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
+        to: '0x7f6fb9f3ce785f3d85772c038fda58ec9432d421',
         data: '0xabcdef1234567890',
         value: ''
       }
@@ -284,7 +284,7 @@ describe('SymbiosisClient should', () => {
     expect(action.type).toBe('CONTRACT-INTERACTION')
     expect(action.requiresClaim).toBe(false)
     expect(action.data).toEqual({
-      to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
+      to: '0x7f6fb9f3ce785f3d85772c038fda58ec9432d421',
       data: '0xabcdef1234567890',
       value: '0x0'
     })
@@ -390,7 +390,8 @@ describe('SymbiosisClient should', () => {
     })
 
     test('accept router and spender addresses with an RSK checksum', async () => {
-      await client.generateAction(buildSwap({ to: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421', approveTo: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421' }))
+      const action = await client.generateAction(buildSwap({ to: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421', approveTo: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421' }))
+      expect(action.data).toMatchObject({ to: '0x7f6fb9f3ce785f3d85772c038fda58ec9432d421' })
       expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: router, amount: '1000000' })
       await client.generateAction(buildSwap({ to: '0x7057ab3fb2bee9c18e0cde4240de4ff7f159e365', approveTo: '0xFFfDb2A69AbCbBF55ecB2F6B348E0bd3d0f9f2E1' }))
       expect(createApprovalHandler).toHaveBeenLastCalledWith({ tokenAddress: usdt0Address, spender: '0xfffdb2a69abcbbf55ecb2f6b348e0bd3d0f9f2e1', amount: '1000000' })

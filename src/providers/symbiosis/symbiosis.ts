@@ -69,7 +69,7 @@ export class SymbiosisClient implements SwapProviderClient {
         const action: SwapAction = {
           type: actionType,
           data: {
-            to: context.to,
+            to: context.to.toLowerCase(),
             data: context.data,
             value
           },
