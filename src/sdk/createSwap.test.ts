@@ -125,7 +125,8 @@ describe('createSwap function should', () => {
           value: '0x02BC'
         },
         requiresClaim: false,
-        fromNetwork: '1'
+        fromNetwork: '1',
+        chainId: 1
       }
     })
     )
@@ -327,20 +328,21 @@ describe('createSwap function should', () => {
     })
 
     test.each([
-      ['CHANGELLY', 'BTC', 'BTC', 'BIP21'],
-      ['SYMBIOSIS', 'BTC', 'BTC', 'BIP21'],
-      ['BOLTZ', 'LN', 'BTC', 'BOLT11'],
-      ['CHANGELLY', '56', 'BNB', 'EVM-NATIVE-PAYMENT'],
-      ['CHANGELLY', '1', 'USDC', 'ERC20-PAYMENT'],
-      ['LIFI', '30', 'RBTC', 'EVM-NATIVE-PAYMENT'],
-      ['LIFI', '30', 'RIF', 'ERC20-PAYMENT'],
-      ['SYMBIOSIS', '30', 'USDT0', 'CONTRACT-INTERACTION'],
-      ['BOLTZ', '30', 'RBTC', 'CONTRACT-INTERACTION']
-    ] as const)('accept from %s a swap paid from %s with %s as %s', async (providerId, fromNetwork, fromToken, actionType) => {
+      ['CHANGELLY', 'BTC', 'BTC', 'BIP21', undefined],
+      ['SYMBIOSIS', 'BTC', 'BTC', 'BIP21', undefined],
+      ['BOLTZ', 'LN', 'BTC', 'BOLT11', undefined],
+      ['CHANGELLY', '56', 'BNB', 'EVM-NATIVE-PAYMENT', 56],
+      ['CHANGELLY', '1', 'USDC', 'ERC20-PAYMENT', 1],
+      ['LIFI', '30', 'RBTC', 'EVM-NATIVE-PAYMENT', 30],
+      ['LIFI', '30', 'RIF', 'ERC20-PAYMENT', 30],
+      ['SYMBIOSIS', '30', 'USDT0', 'CONTRACT-INTERACTION', 30],
+      ['BOLTZ', '30', 'RBTC', 'CONTRACT-INTERACTION', 30]
+    ] as const)('accept from %s a swap paid from %s with %s as %s bound to chain %s', async (providerId, fromNetwork, fromToken, actionType, chainId) => {
       const args = buildArgs(providerId, fromNetwork, fromToken)
       mockApiResult(args, actionType)
       const result = await createSwap(url, httpClient, providerResolver, args)
       expect(result.action.fromNetwork).toBe(fromNetwork)
+      expect(result.action.chainId).toBe(chainId)
       expect(providerClientMock.generateAction).toHaveBeenCalledTimes(1)
     })
 

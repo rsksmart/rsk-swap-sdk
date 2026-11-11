@@ -4,7 +4,7 @@ import { type SwapAction, type SwapWithAction } from '../providers/types'
 import { type ProviderClientResolver } from '../providers/resolver'
 import { RskSwapError } from '../error/error'
 import { TOKEN_REGISTRY, type PinnedToken } from '../constants/tokens'
-import { isBtcChain, isLightningNetwork } from '../utils/chain'
+import { isBtcChain, isEvmChain, isLightningNetwork } from '../utils/chain'
 
 const CONTRACT_INTERACTION_PROVIDERS = ['SYMBIOSIS', 'BOLTZ']
 
@@ -46,7 +46,11 @@ export async function createSwap (apiUrl: string, client: HttpClient, clientReso
   }
 
   const action = await swapProviderClient.generateAction(result)
-  return { swap: result.swap, action: { ...action, fromNetwork: result.swap.fromNetwork } }
+  const { fromNetwork } = result.swap
+  return {
+    swap: result.swap,
+    action: { ...action, fromNetwork, ...(isEvmChain(fromNetwork) && { chainId: Number(fromNetwork) }) }
+  }
 }
 
 function getExpectedActionType (request: CreateSwapRQ, fromToken: PinnedToken): SwapAction['type'] {
