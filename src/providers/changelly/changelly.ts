@@ -2,7 +2,7 @@ import { ethers, assertTruthy } from '@rsksmart/bridges-core-sdk'
 import { type Swap, type CreateSwapResult } from '../../api'
 import { type SwapAction, type ProviderContext, type SwapProviderClient } from '../../providers/types'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
-import { TOKEN_REGISTRY } from '../../constants/tokens'
+import { type PinnedToken } from '../../constants/tokens'
 
 /** {@link SwapProviderClient} implementation for Changelly. Its swaps never require a claim, so it only implements the required contract methods. */
 export class ChangellyClient implements SwapProviderClient {
@@ -19,10 +19,8 @@ export class ChangellyClient implements SwapProviderClient {
     return Promise.resolve(true)
   }
 
-  async generateAction (createdSwap: CreateSwapResult): Promise<SwapAction> {
+  async generateAction (createdSwap: CreateSwapResult, tokenInfo: PinnedToken): Promise<SwapAction> {
     const { swap, actionType } = createdSwap
-    const tokenInfo = TOKEN_REGISTRY[swap.fromNetwork]?.[swap.fromToken]
-    assertTruthy(tokenInfo, `Token ${swap.fromToken} is not supported on ${swap.fromNetwork}`)
     switch (actionType) {
       case 'BIP21':
         return {

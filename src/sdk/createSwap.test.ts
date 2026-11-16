@@ -152,7 +152,7 @@ describe('createSwap function should', () => {
     expect(providerClientMock.validateAddress).toHaveBeenCalledTimes(1)
     expect(providerClientMock.validateAddress).toHaveBeenCalledWith(mockResult.swap)
     expect(providerClientMock.generateAction).toHaveBeenCalledTimes(1)
-    expect(providerClientMock.generateAction).toHaveBeenCalledWith(mockResult)
+    expect(providerClientMock.generateAction).toHaveBeenCalledWith(mockResult, { type: 'native-evm', decimals: 18 })
   })
   test('fail on missing parameter', async () => {
     const url = 'http://localhost:8080'

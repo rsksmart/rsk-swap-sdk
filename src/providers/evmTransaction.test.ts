@@ -1,6 +1,7 @@
 import { describe, expect, test } from '@jest/globals'
 import { RSK_SWAP_ERROR_CODES } from '../error/codes'
-import { validateEvmSwapTransaction } from './evmTransaction'
+import { TOKEN_REGISTRY, type PinnedToken } from '../constants/tokens'
+import { validateEvmSwapTransaction as validateWithToken } from './evmTransaction'
 
 describe('validateEvmSwapTransaction should', () => {
   const lifiRouter = '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE'
@@ -23,6 +24,9 @@ describe('validateEvmSwapTransaction should', () => {
     usedFees: [],
     context: {}
   }
+
+  const validateEvmSwapTransaction = (providerId: string, swap: any, tx: Parameters<typeof validateWithToken>[3]): string =>
+    validateWithToken(providerId, swap, TOKEN_REGISTRY[swap.fromNetwork]?.[swap.fromToken] as PinnedToken, tx)
 
   const expectCode = (fn: () => unknown, code: string): void => {
     expect(fn).toThrow(expect.objectContaining({ code }) as unknown as Error)

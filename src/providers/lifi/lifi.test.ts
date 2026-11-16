@@ -1,6 +1,7 @@
 import { describe, expect, test, jest } from '@jest/globals'
 import { type CreateSwapResult } from '../../api/index'
-import { type TxData } from '../types'
+import { type SwapAction, type TxData } from '../types'
+import { TOKEN_REGISTRY, type PinnedToken } from '../../constants/tokens'
 import { RSK_SWAP_ERROR_CODES } from '../../error/codes'
 import { LiFiClient } from './lifi'
 import { createApprovalHandler } from '../symbiosis/approval'
@@ -13,6 +14,8 @@ jest.mock('../symbiosis/approval', () => {
 describe('LiFiClient should', () => {
   const usdcOnNetwork1 = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
   const client = new LiFiClient()
+  const generateAction = async (createdSwap: CreateSwapResult): Promise<SwapAction> =>
+    client.generateAction(createdSwap, TOKEN_REGISTRY[createdSwap.swap.fromNetwork]?.[createdSwap.swap.fromToken] as PinnedToken)
 
   const baseSwap: any = {
     providerSwapId: 'lifi-123',
@@ -45,7 +48,7 @@ describe('LiFiClient should', () => {
       actionType: 'ERC20-PAYMENT'
     }
 
-    const action = await client.generateAction(createdSwap)
+    const action = await generateAction(createdSwap)
 
     expect(action.type).toBe('ERC20-PAYMENT')
     expect(action.requiresClaim).toBe(false)
@@ -67,7 +70,7 @@ describe('LiFiClient should', () => {
       actionType: 'EVM-NATIVE-PAYMENT'
     }
 
-    const action = await client.generateAction(createdSwap)
+    const action = await generateAction(createdSwap)
 
     expect(action.type).toBe('EVM-NATIVE-PAYMENT')
     expect(action.requiresClaim).toBe(false)
@@ -81,7 +84,7 @@ describe('LiFiClient should', () => {
       actionType: 'BIP21'
     }
 
-    await expect(client.generateAction(createdSwap)).rejects.toThrow(
+    await expect(generateAction(createdSwap)).rejects.toThrow(
       'Action type BIP21 not supported for LI.FI'
     )
   })
@@ -92,7 +95,7 @@ describe('LiFiClient should', () => {
       actionType: 'BOLT11'
     }
 
-    await expect(client.generateAction(createdSwap)).rejects.toThrow(
+    await expect(generateAction(createdSwap)).rejects.toThrow(
       'Action type BOLT11 not supported for LI.FI'
     )
   })
@@ -103,7 +106,7 @@ describe('LiFiClient should', () => {
       actionType: 'NONE'
     }
 
-    await expect(client.generateAction(createdSwap)).rejects.toThrow(
+    await expect(generateAction(createdSwap)).rejects.toThrow(
       'Action type NONE not supported for LI.FI'
     )
   })
@@ -114,7 +117,7 @@ describe('LiFiClient should', () => {
       actionType: 'CONTRACT-INTERACTION'
     }
 
-    await expect(client.generateAction(createdSwap)).rejects.toThrow(
+    await expect(generateAction(createdSwap)).rejects.toThrow(
       'Action type CONTRACT-INTERACTION not supported for LI.FI'
     )
   })
@@ -157,7 +160,7 @@ describe('LiFiClient should', () => {
       actionType: 'ERC20-PAYMENT'
     }
 
-    await expect(client.generateAction(createdSwap)).rejects.toThrow(
+    await expect(generateAction(createdSwap)).rejects.toThrow(
       'LI.FI payment address mismatch: 0x79568c2989232dCa1840087D73d403602364c0D4 !== 0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE'
     )
   })
@@ -171,7 +174,7 @@ describe('LiFiClient should', () => {
       actionType: 'ERC20-PAYMENT'
     }
 
-    await expect(client.generateAction(createdSwap)).rejects.toThrow(
+    await expect(generateAction(createdSwap)).rejects.toThrow(
       'Missing to in LI.FI swap context'
     )
   })
@@ -190,7 +193,7 @@ describe('LiFiClient should', () => {
       },
       actionType: 'ERC20-PAYMENT'
     }
-    await expect(client.generateAction(createdSwap)).resolves.toBeDefined()
+    await expect(generateAction(createdSwap)).resolves.toBeDefined()
   })
 
   test('throw error when publicContext is missing value field', async () => {
@@ -208,12 +211,12 @@ describe('LiFiClient should', () => {
       actionType: 'ERC20-PAYMENT'
     }
 
-    await expect(client.generateAction(createdSwap)).rejects.toThrow(
+    await expect(generateAction(createdSwap)).rejects.toThrow(
       'Missing value in LI.FI swap context'
     )
   })
 
-  test('throw when token is not listed on fromNetwork', async () => {
+  test('throw when the pinned token has no contract address', async () => {
     const expectedTxData: TxData = {
       to: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE',
       data: '0x4630a0d8000000000000000000000000',
@@ -222,14 +225,12 @@ describe('LiFiClient should', () => {
     const createdSwap: CreateSwapResult = {
       swap: {
         ...baseSwap,
-        fromToken: 'RIF',
-        fromNetwork: '1',
         context: { publicContext: { ...expectedTxData, chainId: 1 } }
       },
       actionType: 'ERC20-PAYMENT'
     }
 
-    await expect(client.generateAction(createdSwap)).rejects.toThrow(
+    await expect(client.generateAction(createdSwap, { type: 'erc20', decimals: 6 })).rejects.toThrow(
       'is not available on 1'
     )
   })
@@ -243,7 +244,7 @@ describe('LiFiClient should', () => {
       },
       actionType: 'ERC20-PAYMENT'
     }
-    const action = await client.generateAction(createdSwap)
+    const action = await generateAction(createdSwap)
     expect(action.chainId).toBe(1)
     expect(createApprovalHandler).toHaveBeenCalledWith({
       tokenAddress: usdcOnNetwork1,
@@ -264,7 +265,7 @@ describe('LiFiClient should', () => {
       },
       actionType: 'EVM-NATIVE-PAYMENT'
     }
-    const action = await client.generateAction(createdSwap)
+    const action = await generateAction(createdSwap)
     expect(action.data).toEqual({ to: rskChecksummedRouter.toLowerCase(), data: '0x4630a0d8', value: '0x0' })
     expect(action.chainId).toBe(30)
   })
@@ -279,7 +280,7 @@ describe('LiFiClient should', () => {
       },
       actionType: 'ERC20-PAYMENT'
     }
-    await expect(client.generateAction(createdSwap)).rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.UNTRUSTED_ADDRESS.code })
+    await expect(generateAction(createdSwap)).rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.UNTRUSTED_ADDRESS.code })
     expect(createApprovalHandler).not.toHaveBeenCalled()
   })
 
@@ -293,7 +294,7 @@ describe('LiFiClient should', () => {
       },
       actionType: 'EVM-NATIVE-PAYMENT'
     }
-    await expect(client.generateAction(createdSwap)).rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.MANIPULATED_API_RESPONSE.code })
+    await expect(generateAction(createdSwap)).rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.MANIPULATED_API_RESPONSE.code })
   })
 
   test('reject a transaction for a chain other than the origin network', async () => {
@@ -304,6 +305,6 @@ describe('LiFiClient should', () => {
       },
       actionType: 'ERC20-PAYMENT'
     }
-    await expect(client.generateAction(createdSwap)).rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.MANIPULATED_API_RESPONSE.code })
+    await expect(generateAction(createdSwap)).rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.MANIPULATED_API_RESPONSE.code })
   })
 })

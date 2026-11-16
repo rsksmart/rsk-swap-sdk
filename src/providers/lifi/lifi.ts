@@ -4,7 +4,7 @@ import { type CreateSwapArgs } from '../../sdk/createSwap'
 import { type CreateSwapResult, type Swap } from '../../api'
 import { createApprovalHandler } from '../symbiosis/approval'
 import { validateEvmSwapTransaction } from '../evmTransaction'
-import { TOKEN_REGISTRY } from '../../constants/tokens'
+import { type PinnedToken } from '../../constants/tokens'
 
 /** {@link SwapProviderClient} implementation for LI.FI. Its swaps never require a claim, so it only implements the required contract methods; for ERC20 payments it attaches an approval step via `executePreSteps`. */
 export class LiFiClient implements SwapProviderClient {
@@ -19,7 +19,7 @@ export class LiFiClient implements SwapProviderClient {
     return Promise.resolve(true)
   }
 
-  async generateAction (createdSwap: CreateSwapResult): Promise<SwapAction> {
+  async generateAction (createdSwap: CreateSwapResult, fromToken: PinnedToken): Promise<SwapAction> {
     const { swap, actionType } = createdSwap
     switch (actionType) {
       case 'ERC20-PAYMENT':
@@ -29,14 +29,14 @@ export class LiFiClient implements SwapProviderClient {
         assertTruthy(context?.publicContext?.data, 'Missing data in LI.FI swap context')
         assertTruthy(context?.publicContext?.value, 'Missing value in LI.FI swap context')
         const { to, data, value, chainId } = context.publicContext
-        const spender = validateEvmSwapTransaction('LIFI', swap, { to, value, chainId })
+        const spender = validateEvmSwapTransaction('LIFI', swap, fromToken, { to, value, chainId })
         if (swap.paymentAddress && swap.paymentAddress.toLowerCase() !== to.toLowerCase()) {
           throw new Error(`LI.FI payment address mismatch: ${swap.paymentAddress} !== ${to}`)
         }
         // ethers only accepts EIP-55 addresses
         const action: SwapAction = { type: actionType, data: { to: to.toLowerCase(), data, value }, requiresClaim: false, chainId: Number(swap.fromNetwork) }
         if (actionType === 'ERC20-PAYMENT') {
-          const tokenAddress = TOKEN_REGISTRY[swap.fromNetwork]?.[swap.fromToken]?.address
+          const tokenAddress = fromToken.address
           assertTruthy(tokenAddress, `Token ${swap.fromToken} is not available on ${swap.fromNetwork}`)
           action.executePreSteps = createApprovalHandler({
             tokenAddress,

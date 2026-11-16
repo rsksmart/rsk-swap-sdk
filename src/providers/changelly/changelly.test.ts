@@ -1,9 +1,13 @@
 import { describe, expect, test } from '@jest/globals'
 import { type CreatedSwap } from '../../api/index'
+import { type SwapAction } from '../types'
+import { TOKEN_REGISTRY, type PinnedToken } from '../../constants/tokens'
 import { ChangellyClient } from './changelly'
 
 describe('ChangellyClient should', () => {
   const client = new ChangellyClient()
+  const generateAction = async (createdSwap: CreatedSwap): Promise<SwapAction> =>
+    client.generateAction(createdSwap, TOKEN_REGISTRY[createdSwap.swap.fromNetwork]?.[createdSwap.swap.fromToken] as PinnedToken)
 
   test('create Changelly context', async () => {
     const context = client.createContext({
@@ -46,7 +50,7 @@ describe('ChangellyClient should', () => {
       },
       actionType: 'BIP21'
     }
-    const action = await client.generateAction(swap)
+    const action = await generateAction(swap)
     expect(action).toEqual({
       requiresClaim: false,
       type: 'BIP21',
@@ -78,7 +82,7 @@ describe('ChangellyClient should', () => {
       },
       actionType: 'ERC20-PAYMENT'
     }
-    const action = await client.generateAction(swap)
+    const action = await generateAction(swap)
     expect(action).toEqual({
       requiresClaim: false,
       type: 'ERC20-PAYMENT',
@@ -114,7 +118,7 @@ describe('ChangellyClient should', () => {
       },
       actionType: 'EVM-NATIVE-PAYMENT'
     }
-    const action = await client.generateAction(swap)
+    const action = await generateAction(swap)
     expect(action).toEqual({
       requiresClaim: false,
       type: 'EVM-NATIVE-PAYMENT',
@@ -152,7 +156,7 @@ describe('ChangellyClient should', () => {
     }
     expect.assertions(1)
     try {
-      await client.generateAction(swap)
+      await generateAction(swap)
     } catch (e: any) {
       expect(e.message).toBe('Action type NONE not supported for Changelly')
     }
@@ -178,30 +182,7 @@ describe('ChangellyClient should', () => {
       },
       actionType: 'ERC20-PAYMENT'
     }
-    const action = await client.generateAction(swap)
+    const action = await generateAction(swap)
     expect((action.data as { to: string }).to).toBe('0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d')
-  })
-
-  test('fail for a token that is not supported on the origin network', async () => {
-    const swap: CreatedSwap = {
-      swap: {
-        providerSwapId: '123',
-        refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
-        providerId: 'CHANGELLY',
-        fromAmount: BigInt(100),
-        paymentAddress: '0xd5f00abfbea7a0b193836cac6833c2ad9d06cea8',
-        receiverAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
-        fromToken: 'BTCB',
-        toToken: 'RBTC',
-        fromNetwork: '56',
-        toNetwork: '30',
-        status: 'CREATED',
-        requiredConfirmations: 3,
-        usedFees: [],
-        context: {}
-      },
-      actionType: 'ERC20-PAYMENT'
-    }
-    await expect(client.generateAction(swap)).rejects.toThrow('Token BTCB is not supported on 56')
   })
 })

@@ -5,7 +5,7 @@ import { RskSwapError } from '../../error/error'
 import { validateEvmSwapTransaction } from '../evmTransaction'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
 import { createApprovalHandler } from './approval'
-import { TOKEN_REGISTRY } from '../../constants/tokens'
+import { type PinnedToken } from '../../constants/tokens'
 
 export interface SymbiosisEvmContext {
   chainId: number
@@ -41,10 +41,8 @@ export class SymbiosisClient implements SwapProviderClient {
     return Promise.resolve(true)
   }
 
-  async generateAction (createdSwap: CreateSwapResult): Promise<SwapAction> {
+  async generateAction (createdSwap: CreateSwapResult, tokenInfo: PinnedToken): Promise<SwapAction> {
     const { swap, actionType } = createdSwap
-    const tokenInfo = TOKEN_REGISTRY[swap.fromNetwork]?.[swap.fromToken]
-    assertTruthy(tokenInfo, `Token ${swap.fromToken} is not supported on ${swap.fromNetwork}`)
 
     switch (actionType) {
       case 'BIP21': {
@@ -61,7 +59,7 @@ export class SymbiosisClient implements SwapProviderClient {
         assertTruthy(context?.to, 'Missing "to" address in Symbiosis swap context')
         assertTruthy(context?.data, 'Missing transaction data in Symbiosis swap context')
         const value = context.value === '0' ? '0x0' : context.value
-        const spender = validateEvmSwapTransaction('SYMBIOSIS', swap, { to: context.to, value, chainId: context.chainId })
+        const spender = validateEvmSwapTransaction('SYMBIOSIS', swap, tokenInfo, { to: context.to, value, chainId: context.chainId })
 
         const action: SwapAction = {
           type: actionType,

@@ -45,7 +45,7 @@ export async function createSwap (apiUrl: string, client: HttpClient, clientReso
     throw RskSwapError.untrustedAddress(result.swap)
   }
 
-  const action = await swapProviderClient.generateAction(result)
+  const action = await swapProviderClient.generateAction(result, fromToken)
   const { fromNetwork } = result.swap
   return {
     swap: result.swap,
