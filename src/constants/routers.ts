@@ -14,7 +14,10 @@ export const PROVIDER_ROUTERS: Readonly<Record<string, Readonly<Record<string, r
     56: [{ router: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE', spender: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE' }]
   },
   SYMBIOSIS: {
-    1: [{ router: '0xB4769e9c5bE31199a25ecD1B0C6609183fa72521', spender: '0xB4769e9c5bE31199a25ecD1B0C6609183fa72521' }],
+    1: [
+      { router: '0xB4769e9c5bE31199a25ecD1B0C6609183fa72521', spender: '0xB4769e9c5bE31199a25ecD1B0C6609183fa72521' },
+      { router: '0xf621Fb08BBE51aF70e7E0F4EA63496894166Ff7F', spender: '0xfCEF2Fe72413b65d3F393d278A714caD87512bcd' }
+    ],
     30: [
       { router: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421', spender: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421' },
       { router: '0x7057ab3fb2bee9c18e0cde4240de4ff7f159e365', spender: '0xfffdb2a69abcbbf55ecb2f6b348e0bd3d0f9f2e1' }

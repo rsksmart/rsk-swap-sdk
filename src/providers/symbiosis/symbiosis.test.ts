@@ -389,6 +389,19 @@ describe('SymbiosisClient should', () => {
       expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: gateway, amount: '1000000' })
     })
 
+    test('grant the approval to the gateway of the Ethereum metarouter', async () => {
+      const usdcAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+      const metaRouter = '0xf621Fb08BBE51aF70e7E0F4EA63496894166Ff7F'
+      const gateway = '0xfCEF2Fe72413b65d3F393d278A714caD87512bcd'
+      httpMock.get.mockResolvedValue({ decimals: 6, type: 'erc20', symbol: 'USDC', addresses: { 1: usdcAddress } })
+      const created = buildSwap({ chainId: 1, to: metaRouter, approveTo: gateway, tokenAddress: usdcAddress })
+      created.swap = { ...created.swap, fromNetwork: '1', toNetwork: '30', fromToken: 'USDC', toToken: 'RIF', paymentAddress: metaRouter }
+      const action = await client.generateAction(created)
+      expect(action.chainId).toBe(1)
+      expect(action.data).toMatchObject({ to: metaRouter.toLowerCase() })
+      expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdcAddress, spender: gateway, amount: '1000000' })
+    })
+
     test('accept router and spender addresses with an RSK checksum', async () => {
       const action = await client.generateAction(buildSwap({ to: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421', approveTo: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421' }))
       expect(action.data).toMatchObject({ to: '0x7f6fb9f3ce785f3d85772c038fda58ec9432d421' })

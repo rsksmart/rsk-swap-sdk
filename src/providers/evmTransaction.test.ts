@@ -37,6 +37,11 @@ describe('validateEvmSwapTransaction should', () => {
     expect(validateEvmSwapTransaction('SYMBIOSIS', swap, { to: '0x7057ab3fb2bee9c18e0cde4240de4ff7f159e365', value: '0x0', chainId: 30 }))
       .toBe('0xfffdb2a69abcbbf55ecb2f6b348e0bd3d0f9f2e1')
     expect(validateEvmSwapTransaction('SYMBIOSIS', swap, { to: symbiosisRskRouter, value: '0x0', chainId: 30 })).toBe(symbiosisRskRouter)
+    const ethSwap = { ...swap, fromNetwork: '1', fromToken: 'USDC', toNetwork: '30' }
+    expect(validateEvmSwapTransaction('SYMBIOSIS', ethSwap, { to: '0xf621fb08bbe51af70e7e0f4ea63496894166ff7f', value: '0x0', chainId: 1 }))
+      .toBe('0xfCEF2Fe72413b65d3F393d278A714caD87512bcd')
+    expect(validateEvmSwapTransaction('SYMBIOSIS', ethSwap, { to: '0xB4769e9c5bE31199a25ecD1B0C6609183fa72521', value: '0x0', chainId: 1 }))
+      .toBe('0xB4769e9c5bE31199a25ecD1B0C6609183fa72521')
   })
 
   test('reject a target that is not a router of the provider on the origin chain', () => {
