@@ -6,6 +6,7 @@ import { type SwapProviderClient } from '../providers/types'
 import { ProviderClientResolver } from '../providers/resolver'
 import JSONbig from 'json-bigint'
 import { sanitizeSwap } from '../utils/sanitization'
+import { RSK_SWAP_ERROR_CODES } from '../error/codes'
 
 const serializer = JSONbig({ useNativeBigInt: true })
 
@@ -53,7 +54,7 @@ describe('createSwap function should', () => {
         ],
         context: { publicKey: 'k1' }
       },
-      actionType: 'ERC20-PAYMENT'
+      actionType: 'EVM-NATIVE-PAYMENT'
     }
     const getCaptchaToken: jest.MockedFunction<HttpClient['getCaptchaToken']> = jest.fn<HttpClient['getCaptchaToken']>()
     const get: jest.MockedFunction<HttpClient['get']> = jest.fn<any>()
@@ -123,7 +124,9 @@ describe('createSwap function should', () => {
           data: 'some-data',
           value: '0x02BC'
         },
-        requiresClaim: false
+        requiresClaim: false,
+        fromNetwork: '1',
+        chainId: 1
       }
     })
     )
@@ -149,7 +152,7 @@ describe('createSwap function should', () => {
     expect(providerClientMock.validateAddress).toHaveBeenCalledTimes(1)
     expect(providerClientMock.validateAddress).toHaveBeenCalledWith(mockResult.swap)
     expect(providerClientMock.generateAction).toHaveBeenCalledTimes(1)
-    expect(providerClientMock.generateAction).toHaveBeenCalledWith(mockResult)
+    expect(providerClientMock.generateAction).toHaveBeenCalledWith(mockResult, { type: 'native-evm', decimals: 18 })
   })
   test('fail on missing parameter', async () => {
     const url = 'http://localhost:8080'
@@ -343,7 +346,82 @@ describe('createSwap function should', () => {
       providerClientMock.generateAction.mockResolvedValue({ type: 'ERC20-PAYMENT', data: { to: 'a-payment-address', data: '0x', value: '0x0' }, requiresClaim: false })
       const created = await createSwap('http://localhost:8080', httpClient, providerResolver, params)
       expect(created.swap.fromAmount).toBe(BigInt(500))
-      expect(providerClientMock.generateAction).toHaveBeenCalledWith(expect.objectContaining({ swap: expect.objectContaining({ fromAmount: BigInt(500) }) }))
+      expect(providerClientMock.generateAction).toHaveBeenCalledWith(expect.objectContaining({ swap: expect.objectContaining({ fromAmount: BigInt(500) }) }), { type: 'native-evm', decimals: 18 })
+    })
+  })
+
+  describe('for the action type returned by the API', () => {
+    const url = 'http://localhost:8080'
+    const buildArgs = (providerId: string, fromNetwork: string, fromToken: string): CreateSwapArgs => ({
+      providerId,
+      address: 'a-receiver-address',
+      fromToken,
+      toToken: 'RBTC',
+      fromAmount: BigInt(500),
+      refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
+      fromNetwork,
+      toNetwork: '30'
+    })
+    const mockApiResult = (args: CreateSwapArgs, actionType: CreatedSwap['actionType']): void => {
+      const result = structuredClone(mockResult)
+      result.swap = { ...result.swap, providerId: args.providerId, fromNetwork: args.fromNetwork, fromToken: args.fromToken, toNetwork: args.toNetwork, toToken: args.toToken }
+      result.actionType = actionType
+      httpClient.post = jest.fn<any>().mockResolvedValueOnce(result)
+    }
+
+    beforeEach(() => {
+      providerClientMock.validateAddress.mockResolvedValue(true)
+      providerClientMock.generateAction.mockResolvedValue({ type: 'NONE', data: '', requiresClaim: false })
+    })
+
+    test.each([
+      ['CHANGELLY', 'BTC', 'BTC', 'BIP21', undefined],
+      ['SYMBIOSIS', 'BTC', 'BTC', 'BIP21', undefined],
+      ['BOLTZ', 'LN', 'BTC', 'BOLT11', undefined],
+      ['CHANGELLY', '56', 'BNB', 'EVM-NATIVE-PAYMENT', 56],
+      ['CHANGELLY', '1', 'USDC', 'ERC20-PAYMENT', 1],
+      ['LIFI', '30', 'RBTC', 'EVM-NATIVE-PAYMENT', 30],
+      ['LIFI', '30', 'RIF', 'ERC20-PAYMENT', 30],
+      ['SYMBIOSIS', '30', 'USDT0', 'CONTRACT-INTERACTION', 30],
+      ['BOLTZ', '30', 'RBTC', 'CONTRACT-INTERACTION', 30]
+    ] as const)('accept from %s a swap paid from %s with %s as %s bound to chain %s', async (providerId, fromNetwork, fromToken, actionType, chainId) => {
+      const args = buildArgs(providerId, fromNetwork, fromToken)
+      mockApiResult(args, actionType)
+      const result = await createSwap(url, httpClient, providerResolver, args)
+      expect(result.action.fromNetwork).toBe(fromNetwork)
+      expect(result.action.chainId).toBe(chainId)
+      expect(providerClientMock.generateAction).toHaveBeenCalledTimes(1)
+    })
+
+    test.each([
+      ['CHANGELLY', '1', 'USDC', 'EVM-NATIVE-PAYMENT'],
+      ['CHANGELLY', '56', 'BNB', 'ERC20-PAYMENT'],
+      ['CHANGELLY', 'BTC', 'BTC', 'ERC20-PAYMENT'],
+      ['CHANGELLY', 'BTC', 'BTC', 'EVM-NATIVE-PAYMENT'],
+      ['SYMBIOSIS', 'BTC', 'BTC', 'CONTRACT-INTERACTION'],
+      ['SYMBIOSIS', '30', 'USDT0', 'ERC20-PAYMENT'],
+      ['LIFI', '30', 'RIF', 'CONTRACT-INTERACTION'],
+      ['BOLTZ', 'LN', 'BTC', 'CONTRACT-INTERACTION']
+    ] as const)('reject from %s a swap paid from %s with %s as %s', async (providerId, fromNetwork, fromToken, actionType) => {
+      const args = buildArgs(providerId, fromNetwork, fromToken)
+      mockApiResult(args, actionType)
+      await expect(createSwap(url, httpClient, providerResolver, args))
+        .rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.MANIPULATED_API_RESPONSE.code })
+      expect(providerClientMock.generateAction).not.toHaveBeenCalled()
+    })
+
+    test.each([
+      ['1', 'RIF'],
+      ['30', 'USDC'],
+      ['31', 'tRBTC'],
+      ['BTC', 'RBTC']
+    ])('reject a swap paid from %s with %s before calling the API', async (fromNetwork, fromToken) => {
+      await expect(createSwap(url, httpClient, providerResolver, buildArgs('CHANGELLY', fromNetwork, fromToken)))
+        .rejects.toMatchObject({
+          code: RSK_SWAP_ERROR_CODES.UNSUPPORTED_TOKEN.code,
+          details: { cause: `Token ${fromToken} is not supported on ${fromNetwork}`, network: fromNetwork, token: fromToken }
+        })
+      expect(httpClient.post).not.toHaveBeenCalled()
     })
   })
 })

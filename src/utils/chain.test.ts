@@ -1,5 +1,7 @@
 import { describe, test, expect } from '@jest/globals'
-import { isBtcChain, isLightningNetwork, isRskChain, isEvmChain } from './chain'
+import { networks } from 'bitcoinjs-lib'
+import { isBtcChain, isLightningNetwork, isRskChain, isEvmChain, getBitcoinNetwork } from './chain'
+import { RskSwapEnvironments } from '../constants/environment'
 
 describe('chain utility functions', () => {
   describe('isBtcChain', () => {
@@ -52,6 +54,32 @@ describe('chain utility functions', () => {
     test('should return false for BTC and Lightning Network values', () => {
       expect(isEvmChain('BTC')).toBe(false)
       expect(isEvmChain('LN')).toBe(false)
+    })
+  })
+
+  describe('getBitcoinNetwork', () => {
+    test.each([
+      ['Mainnet', networks.bitcoin],
+      ['Development', networks.bitcoin],
+      ['Local', networks.bitcoin],
+      ['Testnet', networks.testnet]
+    ] as const)('return the Bitcoin network for %s', (envName, expected) => {
+      expect(getBitcoinNetwork(RskSwapEnvironments[envName])).toBe(expected)
+    })
+
+    test.each([
+      ['mainnet', networks.bitcoin],
+      ['testnet', networks.testnet],
+      ['regtest', networks.regtest]
+    ] as const)('map %s to its bitcoinjs-lib network', (bitcoinNetwork, expected) => {
+      expect(getBitcoinNetwork({ api: 'http://localhost', bitcoinNetwork })).toBe(expected)
+    })
+
+    test('leave the bitcoinjs-lib networks mutable', () => {
+      expect(Object.isFrozen(RskSwapEnvironments)).toBe(true)
+      expect(Object.isFrozen(networks.bitcoin)).toBe(false)
+      expect(Object.isFrozen(networks.testnet)).toBe(false)
+      expect(Object.isFrozen(networks.regtest)).toBe(false)
     })
   })
 })
