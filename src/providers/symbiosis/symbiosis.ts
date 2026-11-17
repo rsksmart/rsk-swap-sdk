@@ -5,7 +5,9 @@ import { RskSwapError } from '../../error/error'
 import { validateEvmSwapTransaction } from '../evmTransaction'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
 import { createApprovalHandler } from './approval'
-import { type PinnedToken } from '../../constants/tokens'
+import { type Network } from 'bitcoinjs-lib'
+import { buildBip21Uri } from '../../utils/bip21'
+import { BTC_DECIMALS, type PinnedToken } from '../../constants/tokens'
 
 export interface SymbiosisEvmContext {
   chainId: number
@@ -30,6 +32,8 @@ export type SymbiosisContext =
 
 /** {@link SwapProviderClient} implementation for Symbiosis. Its swaps never require a claim, so it only implements the required contract methods; for EVM contract-interaction swaps that need an ERC20 approval, it attaches an approval step via `executePreSteps`. */
 export class SymbiosisClient implements SwapProviderClient {
+  constructor (private readonly bitcoinNetwork: Network) {}
+
   createContext (_args: CreateSwapArgs): ProviderContext {
     return {
       publicContext: {},
@@ -50,7 +54,7 @@ export class SymbiosisClient implements SwapProviderClient {
         assertTruthy(context.depositAddress, 'Missing deposit address in Symbiosis swap context')
         return {
           type: actionType,
-          data: `bitcoin:${context.depositAddress}?amount=${ethers.utils.formatUnits(swap.fromAmount, tokenInfo.decimals)}`,
+          data: buildBip21Uri({ address: context.depositAddress, amountInDecimal: ethers.utils.formatUnits(swap.fromAmount, BTC_DECIMALS) }, this.bitcoinNetwork),
           requiresClaim: false
         }
       }

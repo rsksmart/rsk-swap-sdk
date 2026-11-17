@@ -5,6 +5,7 @@ import { type SwapAction } from '../types'
 import { TOKEN_REGISTRY, type PinnedToken } from '../../constants/tokens'
 import { SymbiosisClient, type SymbiosisEvmContext } from './symbiosis'
 import { createApprovalHandler } from './approval'
+import { networks } from 'bitcoinjs-lib'
 
 jest.mock('./approval', () => {
   const actual = jest.requireActual<typeof import('./approval')>('./approval')
@@ -13,7 +14,7 @@ jest.mock('./approval', () => {
 
 describe('SymbiosisClient should', () => {
   const usdt0Address = '0x779Ded0c9e1022225f8E0630b35a9b54bE713736'
-  const client = new SymbiosisClient()
+  const client = new SymbiosisClient(networks.bitcoin)
   const generateAction = async (createdSwap: CreatedSwap): Promise<SwapAction> =>
     client.generateAction(createdSwap, TOKEN_REGISTRY[createdSwap.swap.fromNetwork]?.[createdSwap.swap.fromToken] as PinnedToken)
 
@@ -54,8 +55,8 @@ describe('SymbiosisClient should', () => {
     expect(result).toBe(true)
   })
 
-  test('generate action for BIP21', async () => {
-    const swap: CreatedSwap = {
+  function bip21Swap (address: string): CreatedSwap {
+    return {
       swap: {
         providerSwapId: '123',
         refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
@@ -72,14 +73,17 @@ describe('SymbiosisClient should', () => {
         usedFees: [],
         context: {
           publicContext: {
-            depositAddress: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq',
+            depositAddress: address,
             expiresAt: '2026-02-03T00:00:00Z'
           }
         }
       },
       actionType: 'BIP21'
     }
-    const action = await generateAction(swap)
+  }
+
+  test('generate action for BIP21', async () => {
+    const action = await generateAction(bip21Swap('bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq'))
     expect(action).toEqual({
       requiresClaim: false,
       type: 'BIP21',
@@ -87,6 +91,13 @@ describe('SymbiosisClient should', () => {
     })
   })
 
+  test.each([
+    ['an address with a query string', 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq?amount=0.019&x='],
+    ['a testnet address', 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx']
+  ])('fail to generate BIP21 action for %s', async (_, address) => {
+    const swap = bip21Swap(address)
+    await expect(generateAction(swap)).rejects.toThrow(`Invalid Bitcoin address: ${address}`)
+  })
   test('generate action for CONTRACT-INTERACTION', async () => {
     const context: SymbiosisEvmContext = {
       chainId: 30,

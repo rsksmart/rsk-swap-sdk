@@ -3,9 +3,10 @@ import { type CreatedSwap } from '../../api/index'
 import { type SwapAction } from '../types'
 import { TOKEN_REGISTRY, type PinnedToken } from '../../constants/tokens'
 import { ChangellyClient } from './changelly'
+import { networks } from 'bitcoinjs-lib'
 
 describe('ChangellyClient should', () => {
-  const client = new ChangellyClient()
+  const client = new ChangellyClient(networks.bitcoin)
   const generateAction = async (createdSwap: CreatedSwap): Promise<SwapAction> =>
     client.generateAction(createdSwap, TOKEN_REGISTRY[createdSwap.swap.fromNetwork]?.[createdSwap.swap.fromToken] as PinnedToken)
 
@@ -25,14 +26,15 @@ describe('ChangellyClient should', () => {
       secretContext: {}
     })
   })
-  test('generate action for BIP21', async () => {
-    const swap: CreatedSwap = {
+
+  function bip21Swap (address: string): CreatedSwap {
+    return {
       swap: {
         providerSwapId: '123',
         refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
         providerId: 'CHANGELLY',
         fromAmount: BigInt(100000000),
-        paymentAddress: 'paymentAddress',
+        paymentAddress: address,
         receiverAddress: 'receiverAddress',
         fromToken: 'BTC',
         toToken: 'ETH',
@@ -50,12 +52,23 @@ describe('ChangellyClient should', () => {
       },
       actionType: 'BIP21'
     }
-    const action = await generateAction(swap)
+  }
+
+  test('generate action for BIP21', async () => {
+    const action = await generateAction(bip21Swap('bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq'))
     expect(action).toEqual({
       requiresClaim: false,
       type: 'BIP21',
-      data: 'bitcoin:paymentAddress?amount=1.0'
+      data: 'bitcoin:bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq?amount=1.0'
     })
+  })
+
+  test.each([
+    ['an address with a query string', 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq?amount=0.019&x='],
+    ['a testnet address', 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx']
+  ])('fail to generate BIP21 action for %s', async (_, address) => {
+    const swap = bip21Swap(address)
+    await expect(generateAction(swap)).rejects.toThrow(`Invalid Bitcoin address: ${address}`)
   })
   test('generate action for ERC20-PAYMENT', async () => {
     const swap: CreatedSwap = {
