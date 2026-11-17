@@ -1,10 +1,11 @@
-import { type HttpClient, ethers, assertTruthy } from '@rsksmart/bridges-core-sdk'
-import { type Swap, type Token, type CreateSwapResult, Routes } from '../../api'
+import { ethers, assertTruthy } from '@rsksmart/bridges-core-sdk'
+import { type Swap, type CreateSwapResult } from '../../api'
 import { type SwapAction, type ProviderContext, type SwapProviderClient } from '../../providers/types'
 import { RskSwapError } from '../../error/error'
 import { validateEvmSwapTransaction } from '../evmTransaction'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
 import { createApprovalHandler } from './approval'
+import { type PinnedToken } from '../../constants/tokens'
 
 export interface SymbiosisEvmContext {
   chainId: number
@@ -29,11 +30,6 @@ export type SymbiosisContext =
 
 /** {@link SwapProviderClient} implementation for Symbiosis. Its swaps never require a claim, so it only implements the required contract methods; for EVM contract-interaction swaps that need an ERC20 approval, it attaches an approval step via `executePreSteps`. */
 export class SymbiosisClient implements SwapProviderClient {
-  constructor (
-    private readonly apiUrl: string,
-    private readonly httpClient: HttpClient
-  ) {}
-
   createContext (_args: CreateSwapArgs): ProviderContext {
     return {
       publicContext: {},
@@ -45,9 +41,8 @@ export class SymbiosisClient implements SwapProviderClient {
     return Promise.resolve(true)
   }
 
-  async generateAction (createdSwap: CreateSwapResult): Promise<SwapAction> {
+  async generateAction (createdSwap: CreateSwapResult, tokenInfo: PinnedToken): Promise<SwapAction> {
     const { swap, actionType } = createdSwap
-    const tokenInfo = await this.httpClient.get<Token>(this.apiUrl + Routes.getToken + swap.fromToken)
 
     switch (actionType) {
       case 'BIP21': {
@@ -64,7 +59,7 @@ export class SymbiosisClient implements SwapProviderClient {
         assertTruthy(context?.to, 'Missing "to" address in Symbiosis swap context')
         assertTruthy(context?.data, 'Missing transaction data in Symbiosis swap context')
         const value = context.value === '0' ? '0x0' : context.value
-        const spender = validateEvmSwapTransaction('SYMBIOSIS', swap, { to: context.to, value, chainId: context.chainId })
+        const spender = validateEvmSwapTransaction('SYMBIOSIS', swap, tokenInfo, { to: context.to, value, chainId: context.chainId })
 
         const action: SwapAction = {
           type: actionType,
@@ -79,12 +74,12 @@ export class SymbiosisClient implements SwapProviderClient {
 
         if (context.approveTo) {
           const contextTokenAddress = context.tokenAddress
-          const apiTokenAddress = tokenInfo.addresses?.[swap.fromNetwork]
+          const pinnedTokenAddress = tokenInfo.address
           assertTruthy(contextTokenAddress, `Token address not found in context for ${swap.fromToken}`)
-          assertTruthy(apiTokenAddress, `Token address not found in API for ${swap.fromToken} on ${swap.fromNetwork}`)
+          assertTruthy(pinnedTokenAddress, `Token address not found for ${swap.fromToken} on ${swap.fromNetwork}`)
           assertTruthy(
-            contextTokenAddress.toLowerCase() === apiTokenAddress.toLowerCase(),
-            `Token address mismatch: context=${contextTokenAddress}, api=${apiTokenAddress}`
+            contextTokenAddress.toLowerCase() === pinnedTokenAddress.toLowerCase(),
+            `Token address mismatch: context=${contextTokenAddress}, expected=${pinnedTokenAddress}`
           )
 
           if (context.approveTo.toLowerCase() !== spender.toLowerCase()) {

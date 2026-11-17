@@ -25,13 +25,6 @@ export const PROVIDER_ROUTERS: Readonly<Record<string, Readonly<Record<string, r
   }
 })
 
-/** Symbol of the native currency of each EVM chain, by chain id. */
-export const NATIVE_CURRENCY: Readonly<Record<string, string>> = deepFreeze({
-  1: 'ETH',
-  30: 'RBTC',
-  56: 'BNB'
-})
-
 /** Maximum native amount, in wei, a swap transaction may carry on top of the swapped amount, by EVM chain id. */
 export const NATIVE_FEE_ALLOWANCE: Readonly<Record<string, string>> = deepFreeze({
   1: '20000000000000000',

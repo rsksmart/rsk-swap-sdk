@@ -1,7 +1,8 @@
-import { describe, expect, test, beforeEach, jest } from '@jest/globals'
-import { type HttpClient } from '@rsksmart/bridges-core-sdk'
+import { describe, expect, test, jest } from '@jest/globals'
 import { type CreatedSwap } from '../../api/index'
 import { RSK_SWAP_ERROR_CODES } from '../../error/codes'
+import { type SwapAction } from '../types'
+import { TOKEN_REGISTRY, type PinnedToken } from '../../constants/tokens'
 import { SymbiosisClient, type SymbiosisEvmContext } from './symbiosis'
 import { createApprovalHandler } from './approval'
 
@@ -10,23 +11,11 @@ jest.mock('./approval', () => {
   return { createApprovalHandler: jest.fn(actual.createApprovalHandler) }
 })
 
-function createHttpMock (): jest.Mocked<HttpClient> {
-  return {
-    get: jest.fn<any>(),
-    post: jest.fn<any>(),
-    getCaptchaToken: jest.fn<HttpClient['getCaptchaToken']>()
-  }
-}
-
 describe('SymbiosisClient should', () => {
-  const apiUrl = 'http://localhost:8080/api'
-  let client: SymbiosisClient
-  let httpMock: jest.Mocked<HttpClient>
-
-  beforeEach(() => {
-    httpMock = createHttpMock()
-    client = new SymbiosisClient(apiUrl, httpMock)
-  })
+  const usdt0Address = '0x779Ded0c9e1022225f8E0630b35a9b54bE713736'
+  const client = new SymbiosisClient()
+  const generateAction = async (createdSwap: CreatedSwap): Promise<SwapAction> =>
+    client.generateAction(createdSwap, TOKEN_REGISTRY[createdSwap.swap.fromNetwork]?.[createdSwap.swap.fromToken] as PinnedToken)
 
   test('create empty context', () => {
     const context = client.createContext({
@@ -66,7 +55,6 @@ describe('SymbiosisClient should', () => {
   })
 
   test('generate action for BIP21', async () => {
-    httpMock.get.mockResolvedValueOnce({ decimals: 8 })
     const swap: CreatedSwap = {
       swap: {
         providerSwapId: '123',
@@ -91,18 +79,15 @@ describe('SymbiosisClient should', () => {
       },
       actionType: 'BIP21'
     }
-    const action = await client.generateAction(swap)
+    const action = await generateAction(swap)
     expect(action).toEqual({
       requiresClaim: false,
       type: 'BIP21',
       data: 'bitcoin:bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq?amount=1.0'
     })
-    expect(httpMock.get).toHaveBeenCalledTimes(1)
-    expect(httpMock.get).toHaveBeenCalledWith(apiUrl + '/tokens/BTC')
   })
 
   test('generate action for CONTRACT-INTERACTION', async () => {
-    httpMock.get.mockResolvedValueOnce({ decimals: 18, type: 'native-evm', symbol: 'RBTC', addresses: {} })
     const context: SymbiosisEvmContext = {
       chainId: 30,
       to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
@@ -134,7 +119,7 @@ describe('SymbiosisClient should', () => {
       },
       actionType: 'CONTRACT-INTERACTION'
     }
-    const action = await client.generateAction(swap)
+    const action = await generateAction(swap)
     expect(action).toEqual({
       requiresClaim: false,
       chainId: 30,
@@ -148,12 +133,6 @@ describe('SymbiosisClient should', () => {
   })
 
   test('generate action without approval when approveTo is not provided', async () => {
-    httpMock.get.mockResolvedValueOnce({
-      decimals: 6,
-      type: 'erc20',
-      symbol: 'USDC',
-      addresses: { 30: '0xUsdcTokenAddress' }
-    })
     const context: SymbiosisEvmContext = {
       chainId: 30,
       to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
@@ -169,7 +148,7 @@ describe('SymbiosisClient should', () => {
         fromAmount: BigInt('500000000000000000'),
         paymentAddress: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
         receiverAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
-        fromToken: 'USDC',
+        fromToken: 'USDT0',
         toToken: 'USDT',
         fromNetwork: '30',
         toNetwork: '1',
@@ -180,7 +159,7 @@ describe('SymbiosisClient should', () => {
       },
       actionType: 'CONTRACT-INTERACTION'
     }
-    const action = await client.generateAction(swap)
+    const action = await generateAction(swap)
     expect(action).toEqual({
       requiresClaim: false,
       chainId: 30,
@@ -214,7 +193,7 @@ describe('SymbiosisClient should', () => {
       },
       actionType: 'EVM-NATIVE-PAYMENT'
     }
-    await expect(client.generateAction(swap)).rejects.toThrow(
+    await expect(generateAction(swap)).rejects.toThrow(
       'Action type EVM-NATIVE-PAYMENT not supported for Symbiosis'
     )
   })
@@ -239,18 +218,12 @@ describe('SymbiosisClient should', () => {
       },
       actionType: 'CONTRACT-INTERACTION'
     }
-    await expect(client.generateAction(swap)).rejects.toThrow(
+    await expect(generateAction(swap)).rejects.toThrow(
       'Missing "to" address in Symbiosis swap context'
     )
   })
 
   test('generate action with executePreSteps for ERC20 swaps when approveTo is provided', async () => {
-    httpMock.get.mockResolvedValueOnce({
-      decimals: 6,
-      type: 'erc20',
-      symbol: 'USDC',
-      addresses: { 30: '0xUsdcTokenAddress12345678901234567890' }
-    })
     const context: SymbiosisEvmContext = {
       chainId: 30,
       to: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
@@ -258,7 +231,7 @@ describe('SymbiosisClient should', () => {
       data: '0xabcdef1234567890',
       value: '0x0',
       approveTo: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
-      tokenAddress: '0xUsdcTokenAddress12345678901234567890',
+      tokenAddress: usdt0Address,
       approveAmount: '1000000000000000000'
     }
     const swap: CreatedSwap = {
@@ -269,7 +242,7 @@ describe('SymbiosisClient should', () => {
         fromAmount: BigInt('1000000000000000000'),
         paymentAddress: '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421',
         receiverAddress: '0x79568c2989232dCa1840087D73d403602364c0D4',
-        fromToken: 'USDC',
+        fromToken: 'USDT0',
         toToken: 'USDT',
         fromNetwork: '30',
         toNetwork: '1',
@@ -280,7 +253,7 @@ describe('SymbiosisClient should', () => {
       },
       actionType: 'CONTRACT-INTERACTION'
     }
-    const action = await client.generateAction(swap)
+    const action = await generateAction(swap)
     expect(action.type).toBe('CONTRACT-INTERACTION')
     expect(action.requiresClaim).toBe(false)
     expect(action.data).toEqual({
@@ -292,12 +265,6 @@ describe('SymbiosisClient should', () => {
   })
 
   test('generate action with executePreSteps for ERC677 tokens (like RIF)', async () => {
-    httpMock.get.mockResolvedValueOnce({
-      decimals: 18,
-      type: 'erc677',
-      symbol: 'RIF',
-      addresses: { 30: '0x2acc95758f8b5f583470ba265eb685a8f45fc9d5' }
-    })
     const context: SymbiosisEvmContext = {
       chainId: 30,
       to: '0x7057ab3fb2bee9c18e0cde4240de4ff7f159e365',
@@ -326,7 +293,7 @@ describe('SymbiosisClient should', () => {
       },
       actionType: 'CONTRACT-INTERACTION'
     }
-    const action = await client.generateAction(swap)
+    const action = await generateAction(swap)
     expect(action.type).toBe('CONTRACT-INTERACTION')
     expect(action.requiresClaim).toBe(false)
     expect(action.data).toEqual({
@@ -339,7 +306,6 @@ describe('SymbiosisClient should', () => {
 
   describe('for an ERC20 CONTRACT-INTERACTION', () => {
     const router = '0x7f6fb9f3ce785F3d85772c038Fda58eC9432D421'
-    const usdt0Address = '0x779Ded0c9e1022225f8E0630b35a9b54bE713736'
     const buildSwap = (context: Partial<SymbiosisEvmContext>): CreatedSwap => ({
       swap: {
         providerSwapId: '1001',
@@ -372,12 +338,8 @@ describe('SymbiosisClient should', () => {
       actionType: 'CONTRACT-INTERACTION'
     })
 
-    beforeEach(() => {
-      httpMock.get.mockResolvedValue({ decimals: 6, type: 'erc20', symbol: 'USDT0', addresses: { 30: usdt0Address } })
-    })
-
     test('grant the approval to the pinned spender for at most fromAmount', async () => {
-      const action = await client.generateAction(buildSwap({ approveAmount: '400000' }))
+      const action = await generateAction(buildSwap({ approveAmount: '400000' }))
       expect(action.chainId).toBe(30)
       expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: router, amount: '400000' })
     })
@@ -385,7 +347,7 @@ describe('SymbiosisClient should', () => {
     test('grant the approval to the gateway of the metarouter that uses one', async () => {
       const metaRouter = '0x7057ab3fb2bee9c18e0cde4240de4ff7f159e365'
       const gateway = '0xfffdb2a69abcbbf55ecb2f6b348e0bd3d0f9f2e1'
-      await client.generateAction(buildSwap({ to: metaRouter, approveTo: gateway }))
+      await generateAction(buildSwap({ to: metaRouter, approveTo: gateway }))
       expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: gateway, amount: '1000000' })
     })
 
@@ -393,42 +355,41 @@ describe('SymbiosisClient should', () => {
       const usdcAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
       const metaRouter = '0xf621Fb08BBE51aF70e7E0F4EA63496894166Ff7F'
       const gateway = '0xfCEF2Fe72413b65d3F393d278A714caD87512bcd'
-      httpMock.get.mockResolvedValue({ decimals: 6, type: 'erc20', symbol: 'USDC', addresses: { 1: usdcAddress } })
       const created = buildSwap({ chainId: 1, to: metaRouter, approveTo: gateway, tokenAddress: usdcAddress })
       created.swap = { ...created.swap, fromNetwork: '1', toNetwork: '30', fromToken: 'USDC', toToken: 'RIF', paymentAddress: metaRouter }
-      const action = await client.generateAction(created)
+      const action = await generateAction(created)
       expect(action.chainId).toBe(1)
       expect(action.data).toMatchObject({ to: metaRouter.toLowerCase() })
       expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdcAddress, spender: gateway, amount: '1000000' })
     })
 
     test('accept router and spender addresses with an RSK checksum', async () => {
-      const action = await client.generateAction(buildSwap({ to: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421', approveTo: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421' }))
+      const action = await generateAction(buildSwap({ to: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421', approveTo: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421' }))
       expect(action.data).toMatchObject({ to: '0x7f6fb9f3ce785f3d85772c038fda58ec9432d421' })
       expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: router, amount: '1000000' })
-      await client.generateAction(buildSwap({ to: '0x7057ab3fb2bee9c18e0cde4240de4ff7f159e365', approveTo: '0xFFfDb2A69AbCbBF55ecB2F6B348E0bd3d0f9f2E1' }))
+      await generateAction(buildSwap({ to: '0x7057ab3fb2bee9c18e0cde4240de4ff7f159e365', approveTo: '0xFFfDb2A69AbCbBF55ecB2F6B348E0bd3d0f9f2E1' }))
       expect(createApprovalHandler).toHaveBeenLastCalledWith({ tokenAddress: usdt0Address, spender: '0xfffdb2a69abcbbf55ecb2f6b348e0bd3d0f9f2e1', amount: '1000000' })
     })
 
     test('reject an approval to a spender other than the pinned one', async () => {
-      await expect(client.generateAction(buildSwap({ approveTo: '0x79568c2989232dCa1840087D73d403602364c0D4' })))
+      await expect(generateAction(buildSwap({ approveTo: '0x79568c2989232dCa1840087D73d403602364c0D4' })))
         .rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.UNTRUSTED_ADDRESS.code })
       expect(createApprovalHandler).not.toHaveBeenCalled()
     })
 
     test('reject an approval above fromAmount', async () => {
-      await expect(client.generateAction(buildSwap({ approveAmount: '1000001' })))
+      await expect(generateAction(buildSwap({ approveAmount: '1000001' })))
         .rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.MANIPULATED_API_RESPONSE.code })
       expect(createApprovalHandler).not.toHaveBeenCalled()
     })
 
     test('reject a transaction to a contract other than the pinned router', async () => {
-      await expect(client.generateAction(buildSwap({ to: usdt0Address })))
+      await expect(generateAction(buildSwap({ to: usdt0Address })))
         .rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.UNTRUSTED_ADDRESS.code })
     })
 
     test('reject a transaction carrying native value above the fee allowance', async () => {
-      await expect(client.generateAction(buildSwap({ value: '1000000000000001' })))
+      await expect(generateAction(buildSwap({ value: '1000000000000001' })))
         .rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.MANIPULATED_API_RESPONSE.code })
     })
   })
