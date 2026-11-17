@@ -1,19 +1,15 @@
-import { type HttpClient, ethers, assertTruthy } from '@rsksmart/bridges-core-sdk'
-import { type Swap, type Token, type CreateSwapResult, Routes } from '../../api'
+import { ethers, assertTruthy } from '@rsksmart/bridges-core-sdk'
+import { type Swap, type CreateSwapResult } from '../../api'
 import { type SwapAction, type ProviderContext, type SwapProviderClient } from '../../providers/types'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
 import { type Network } from 'bitcoinjs-lib'
 import { buildBip21Uri } from '../../utils/bip21'
-import { BTC_DECIMALS } from '../../constants/tokens'
+import { BTC_DECIMALS, type PinnedToken } from '../../constants/tokens'
 
 /** {@link SwapProviderClient} implementation for Changelly. Its swaps never require a claim, so it only implements the required contract methods. */
 export class ChangellyClient implements SwapProviderClient {
   private readonly ERC20_INTERFACE = new ethers.utils.Interface(['function transfer(address _to, uint _value) public'])
-  constructor (
-    private readonly apiUrl: string,
-    private readonly httpClient: HttpClient,
-    private readonly bitcoinNetwork: Network
-  ) {}
+  constructor (private readonly bitcoinNetwork: Network) {}
 
   createContext (_args: CreateSwapArgs): ProviderContext {
     return {
@@ -27,7 +23,7 @@ export class ChangellyClient implements SwapProviderClient {
     return Promise.resolve(true)
   }
 
-  async generateAction (createdSwap: CreateSwapResult): Promise<SwapAction> {
+  async generateAction (createdSwap: CreateSwapResult, tokenInfo: PinnedToken): Promise<SwapAction> {
     const { swap, actionType } = createdSwap
     switch (actionType) {
       case 'BIP21':
@@ -37,9 +33,8 @@ export class ChangellyClient implements SwapProviderClient {
           requiresClaim: false
         }
       case 'ERC20-PAYMENT': {
-        const tokenInfo = await this.httpClient.get<Token>(this.apiUrl + Routes.getToken + swap.fromToken)
-        const tokenAddress = tokenInfo.addresses[swap.fromNetwork]
-        assertTruthy(tokenAddress, `Token ${tokenInfo.symbol} is not available on ${swap.fromNetwork}`)
+        const tokenAddress = tokenInfo.address
+        assertTruthy(tokenAddress, `Token ${swap.fromToken} is not available on ${swap.fromNetwork}`)
         return {
           requiresClaim: false,
           type: actionType,

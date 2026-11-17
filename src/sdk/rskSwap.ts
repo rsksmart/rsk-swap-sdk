@@ -80,9 +80,9 @@ export class RskSwapSDK {
     this.bitcoinNetwork = getBitcoinNetwork(this.environment)
     this.providerClientResolver = new ProviderClientResolver()
       .register('BOLTZ', new BoltzClient('Mainnet', connection, this.httpClient, new DefaultBoltzAtomicSwapFactory()))
-      .register('CHANGELLY', new ChangellyClient(this.environment.api, this.httpClient, this.bitcoinNetwork))
-      .register('SYMBIOSIS', new SymbiosisClient(this.environment.api, this.httpClient, this.bitcoinNetwork))
-      .register('LIFI', new LiFiClient(this.environment.api, this.httpClient))
+      .register('CHANGELLY', new ChangellyClient(this.bitcoinNetwork))
+      .register('SYMBIOSIS', new SymbiosisClient(this.bitcoinNetwork))
+      .register('LIFI', new LiFiClient())
   }
 
   /**

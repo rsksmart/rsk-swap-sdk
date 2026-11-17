@@ -86,7 +86,7 @@ describe('RskSwapSDK class should', () => {
   ] as Array<[RskSwapEnvironmentName, typeof networks.bitcoin, string, string]>)('use the %s Bitcoin network for BIP21', async (envName, network, validAddress, otherNetworkAddress) => {
     jest.clearAllMocks()
     sdk = new RskSwapSDK(envName, connectionMock)
-    expect(ChangellyClient).toHaveBeenCalledWith(expect.any(String), httpClientMatcher, network)
+    expect(ChangellyClient).toHaveBeenCalledWith(network)
     expect((sdk as any).providerClientResolver.get('SYMBIOSIS').bitcoinNetwork).toBe(network)
     await expect(sdk.getQrCode({ type: 'BIP-21', data: { address: validAddress } })).resolves.toMatch(/^data:image\/png;base64,/)
     await expect(sdk.getQrCode({ type: 'BIP-21', data: { address: otherNetworkAddress } })).rejects.toThrow(`Invalid Bitcoin address: ${otherNetworkAddress}`)
