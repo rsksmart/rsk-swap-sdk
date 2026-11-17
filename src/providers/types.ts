@@ -2,6 +2,7 @@ import { type BlockchainConnection } from '@rsksmart/bridges-core-sdk'
 import { type CreateSwapResult, type Swap } from '../api'
 import { type CreateSwapRS } from '../api/bindings/data-contracts'
 import { type CreateSwapArgs } from '../sdk/createSwap'
+import { type PinnedToken } from '../constants/tokens'
 
 /** The context a provider client keeps around a swap, split into what is safe to send to the server and what must stay on the client. */
 export interface ProviderContext {
@@ -20,8 +21,8 @@ export interface SwapProviderClient {
   createContext: (creationArgs: CreateSwapArgs) => ProviderContext
   /** Validates that the payment address returned by the server for this swap can be trusted. */
   validateAddress: (swap: Swap) => Promise<boolean>
-  /** Builds the {@link SwapAction} the SDK consumer must perform to pay for the swap, once it's been created. */
-  generateAction: (swap: CreateSwapResult) => Promise<SwapAction>
+  /** Builds the {@link SwapAction} the SDK consumer must perform to pay for the swap, once it's been created. `fromToken` is the origin token already resolved by the SDK from its token registry. */
+  generateAction: (swap: CreateSwapResult, fromToken: PinnedToken) => Promise<SwapAction>
   /**
    * Builds the on-chain transaction data needed to claim a swap.
    * Optional on the interface, but required for any provider whose swaps can set `requiresClaim: true` and settle on an EVM chain — currently only implemented by {@link BoltzClient}, for its chain-swap-in direction.
@@ -46,6 +47,10 @@ export interface SwapAction {
   requiresClaim: boolean
   /** Optional steps (e.g. an ERC20 approval) that must be executed on the connected blockchain before the action itself, such as an ERC20 `approve` call. */
   executePreSteps?: (connection: BlockchainConnection) => Promise<void>
+  /** EVM chain id the action's transactions must be sent on. When set, {@link RskSwapSDK.executeSwap} only sends them while connected to that chain. */
+  chainId?: number
+  /** Network the swap is paid from. {@link RskSwapSDK.executeSwap} only sends EVM transactions when it is an EVM network. */
+  fromNetwork?: string
 }
 
 /** A swap paired with the action required to pay for it. */
