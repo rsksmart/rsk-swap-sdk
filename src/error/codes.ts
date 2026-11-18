@@ -17,5 +17,9 @@ export const RSK_SWAP_ERROR_CODES = deepFreeze({
   UNSUPPORTED_ACTION: {
     code: 'RskSwap-SDK-005',
     description: 'Unsupported action type'
+  },
+  UNSUPPORTED_TOKEN: {
+    code: 'RskSwap-SDK-006',
+    description: 'Unsupported origin token'
   }
 } as const)

@@ -256,12 +256,17 @@ export interface TokenDTO {
    */
   description: string;
   /** Type of the asset */
-  type: "native-evm" | "erc20" | "native-btc" | "oft";
+  type: "native-evm" | "erc20" | "erc677" | "native-btc" | "oft";
   /**
    * Decimal precision of the asset
    * @example 18
    */
   decimals: number;
+  /**
+   * Decimal precision of the asset on the networks where it differs from `decimals`. The key is the chainId and the value is the precision.
+   * @example {"56":18}
+   */
+  networkDecimals?: Record<string, number>;
   /**
    * Address of the token depending on the network. Only used for ERC20 tokens. The key is the chainId and the value is the address.
    * @example {"1":"0xdac17f958d2ee523a2206206994597c13d831ec7"}

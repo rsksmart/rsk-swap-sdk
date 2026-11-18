@@ -15,6 +15,8 @@ import { type BlockchainConnection } from '@rsksmart/bridges-core-sdk'
 import { type SwapAction } from '../providers/types'
 import { ProviderClientResolver } from '../providers/resolver'
 import { ChangellyClient } from '../providers/changelly/changelly'
+import { networks } from 'bitcoinjs-lib'
+import { type RskSwapEnvironmentName } from '../constants/environment'
 
 jest.mock('./getProviders')
 jest.mock('./getProvider')
@@ -59,6 +61,19 @@ describe('RskSwapSDK class should', () => {
     sdk = new RskSwapSDK('Local', connectionMock)
     expect(sdk).toBeDefined()
     expect(ChangellyClient).toHaveBeenCalledTimes(1)
+  })
+  test.each([
+    ['Mainnet', networks.bitcoin, 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq', 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx'],
+    ['Development', networks.bitcoin, 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq', 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx'],
+    ['Local', networks.bitcoin, 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq', 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx'],
+    ['Testnet', networks.testnet, 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx', 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq']
+  ] as Array<[RskSwapEnvironmentName, typeof networks.bitcoin, string, string]>)('use the %s Bitcoin network for BIP21', async (envName, network, validAddress, otherNetworkAddress) => {
+    jest.clearAllMocks()
+    sdk = new RskSwapSDK(envName, connectionMock)
+    expect(ChangellyClient).toHaveBeenCalledWith(network)
+    expect((sdk as any).providerClientResolver.get('SYMBIOSIS').bitcoinNetwork).toBe(network)
+    await expect(sdk.getQrCode({ type: 'BIP-21', data: { address: validAddress } })).resolves.toMatch(/^data:image\/png;base64,/)
+    await expect(sdk.getQrCode({ type: 'BIP-21', data: { address: otherNetworkAddress } })).rejects.toThrow(`Invalid Bitcoin address: ${otherNetworkAddress}`)
   })
   test('throw an error on unexpected environment name', async () => {
     // @ts-expect-error "Unexpected" is not assignable to parameter of type RskSwapEnvironmentName

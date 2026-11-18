@@ -1,4 +1,6 @@
 import { toDataURL } from 'qrcode'
+import { type Network } from 'bitcoinjs-lib'
+import { buildBip21Uri } from '../utils/bip21'
 
 /**
  * Arguments for the BIP21 QR code
@@ -55,13 +57,13 @@ export type GetQrCodeArgs =
  * - BIP21: Bitcoin payment URIs (e.g., bitcoin:1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa?amount=0.001)
  * - EIP681: Ethereum payment URIs for native tokens or ERC20 transfers
  */
-export async function getQrCode (args: GetQrCodeArgs): Promise<string> {
+export async function getQrCode (args: GetQrCodeArgs, bitcoinNetwork: Network): Promise<string> {
   let uri: string
 
   try {
     switch (args.type) {
       case 'BIP-21':
-        uri = buildBip21Uri(args.data)
+        uri = buildBip21Uri(args.data, bitcoinNetwork)
         break
       case 'EIP-681':
         uri = buildEip681Uri(args.data)
@@ -75,28 +77,6 @@ export async function getQrCode (args: GetQrCodeArgs): Promise<string> {
   } catch (err: unknown) {
     throw new Error('Error generating QR code: ' + (err as Error).message)
   }
-}
-
-/**
- * Builds a BIP21 URI for Bitcoin payments
- * Format: bitcoin:<address>?amount=<amount>&label=<label>&message=<message>
- */
-function buildBip21Uri (args: Bip21QrCodeArgs): string {
-  const { address, amountInDecimal, label, message } = args
-  let uri = `bitcoin:${address}`
-
-  const params: string[] = []
-  if (amountInDecimal) {
-    params.push(`amount=${encodeURIComponent(amountInDecimal)}`)
-  }
-  if (label) params.push(`label=${encodeURIComponent(label)}`)
-  if (message) params.push(`message=${encodeURIComponent(message)}`)
-
-  if (params.length > 0) {
-    uri += `?${params.join('&')}`
-  }
-
-  return uri
 }
 
 /**

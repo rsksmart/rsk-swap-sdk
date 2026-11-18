@@ -50,6 +50,16 @@ export class RskSwapError extends BridgeError {
     })
   }
 
+  static unsupportedToken (network: string, token: string): RskSwapError {
+    return new RskSwapError({
+      timestamp: Date.now(),
+      recoverable: true,
+      message: RSK_SWAP_ERROR_CODES.UNSUPPORTED_TOKEN.description,
+      code: RSK_SWAP_ERROR_CODES.UNSUPPORTED_TOKEN.code,
+      details: { cause: `Token ${token} is not supported on ${network}`, network, token }
+    })
+  }
+
   static unsupportedAction (action: SwapAction): RskSwapError {
     return new RskSwapError({
       timestamp: Date.now(),

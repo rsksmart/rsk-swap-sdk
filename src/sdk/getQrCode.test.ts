@@ -3,6 +3,7 @@ import { getQrCode, type GetQrCodeArgs, type Bip21QrCodeArgs, type Eip681QrCodeA
 
 // Get the mocked function after jest.mock is called
 import { toDataURL } from 'qrcode'
+import { networks } from 'bitcoinjs-lib'
 
 jest.mock('qrcode', () => ({
   toDataURL: jest.fn<any>()
@@ -18,6 +19,16 @@ describe('getQrCode function', () => {
   })
 
   describe('BIP-21 (Bitcoin Payment URIs)', () => {
+    test.each([
+      ['an address with a query string', 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh?amount=0.019&x='],
+      ['a testnet address', 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx']
+    ])('rejects %s on mainnet', async (_, address) => {
+      const args: GetQrCodeArgs = { type: 'BIP-21', data: { address, amountInDecimal: '0.01' } }
+
+      await expect(getQrCode(args, networks.bitcoin)).rejects.toThrow(`Error generating QR code: Invalid Bitcoin address: ${address}`)
+      expect(mockedToDataURL).not.toHaveBeenCalled()
+    })
+
     test('generates QR code for Bitcoin payment with address only', async () => {
       const data: Bip21QrCodeArgs = {
         address: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'
@@ -27,7 +38,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('bitcoin:1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')
@@ -44,7 +55,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('bitcoin:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh?amount=0.001')
@@ -62,7 +73,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('bitcoin:1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH?amount=0.5&label=Swap%20Payment&message=Payment%20for%20RSK%20swap')
@@ -79,7 +90,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('bitcoin:1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa?label=Payment%20%26%20Swap&message=Amount%3A%20%24100%20USD')
@@ -95,7 +106,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('bitcoin:3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy?amount=1.5')
@@ -112,7 +123,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb')
@@ -129,7 +140,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x9D93929A9099be4355fC2389FbF253982F9dF47c@30?value=1000000000000000000')
@@ -146,7 +157,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db@31?value=500000000000000000')
@@ -165,7 +176,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x0000000000000000000000000000000000000001@30/transfer?address=0x9D93929A9099be4355fC2389FbF253982F9dF47c&uint256=1000000000000000000')
@@ -183,7 +194,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x0000000000000000000000000000000000000002/transfer?address=0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb&uint256=1000000')
@@ -199,7 +210,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb?value=250000000000000000')
@@ -219,7 +230,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      await expect(getQrCode(args)).rejects.toThrow('Error generating QR code: QR code generation failed')
+      await expect(getQrCode(args, networks.bitcoin)).rejects.toThrow('Error generating QR code: QR code generation failed')
     })
 
     test('propagates error message from underlying library', async () => {
@@ -234,7 +245,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      await expect(getQrCode(args)).rejects.toThrow('Error generating QR code: Invalid input data')
+      await expect(getQrCode(args, networks.bitcoin)).rejects.toThrow('Error generating QR code: Invalid input data')
     })
   })
 
@@ -251,7 +262,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('bitcoin:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh?amount=0.01&label=RSK%20Swap%20Payment&message=Swap%200.01%20BTC%20to%20RBTC')
@@ -271,7 +282,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x0000000000000000000000000000000000000003@30/transfer?address=0x9D93929A9099be4355fC2389FbF253982F9dF47c&uint256=100000000')
@@ -288,7 +299,7 @@ describe('getQrCode function', () => {
         data
       }
 
-      const result = await getQrCode(args)
+      const result = await getQrCode(args, networks.bitcoin)
 
       expect(result).toBe(mockQrCodeDataUrl)
       expect(mockedToDataURL).toHaveBeenCalledWith('ethereum:0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db@31?value=100000000000000000')

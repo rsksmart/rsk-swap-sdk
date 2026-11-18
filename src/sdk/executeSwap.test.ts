@@ -3,6 +3,7 @@ import { executeSwap } from './executeSwap'
 import { BlockchainConnection } from '@rsksmart/bridges-core-sdk'
 import { type SwapAction } from '../providers/types'
 import { RskSwapError } from '../error/error'
+import { RSK_SWAP_ERROR_CODES } from '../error/codes'
 
 jest.mock('@rsksmart/bridges-core-sdk', () => {
   return {
@@ -15,10 +16,10 @@ jest.mock('@rsksmart/bridges-core-sdk', () => {
 
 describe('executeSwap function should', () => {
   let blockchainConnection: BlockchainConnection
-  let txMock: { executeTransaction: jest.Mock }
+  let txMock: { executeTransaction: jest.Mock, getChainId: jest.Mock }
 
   beforeEach(async () => {
-    txMock = { executeTransaction: jest.fn() }
+    txMock = { executeTransaction: jest.fn(), getChainId: jest.fn() }
     jest.spyOn(BlockchainConnection, 'createUsingPassphrase').mockResolvedValue(txMock as any)
     blockchainConnection = await BlockchainConnection.createUsingPassphrase('pass')
   })
@@ -135,5 +136,63 @@ describe('executeSwap function should', () => {
       expect(e.message).toBe('Unsupported action type')
       expect(e.details.action).toEqual({ type: 'UNKNOWN', data: {} })
     }
+  })
+
+  describe('for an action bound to a chain', () => {
+    const buildAction = (type: SwapAction['type'], executePreSteps: jest.Mock): SwapAction => ({
+      type,
+      chainId: 30,
+      executePreSteps: executePreSteps as unknown as SwapAction['executePreSteps'],
+      data: { to: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE', value: '0x0', data: '0x1234' }
+    })
+
+    test.each(['EVM-NATIVE-PAYMENT', 'ERC20-PAYMENT', 'CONTRACT-INTERACTION'] as const)('not send %s while connected to another chain', async (type) => {
+      txMock.getChainId.mockImplementation(async () => Promise.resolve(1))
+      const preSteps = jest.fn()
+      await expect(executeSwap(blockchainConnection, buildAction(type, preSteps)))
+        .rejects.toThrow('Connected to chain 1, but this swap must be paid on chain 30')
+      expect(preSteps).not.toHaveBeenCalled()
+      expect(blockchainConnection.executeTransaction).not.toHaveBeenCalled()
+    })
+
+    test.each(['EVM-NATIVE-PAYMENT', 'ERC20-PAYMENT', 'CONTRACT-INTERACTION'] as const)('send %s while connected to that chain', async (type) => {
+      txMock.getChainId.mockImplementation(async () => Promise.resolve(30))
+      txMock.executeTransaction.mockImplementation(async () => Promise.resolve({ txHash: 'a hash' }))
+      const preSteps = jest.fn()
+      await expect(executeSwap(blockchainConnection, buildAction(type, preSteps))).resolves.toBe('a hash')
+      expect(preSteps).toHaveBeenCalledTimes(1)
+      expect(blockchainConnection.executeTransaction).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('for an action with an origin network', () => {
+    const buildAction = (type: SwapAction['type'], fromNetwork: string, executePreSteps: jest.Mock): SwapAction => ({
+      type,
+      fromNetwork,
+      executePreSteps: executePreSteps as unknown as SwapAction['executePreSteps'],
+      data: { to: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE', value: '0x0', data: '0x1234' }
+    })
+
+    test.each([
+      ['EVM-NATIVE-PAYMENT', 'BTC'],
+      ['ERC20-PAYMENT', 'BTC'],
+      ['CONTRACT-INTERACTION', 'BTC'],
+      ['EVM-NATIVE-PAYMENT', 'LN'],
+      ['ERC20-PAYMENT', 'LN'],
+      ['CONTRACT-INTERACTION', 'LN']
+    ] as const)('not send %s for a swap paid from %s', async (type, fromNetwork) => {
+      const preSteps = jest.fn()
+      await expect(executeSwap(blockchainConnection, buildAction(type, fromNetwork, preSteps)))
+        .rejects.toMatchObject({ code: RSK_SWAP_ERROR_CODES.UNSUPPORTED_ACTION.code })
+      expect(preSteps).not.toHaveBeenCalled()
+      expect(blockchainConnection.executeTransaction).not.toHaveBeenCalled()
+    })
+
+    test.each(['EVM-NATIVE-PAYMENT', 'ERC20-PAYMENT', 'CONTRACT-INTERACTION'] as const)('send %s for a swap paid from an EVM network', async (type) => {
+      txMock.executeTransaction.mockImplementation(async () => Promise.resolve({ txHash: 'a hash' }))
+      const preSteps = jest.fn()
+      await expect(executeSwap(blockchainConnection, buildAction(type, '30', preSteps))).resolves.toBe('a hash')
+      expect(preSteps).toHaveBeenCalledTimes(1)
+    })
   })
 })
