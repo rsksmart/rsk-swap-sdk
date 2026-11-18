@@ -21,5 +21,9 @@ export const RSK_SWAP_ERROR_CODES = deepFreeze({
   UNSUPPORTED_TOKEN: {
     code: 'RskSwap-SDK-006',
     description: 'Unsupported origin token'
+  },
+  INSUFFICIENT_BALANCE: {
+    code: 'RskSwap-SDK-007',
+    description: 'Insufficient balance to cover the swap amount'
   }
 } as const)

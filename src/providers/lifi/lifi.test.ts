@@ -4,10 +4,10 @@ import { type SwapAction, type TxData } from '../types'
 import { TOKEN_REGISTRY, type PinnedToken } from '../../constants/tokens'
 import { RSK_SWAP_ERROR_CODES } from '../../error/codes'
 import { LiFiClient } from './lifi'
-import { createApprovalHandler } from '../symbiosis/approval'
+import { createApprovalHandler } from '../approval'
 
-jest.mock('../symbiosis/approval', () => {
-  const actual = jest.requireActual<typeof import('../symbiosis/approval')>('../symbiosis/approval')
+jest.mock('../approval', () => {
+  const actual = jest.requireActual<typeof import('../approval')>('../approval')
   return { createApprovalHandler: jest.fn(actual.createApprovalHandler) }
 })
 
@@ -236,7 +236,8 @@ describe('LiFiClient should', () => {
     expect(createApprovalHandler).toHaveBeenCalledWith({
       tokenAddress: usdcOnNetwork1,
       spender: '0x1231DEB6f5749EF6cE6943a275A1D3E7486F4EaE',
-      amount: '1000000'
+      amount: '1000000',
+      transferAmount: '1000000'
     })
   })
 

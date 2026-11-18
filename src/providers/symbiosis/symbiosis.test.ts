@@ -4,11 +4,11 @@ import { RSK_SWAP_ERROR_CODES } from '../../error/codes'
 import { type SwapAction } from '../types'
 import { TOKEN_REGISTRY, type PinnedToken } from '../../constants/tokens'
 import { SymbiosisClient, type SymbiosisEvmContext } from './symbiosis'
-import { createApprovalHandler } from './approval'
+import { createApprovalHandler } from '../approval'
 import { networks } from 'bitcoinjs-lib'
 
-jest.mock('./approval', () => {
-  const actual = jest.requireActual<typeof import('./approval')>('./approval')
+jest.mock('../approval', () => {
+  const actual = jest.requireActual<typeof import('../approval')>('../approval')
   return { createApprovalHandler: jest.fn(actual.createApprovalHandler) }
 })
 
@@ -347,14 +347,14 @@ describe('SymbiosisClient should', () => {
     test('grant the approval to the pinned spender for at most fromAmount', async () => {
       const action = await generateAction(buildSwap({ approveAmount: '400000' }))
       expect(action.chainId).toBe(30)
-      expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: router, amount: '400000' })
+      expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: router, amount: '400000', transferAmount: '1000000' })
     })
 
     test('grant the approval to the gateway of the metarouter that uses one', async () => {
       const metaRouter = '0x7057ab3fb2bee9c18e0cde4240de4ff7f159e365'
       const gateway = '0xfffdb2a69abcbbf55ecb2f6b348e0bd3d0f9f2e1'
       await generateAction(buildSwap({ to: metaRouter, approveTo: gateway }))
-      expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: gateway, amount: '1000000' })
+      expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: gateway, amount: '1000000', transferAmount: '1000000' })
     })
 
     test('grant the approval to the gateway of the Ethereum metarouter', async () => {
@@ -366,15 +366,15 @@ describe('SymbiosisClient should', () => {
       const action = await generateAction(created)
       expect(action.chainId).toBe(1)
       expect(action.data).toMatchObject({ to: metaRouter.toLowerCase() })
-      expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdcAddress, spender: gateway, amount: '1000000' })
+      expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdcAddress, spender: gateway, amount: '1000000', transferAmount: '1000000' })
     })
 
     test('accept router and spender addresses with an RSK checksum', async () => {
       const action = await generateAction(buildSwap({ to: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421', approveTo: '0x7f6Fb9F3cE785f3D85772C038fda58EC9432d421' }))
       expect(action.data).toMatchObject({ to: '0x7f6fb9f3ce785f3d85772c038fda58ec9432d421' })
-      expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: router, amount: '1000000' })
+      expect(createApprovalHandler).toHaveBeenCalledWith({ tokenAddress: usdt0Address, spender: router, amount: '1000000', transferAmount: '1000000' })
       await generateAction(buildSwap({ to: '0x7057ab3fb2bee9c18e0cde4240de4ff7f159e365', approveTo: '0xFFfDb2A69AbCbBF55ecB2F6B348E0bd3d0f9f2E1' }))
-      expect(createApprovalHandler).toHaveBeenLastCalledWith({ tokenAddress: usdt0Address, spender: '0xfffdb2a69abcbbf55ecb2f6b348e0bd3d0f9f2e1', amount: '1000000' })
+      expect(createApprovalHandler).toHaveBeenLastCalledWith({ tokenAddress: usdt0Address, spender: '0xfffdb2a69abcbbf55ecb2f6b348e0bd3d0f9f2e1', amount: '1000000', transferAmount: '1000000' })
     })
 
     test('reject an approval to a spender other than the pinned one', async () => {

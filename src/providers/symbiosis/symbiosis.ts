@@ -4,7 +4,7 @@ import { type SwapAction, type ProviderContext, type SwapProviderClient } from '
 import { RskSwapError } from '../../error/error'
 import { validateEvmSwapTransaction } from '../evmTransaction'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
-import { createApprovalHandler } from './approval'
+import { createApprovalHandler } from '../approval'
 import { type Network } from 'bitcoinjs-lib'
 import { buildBip21Uri } from '../../utils/bip21'
 import { BTC_DECIMALS, type PinnedToken } from '../../constants/tokens'
@@ -95,7 +95,8 @@ export class SymbiosisClient implements SwapProviderClient {
           action.executePreSteps = createApprovalHandler({
             tokenAddress: contextTokenAddress,
             spender,
-            amount: approveAmount.toString()
+            amount: approveAmount.toString(),
+            transferAmount: swap.fromAmount.toString()
           })
         }
 
