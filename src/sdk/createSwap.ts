@@ -4,9 +4,9 @@ import { type SwapAction, type SwapWithAction } from '../providers/types'
 import { type ProviderClientResolver } from '../providers/resolver'
 import { RskSwapError } from '../error/error'
 import { TOKEN_REGISTRY, type PinnedToken } from '../constants/tokens'
-import { isBtcChain, isEvmChain, isLightningNetwork } from '../utils/chain'
+import { isBtcChain, isEvmChain } from '../utils/chain'
 
-const CONTRACT_INTERACTION_PROVIDERS = ['SYMBIOSIS', 'BOLTZ']
+const CONTRACT_INTERACTION_PROVIDERS = ['SYMBIOSIS']
 
 /** Arguments to create a new swap with a specific provider (see {@link RskSwapSDK.createNewSwap}). The provider-specific `context` is generated internally by the SDK and can't be passed in. */
 export type CreateSwapArgs = Omit<CreateSwapRQ, 'context'>
@@ -39,7 +39,7 @@ export async function createSwap (apiUrl: string, client: HttpClient, clientReso
     },
     secretContext: context.secretContext
   }
-  result.swap.context = swapProviderClient.finalizeContext?.(baseContext, result.swap) ?? baseContext
+  result.swap.context = baseContext
 
   const isValidAddress = await swapProviderClient.validateAddress(result.swap)
   if (!isValidAddress) {
@@ -57,9 +57,6 @@ export async function createSwap (apiUrl: string, client: HttpClient, clientReso
 function getExpectedActionType (request: CreateSwapRQ, fromToken: PinnedToken): SwapAction['type'] {
   if (isBtcChain(request.fromNetwork)) {
     return 'BIP21'
-  }
-  if (isLightningNetwork(request.fromNetwork)) {
-    return 'BOLT11'
   }
   if (CONTRACT_INTERACTION_PROVIDERS.includes(request.providerId)) {
     return 'CONTRACT-INTERACTION'

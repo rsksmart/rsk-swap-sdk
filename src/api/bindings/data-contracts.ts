@@ -67,7 +67,6 @@ export const ErrorDtoRequiredFields: string[] = ["code", "message", "context"];
 
 export interface FeeDTO {
   type:
-    | "PERCENTAGE_BOLTZ_FEE"
     | "FIXED_MINER_FEE"
     | "FIXED_DESTINATION_NETWORK_FEE"
     | "FIXED_CHANGELLY_FEE"
@@ -134,12 +133,6 @@ export interface SwapLimitsRS {
 export const SwapLimitsRsRequiredFields: string[] = ["minAmount", "maxAmount"];
 
 export interface CreateSwapContext {
-  /** The preimage hash of the swap */
-  preimageHash?: string;
-  /** The refund public key of the swap */
-  refundPublicKey?: string;
-  /** The claim public key of the swap */
-  claimPublicKey?: string;
   /** Slippage tolerance as an integer (e.g. 300 for 3%) */
   slippage?: number;
 }
@@ -246,7 +239,7 @@ export interface CreateSwapRS {
   /** The swap created */
   swap: SwapDTO;
   /** The type of action to perform */
-  actionType: "NONE" | "ERC20-PAYMENT" | "EVM-NATIVE-PAYMENT" | "BIP21" | "BOLT11" | "CONTRACT-INTERACTION";
+  actionType: "NONE" | "ERC20-PAYMENT" | "EVM-NATIVE-PAYMENT" | "BIP21" | "CONTRACT-INTERACTION";
 }
 
 export const CreateSwapRsRequiredFields: string[] = ["swap", "actionType"];

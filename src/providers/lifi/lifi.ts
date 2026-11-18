@@ -6,7 +6,7 @@ import { createApprovalHandler } from '../symbiosis/approval'
 import { validateEvmSwapTransaction } from '../evmTransaction'
 import { type PinnedToken } from '../../constants/tokens'
 
-/** {@link SwapProviderClient} implementation for LI.FI. Its swaps never require a claim, so it only implements the required contract methods; for ERC20 payments it attaches an approval step via `executePreSteps`. */
+/** {@link SwapProviderClient} implementation for LI.FI. It only implements the required contract methods; for ERC20 payments it attaches an approval step via `executePreSteps`. */
 export class LiFiClient implements SwapProviderClient {
   createContext (_args: CreateSwapArgs): ProviderContext {
     return {
@@ -34,7 +34,7 @@ export class LiFiClient implements SwapProviderClient {
           throw new Error(`LI.FI payment address mismatch: ${swap.paymentAddress} !== ${to}`)
         }
         // ethers only accepts EIP-55 addresses
-        const action: SwapAction = { type: actionType, data: { to: to.toLowerCase(), data, value }, requiresClaim: false, chainId: Number(swap.fromNetwork) }
+        const action: SwapAction = { type: actionType, data: { to: to.toLowerCase(), data, value }, chainId: Number(swap.fromNetwork) }
         if (actionType === 'ERC20-PAYMENT') {
           const tokenAddress = fromToken.address
           assertTruthy(tokenAddress, `Token ${swap.fromToken} is not available on ${swap.fromNetwork}`)

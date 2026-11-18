@@ -17,9 +17,6 @@ export const TOKEN_REGISTRY: Readonly<Record<string, Readonly<Record<string, Pin
   BTC: {
     BTC: { type: 'native-btc', decimals: BTC_DECIMALS }
   },
-  LN: {
-    BTC: { type: 'native-btc', decimals: BTC_DECIMALS }
-  },
   1: {
     ETH: { type: 'native-evm', decimals: EVM_NATIVE_DECIMALS },
     USDC: { type: 'erc20', decimals: 6, address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48' },

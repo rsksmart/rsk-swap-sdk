@@ -6,7 +6,7 @@ import { type Network } from 'bitcoinjs-lib'
 import { buildBip21Uri } from '../../utils/bip21'
 import { BTC_DECIMALS, type PinnedToken } from '../../constants/tokens'
 
-/** {@link SwapProviderClient} implementation for Changelly. Its swaps never require a claim, so it only implements the required contract methods. */
+/** {@link SwapProviderClient} implementation for Changelly. It only implements the required contract methods. */
 export class ChangellyClient implements SwapProviderClient {
   private readonly ERC20_INTERFACE = new ethers.utils.Interface(['function transfer(address _to, uint _value) public'])
   constructor (private readonly bitcoinNetwork: Network) {}
@@ -29,14 +29,12 @@ export class ChangellyClient implements SwapProviderClient {
       case 'BIP21':
         return {
           type: actionType,
-          data: buildBip21Uri({ address: swap.paymentAddress, amountInDecimal: ethers.utils.formatUnits(swap.fromAmount, BTC_DECIMALS) }, this.bitcoinNetwork),
-          requiresClaim: false
+          data: buildBip21Uri({ address: swap.paymentAddress, amountInDecimal: ethers.utils.formatUnits(swap.fromAmount, BTC_DECIMALS) }, this.bitcoinNetwork)
         }
       case 'ERC20-PAYMENT': {
         const tokenAddress = tokenInfo.address
         assertTruthy(tokenAddress, `Token ${swap.fromToken} is not available on ${swap.fromNetwork}`)
         return {
-          requiresClaim: false,
           type: actionType,
           data: {
             to: tokenAddress,
@@ -50,7 +48,6 @@ export class ChangellyClient implements SwapProviderClient {
       }
       case 'EVM-NATIVE-PAYMENT':
         return {
-          requiresClaim: false,
           type: actionType,
           data: {
             to: swap.paymentAddress,

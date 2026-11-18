@@ -2,12 +2,6 @@ import { toDataURL } from 'qrcode'
 import { type Network } from 'bitcoinjs-lib'
 import { buildBip21Uri } from '../utils/bip21'
 
-/** Arguments for a Lightning (BOLT11) QR code. */
-export interface LightningQrCodeArgs {
-  /** The BOLT11 payment request string to encode as-is in the QR code. */
-  lnPaymentString: string
-}
-
 /**
  * Arguments for the BIP21 QR code
  * @property address - The address of the wallet
@@ -43,8 +37,8 @@ export interface Eip681QrCodeArgs {
 
 /**
  * Arguments for {@link getQrCode}.
- * @property type - The type of QR code to generate 'BIP-21' | 'EIP-681' | 'BOLT11'
- * @property data - The data for the QR code Bip21QrCodeArgs | Eip681QrCodeArgs | LightningQrCodeArgs
+ * @property type - The type of QR code to generate 'BIP-21' | 'EIP-681'
+ * @property data - The data for the QR code Bip21QrCodeArgs | Eip681QrCodeArgs
  */
 export type GetQrCodeArgs =
   | {
@@ -55,10 +49,6 @@ export type GetQrCodeArgs =
     type: 'EIP-681'
     data: Eip681QrCodeArgs
   }
-  | {
-    type: 'BOLT11'
-    data: LightningQrCodeArgs
-  }
 
 /**
  * Generates a QR code data URL from a payment URI.
@@ -66,7 +56,6 @@ export type GetQrCodeArgs =
  * Supports:
  * - BIP21: Bitcoin payment URIs (e.g., bitcoin:1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa?amount=0.001)
  * - EIP681: Ethereum payment URIs for native tokens or ERC20 transfers
- * - BOLT11: Lightning Network payment requests
  */
 export async function getQrCode (args: GetQrCodeArgs, bitcoinNetwork: Network): Promise<string> {
   let uri: string
@@ -78,9 +67,6 @@ export async function getQrCode (args: GetQrCodeArgs, bitcoinNetwork: Network): 
         break
       case 'EIP-681':
         uri = buildEip681Uri(args.data)
-        break
-      case 'BOLT11':
-        uri = args.data.lnPaymentString
         break
       default:
         throw new Error('Unsupported QR code type')

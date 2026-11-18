@@ -40,19 +40,6 @@ export class RskSwapError extends BridgeError {
     })
   }
 
-  static unexpectedContract (address: string): RskSwapError {
-    return new RskSwapError({
-      timestamp: Date.now(),
-      recoverable: true,
-      message: RSK_SWAP_ERROR_CODES.UNEXPECTED_BYTECODE.description,
-      code: RSK_SWAP_ERROR_CODES.UNEXPECTED_BYTECODE.code,
-      details: {
-        cause: `Code found at address ${address} doesn't match expected code`,
-        address
-      }
-    })
-  }
-
   static invalidApiResponse (request: unknown, response: unknown): RskSwapError {
     return new RskSwapError({
       timestamp: Date.now(),

@@ -57,7 +57,6 @@ describe('ChangellyClient should', () => {
   test('generate action for BIP21', async () => {
     const action = await generateAction(bip21Swap('bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq'))
     expect(action).toEqual({
-      requiresClaim: false,
       type: 'BIP21',
       data: 'bitcoin:bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq?amount=1.0'
     })
@@ -97,7 +96,6 @@ describe('ChangellyClient should', () => {
     }
     const action = await generateAction(swap)
     expect(action).toEqual({
-      requiresClaim: false,
       type: 'ERC20-PAYMENT',
       data: {
         to: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
@@ -136,7 +134,6 @@ describe('ChangellyClient should', () => {
     }
     const action = await generateAction(swap)
     expect(action).toEqual({
-      requiresClaim: false,
       type: 'EVM-NATIVE-PAYMENT',
       data: {
         to: '0xd5f00abfbea7a0b193836cac6833c2ad9d06cea8',

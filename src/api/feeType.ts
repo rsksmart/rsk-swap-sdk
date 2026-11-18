@@ -1,7 +1,6 @@
 import type { FeeDTO } from './bindings/data-contracts'
 
 export const FeeType = {
-  PERCENTAGE_BOLTZ_FEE: 'PERCENTAGE_BOLTZ_FEE',
   FIXED_MINER_FEE: 'FIXED_MINER_FEE',
   FIXED_DESTINATION_NETWORK_FEE: 'FIXED_DESTINATION_NETWORK_FEE',
   FIXED_CHANGELLY_FEE: 'FIXED_CHANGELLY_FEE',
@@ -14,10 +13,6 @@ export const FeeType = {
 
 /** The possible fee type identifiers a {@link Fee} can have, as returned by the API. */
 export type FeeType = FeeDTO['type']
-
-/** Checks whether a fee type is the percentage-based Boltz provider fee. */
-export const isPercentageFee = (t: FeeType): boolean =>
-  t === FeeType.PERCENTAGE_BOLTZ_FEE
 
 const NETWORK_FEE_TYPES: ReadonlySet<FeeType> = new Set<FeeType>([
   FeeType.FIXED_MINER_FEE,

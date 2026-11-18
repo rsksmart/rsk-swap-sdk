@@ -30,7 +30,7 @@ export type SymbiosisContext =
   | SymbiosisEvmContext
   | SymbiosisBtcContext
 
-/** {@link SwapProviderClient} implementation for Symbiosis. Its swaps never require a claim, so it only implements the required contract methods; for EVM contract-interaction swaps that need an ERC20 approval, it attaches an approval step via `executePreSteps`. */
+/** {@link SwapProviderClient} implementation for Symbiosis. It only implements the required contract methods; for EVM contract-interaction swaps that need an ERC20 approval, it attaches an approval step via `executePreSteps`. */
 export class SymbiosisClient implements SwapProviderClient {
   constructor (private readonly bitcoinNetwork: Network) {}
 
@@ -54,8 +54,7 @@ export class SymbiosisClient implements SwapProviderClient {
         assertTruthy(context.depositAddress, 'Missing deposit address in Symbiosis swap context')
         return {
           type: actionType,
-          data: buildBip21Uri({ address: context.depositAddress, amountInDecimal: ethers.utils.formatUnits(swap.fromAmount, BTC_DECIMALS) }, this.bitcoinNetwork),
-          requiresClaim: false
+          data: buildBip21Uri({ address: context.depositAddress, amountInDecimal: ethers.utils.formatUnits(swap.fromAmount, BTC_DECIMALS) }, this.bitcoinNetwork)
         }
       }
       case 'CONTRACT-INTERACTION': {
@@ -72,7 +71,6 @@ export class SymbiosisClient implements SwapProviderClient {
             data: context.data,
             value
           },
-          requiresClaim: false,
           chainId: Number(swap.fromNetwork)
         }
 

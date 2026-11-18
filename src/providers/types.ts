@@ -13,7 +13,7 @@ export interface ProviderContext {
 }
 
 /**
- * Contract that every swap provider integration must implement (see `src/providers/*`, e.g. {@link BoltzClient}, `ChangellyClient`, `SymbiosisClient`, `LiFiClient`).
+ * Contract that every swap provider integration must implement (see `src/providers/*`, e.g. `ChangellyClient`, `SymbiosisClient`, `LiFiClient`).
  * A new provider is added by implementing this interface and registering it with {@link ProviderClientResolver}.
  */
 export interface SwapProviderClient {
@@ -23,18 +23,6 @@ export interface SwapProviderClient {
   validateAddress: (swap: Swap) => Promise<boolean>
   /** Builds the {@link SwapAction} the SDK consumer must perform to pay for the swap, once it's been created. `fromToken` is the origin token already resolved by the SDK from its token registry. */
   generateAction: (swap: CreateSwapResult, fromToken: PinnedToken) => Promise<SwapAction>
-  /**
-   * Builds the on-chain transaction data needed to claim a swap.
-   * Optional on the interface, but required for any provider whose swaps can set `requiresClaim: true` and settle on an EVM chain — currently only implemented by {@link BoltzClient}, for its chain-swap-in direction.
-   */
-  buildClaimTransaction?: (swap: Swap) => Promise<TxData>
-  /**
-   * Executes a claim that settles off-chain from the SDK's perspective (e.g. cooperatively signed and broadcast by the provider).
-   * Optional on the interface, but required for any provider whose swaps can set `requiresClaim: true` and settle on a non-EVM chain — currently only implemented by {@link BoltzClient}, for its chain-swap-out direction.
-   */
-  executeExternalClaim?: (swap: Swap) => Promise<string>
-  /** Reconciles the local {@link ProviderContext} with the server's response after a swap is created. Only implemented by providers that need to merge server-provided data (e.g. {@link BoltzClient}) into the context; providers that don't need this fall back to the local context unchanged. */
-  finalizeContext?: (localContext: ProviderContext, swap: Swap) => ProviderContext
 }
 
 /** The action an SDK consumer must perform to pay for a created swap. */
@@ -43,8 +31,6 @@ export interface SwapAction {
   type: CreateSwapRS['actionType']
   /** The data to perform the action. Format depends on the action itself */
   data: TxData | string
-  /** Whether this swap requires an explicit {@link RskSwapSDK.claimSwap} call after the payment to receive the destination funds. */
-  requiresClaim: boolean
   /** Optional steps (e.g. an ERC20 approval) that must be executed on the connected blockchain before the action itself, such as an ERC20 `approve` call. */
   executePreSteps?: (connection: BlockchainConnection) => Promise<void>
   /** EVM chain id the action's transactions must be sent on. When set, {@link RskSwapSDK.executeSwap} only sends them while connected to that chain. */
