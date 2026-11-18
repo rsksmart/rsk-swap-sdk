@@ -2,7 +2,7 @@ import { assertTruthy } from '@rsksmart/bridges-core-sdk'
 import { type SwapProviderClient, type ProviderContext, type SwapAction, type TxData } from '../types'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
 import { type CreateSwapResult, type Swap } from '../../api'
-import { createApprovalHandler } from '../symbiosis/approval'
+import { createApprovalHandler } from '../approval'
 import { validateEvmSwapTransaction } from '../evmTransaction'
 import { type PinnedToken } from '../../constants/tokens'
 
@@ -41,7 +41,8 @@ export class LiFiClient implements SwapProviderClient {
           action.executePreSteps = createApprovalHandler({
             tokenAddress,
             spender,
-            amount: swap.fromAmount.toString()
+            amount: swap.fromAmount.toString(),
+            transferAmount: swap.fromAmount.toString()
           })
         }
         return action
