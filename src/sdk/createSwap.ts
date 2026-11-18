@@ -29,6 +29,7 @@ export async function createSwap (apiUrl: string, client: HttpClient, clientReso
   if (!isValidApiResponse(request, result) || result.actionType !== getExpectedActionType(request, fromToken)) {
     throw RskSwapError.invalidApiResponse(request, result)
   }
+  result.swap.fromAmount = BigInt(request.fromAmount)
 
   // only the public context is sent to the server
   const baseContext = {
@@ -66,13 +67,18 @@ function getExpectedActionType (request: CreateSwapRQ, fromToken: PinnedToken): 
   return fromToken.type === 'native-evm' ? 'EVM-NATIVE-PAYMENT' : 'ERC20-PAYMENT'
 }
 
+function isIntegerAmount (amount: unknown): boolean {
+  return typeof amount === 'bigint' || (typeof amount === 'number' && Number.isSafeInteger(amount))
+}
+
 function isValidApiResponse (request: CreateSwapRQ, result: CreateSwapResult): boolean {
   for (const [key, value] of Object.entries(request.context ?? {})) {
     if (result.swap.context[key as keyof object] !== value) {
       return false
     }
   }
-  return BigInt(request.fromAmount) === BigInt(result.swap.fromAmount) &&
+  return isIntegerAmount(result.swap.fromAmount) &&
+    BigInt(request.fromAmount) === BigInt(result.swap.fromAmount) &&
     request.fromToken === result.swap.fromToken &&
     request.toToken === result.swap.toToken &&
     request.fromNetwork === result.swap.fromNetwork &&

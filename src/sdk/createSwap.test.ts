@@ -303,6 +303,53 @@ describe('createSwap function should', () => {
     await expect(createSwap(url, httpClient, providerResolver, params)).rejects.toThrow('The result returned with the API doesn\'t match with the request')
   })
 
+  describe('when the API returns fromAmount', () => {
+    const params: CreateSwapArgs = {
+      providerId: 'PROVIDER1',
+      address: 'a-receiver-address',
+      fromToken: 'ETH',
+      toToken: 'BTC',
+      fromAmount: BigInt(500),
+      refundAddress: '0x4217BD283e9Dc9A2cE3d5D20fAE34AA0902C28db',
+      fromNetwork: '1',
+      toNetwork: 'BTC'
+    }
+
+    test.each([
+      ['a string', '500'],
+      ['an array', ['500']],
+      ['a decimal number', 500.5]
+    ])('as %s, fail', async (_, fromAmount) => {
+      const result = structuredClone(mockResult);
+      (result.swap as { fromAmount: unknown }).fromAmount = fromAmount
+      httpClient.post = jest.fn<any>().mockResolvedValueOnce(result)
+      await expect(createSwap('http://localhost:8080', httpClient, providerResolver, params)).rejects.toThrow('The result returned with the API doesn\'t match with the request')
+      expect(providerClientMock.validateAddress).not.toHaveBeenCalled()
+      expect(providerClientMock.generateAction).not.toHaveBeenCalled()
+    })
+
+    test('as an unsafe integer number matching the request, fail', async () => {
+      const unsafeAmount = 9007199254740992 // Number.MAX_SAFE_INTEGER + 1
+      const result = structuredClone(mockResult)
+      result.swap.fromAmount = unsafeAmount
+      httpClient.post = jest.fn<any>().mockResolvedValueOnce(result)
+      await expect(createSwap('http://localhost:8080', httpClient, providerResolver, { ...params, fromAmount: BigInt(unsafeAmount) })).rejects.toThrow('The result returned with the API doesn\'t match with the request')
+      expect(providerClientMock.validateAddress).not.toHaveBeenCalled()
+      expect(providerClientMock.generateAction).not.toHaveBeenCalled()
+    })
+
+    test('as a number, return it as the request bigint', async () => {
+      const result = structuredClone(mockResult)
+      result.swap.fromAmount = 500
+      httpClient.post = jest.fn<any>().mockResolvedValueOnce(result)
+      providerClientMock.validateAddress.mockResolvedValue(true)
+      providerClientMock.generateAction.mockResolvedValue({ type: 'ERC20-PAYMENT', data: { to: 'a-payment-address', data: '0x', value: '0x0' }, requiresClaim: false })
+      const created = await createSwap('http://localhost:8080', httpClient, providerResolver, params)
+      expect(created.swap.fromAmount).toBe(BigInt(500))
+      expect(providerClientMock.generateAction).toHaveBeenCalledWith(expect.objectContaining({ swap: expect.objectContaining({ fromAmount: BigInt(500) }) }), { type: 'native-evm', decimals: 18 })
+    })
+  })
+
   describe('for the action type returned by the API', () => {
     const url = 'http://localhost:8080'
     const buildArgs = (providerId: string, fromNetwork: string, fromToken: string): CreateSwapArgs => ({
