@@ -10,20 +10,20 @@ export const RSK_SWAP_ERROR_CODES = deepFreeze({
     code: 'RskSwap-SDK-001',
     description: 'Untrusted destination address'
   },
-  UNEXPECTED_BYTECODE: {
-    code: 'RskSwap-SDK-002',
-    description: 'Unexpected contract content'
-  },
   MANIPULATED_API_RESPONSE: {
     code: 'RskSwap-SDK-003',
     description: "The result returned with the API doesn't match with the request"
   },
-  NOT_CLAIMABLE: {
-    code: 'RskSwap-SDK-004',
-    description: 'This swap does not require a claim'
-  },
   UNSUPPORTED_ACTION: {
     code: 'RskSwap-SDK-005',
     description: 'Unsupported action type'
+  },
+  UNSUPPORTED_TOKEN: {
+    code: 'RskSwap-SDK-006',
+    description: 'Unsupported origin token'
+  },
+  INSUFFICIENT_BALANCE: {
+    code: 'RskSwap-SDK-007',
+    description: 'Insufficient balance to cover the swap amount'
   }
 } as const)

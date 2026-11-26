@@ -8,15 +8,15 @@ import * as getSwapMod from './getSwap'
 import * as executeSwapMod from './executeSwap'
 import * as getLimitsMod from './getLimits'
 import * as listTokensMod from './listTokens'
-import * as claimSwapMod from './claimSwap'
 
 import { RskSwapSDK } from './rskSwap'
 import { type CreateSwapRQ as CreateSwapArgs } from '../api'
-import { type TxResult, type BlockchainConnection } from '@rsksmart/bridges-core-sdk'
-import { type SwapWithAction, type SwapAction } from '../providers/types'
+import { type BlockchainConnection } from '@rsksmart/bridges-core-sdk'
+import { type SwapAction } from '../providers/types'
 import { ProviderClientResolver } from '../providers/resolver'
-import { BoltzClient } from '../providers/boltz/boltz'
 import { ChangellyClient } from '../providers/changelly/changelly'
+import { networks } from 'bitcoinjs-lib'
+import { type RskSwapEnvironmentName } from '../constants/environment'
 
 jest.mock('./getProviders')
 jest.mock('./getProvider')
@@ -26,19 +26,6 @@ jest.mock('./getSwap')
 jest.mock('./executeSwap')
 jest.mock('./getLimits')
 jest.mock('./listTokens')
-jest.mock('./claimSwap')
-
-jest.mock('../providers/boltz/boltz', () => {
-  return {
-    BoltzClient: jest.fn().mockImplementation(() => {
-      return {
-        createContext: jest.fn(),
-        validateAddress: jest.fn(),
-        generateAction: jest.fn()
-      }
-    })
-  }
-})
 
 jest.mock('../providers/changelly/changelly', () => {
   return {
@@ -73,8 +60,20 @@ describe('RskSwapSDK class should', () => {
     jest.clearAllMocks()
     sdk = new RskSwapSDK('Local', connectionMock)
     expect(sdk).toBeDefined()
-    expect(BoltzClient).toHaveBeenCalledTimes(1)
     expect(ChangellyClient).toHaveBeenCalledTimes(1)
+  })
+  test.each([
+    ['Mainnet', networks.bitcoin, 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq', 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx'],
+    ['Development', networks.bitcoin, 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq', 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx'],
+    ['Local', networks.bitcoin, 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq', 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx'],
+    ['Testnet', networks.testnet, 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx', 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq']
+  ] as Array<[RskSwapEnvironmentName, typeof networks.bitcoin, string, string]>)('use the %s Bitcoin network for BIP21', async (envName, network, validAddress, otherNetworkAddress) => {
+    jest.clearAllMocks()
+    sdk = new RskSwapSDK(envName, connectionMock)
+    expect(ChangellyClient).toHaveBeenCalledWith(network)
+    expect((sdk as any).providerClientResolver.get('SYMBIOSIS').bitcoinNetwork).toBe(network)
+    await expect(sdk.getQrCode({ type: 'BIP-21', data: { address: validAddress } })).resolves.toMatch(/^data:image\/png;base64,/)
+    await expect(sdk.getQrCode({ type: 'BIP-21', data: { address: otherNetworkAddress } })).rejects.toThrow(`Invalid Bitcoin address: ${otherNetworkAddress}`)
   })
   test('throw an error on unexpected environment name', async () => {
     // @ts-expect-error "Unexpected" is not assignable to parameter of type RskSwapEnvironmentName
@@ -146,7 +145,6 @@ describe('RskSwapSDK class should', () => {
     jest.spyOn(executeSwapMod, 'executeSwap').mockResolvedValueOnce(hash)
     const action: SwapAction = {
       type: 'ERC20-PAYMENT',
-      requiresClaim: false,
       data: {
         to: '0x123456789',
         data: '0x123456789',
@@ -180,17 +178,6 @@ describe('RskSwapSDK class should', () => {
     expect(result).toEqual(mockResult)
     expect(listTokensMod.listTokens).toHaveBeenCalledTimes(1)
     expect(listTokensMod.listTokens).toHaveBeenCalledWith(apiUrl, httpClientMatcher)
-  })
-
-  test('invoke claimSwap properly', async () => {
-    const mockResult: TxResult = { txHash: 'a tx hash', successful: true }
-    jest.spyOn(claimSwapMod, 'claimSwap').mockResolvedValueOnce(mockResult)
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const swap: SwapWithAction = { swap: { providerId: 'PROVIDER' }, action: { requiresClaim: true } } as SwapWithAction
-    const result = await sdk.claimSwap(swap)
-    expect(result).toEqual('a tx hash')
-    expect(claimSwapMod.claimSwap).toHaveBeenCalledTimes(1)
-    expect(claimSwapMod.claimSwap).toHaveBeenCalledWith(expect.any(ProviderClientResolver), swap, connectionMock)
   })
 
   test('change connection correctly', () => {

@@ -1,6 +1,7 @@
 import { type BlockchainConnection } from '@rsksmart/bridges-core-sdk'
 import { RskSwapError } from '../error/error'
 import { type SwapAction } from '../providers/types'
+import { isEvmChain } from '../utils/chain'
 
 export async function executeSwap (connection: BlockchainConnection, action: SwapAction): Promise<string> {
   switch (action.type) {
@@ -8,13 +9,15 @@ export async function executeSwap (connection: BlockchainConnection, action: Swa
       return ''
     case 'BIP21':
       return returnQrCodeData(action)
-    case 'BOLT11':
-      return returnQrCodeData(action)
     case 'EVM-NATIVE-PAYMENT':
     case 'ERC20-PAYMENT':
+      assertEvmOrigin(action)
+      await assertConnectedChain(connection, action)
       await action.executePreSteps?.(connection)
       return executeEvmTransaction(connection, action)
     case 'CONTRACT-INTERACTION':
+      assertEvmOrigin(action)
+      await assertConnectedChain(connection, action)
       await action.executePreSteps?.(connection)
       return executeEvmTransaction(connection, action)
     default:
@@ -23,7 +26,7 @@ export async function executeSwap (connection: BlockchainConnection, action: Swa
 }
 
 /**
- * Use this function if the action type is a string that should be shown as a QR code (BIP21, BOLT11)
+ * Use this function if the action type is a string that should be shown as a QR code (BIP21)
  * @param action The action to execute
  * @returns The data to show in a QR code
  */
@@ -32,6 +35,22 @@ function returnQrCodeData (action: SwapAction): string {
     throw new Error(`Received a wrong value to show in a QR code: ${JSON.stringify(action.data)}`)
   }
   return action.data
+}
+
+function assertEvmOrigin (action: SwapAction): void {
+  if (action.fromNetwork !== undefined && !isEvmChain(action.fromNetwork)) {
+    throw RskSwapError.unsupportedAction(action)
+  }
+}
+
+async function assertConnectedChain (connection: BlockchainConnection, action: SwapAction): Promise<void> {
+  if (action.chainId === undefined) {
+    return
+  }
+  const connectedChainId = await connection.getChainId()
+  if (connectedChainId !== action.chainId) {
+    throw new Error(`Connected to chain ${connectedChainId}, but this swap must be paid on chain ${action.chainId}`)
+  }
 }
 
 /**

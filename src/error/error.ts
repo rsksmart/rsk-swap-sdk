@@ -40,19 +40,6 @@ export class RskSwapError extends BridgeError {
     })
   }
 
-  static unexpectedContract (address: string): RskSwapError {
-    return new RskSwapError({
-      timestamp: Date.now(),
-      recoverable: true,
-      message: RSK_SWAP_ERROR_CODES.UNEXPECTED_BYTECODE.description,
-      code: RSK_SWAP_ERROR_CODES.UNEXPECTED_BYTECODE.code,
-      details: {
-        cause: `Code found at address ${address} doesn't match expected code`,
-        address
-      }
-    })
-  }
-
   static invalidApiResponse (request: unknown, response: unknown): RskSwapError {
     return new RskSwapError({
       timestamp: Date.now(),
@@ -60,6 +47,16 @@ export class RskSwapError extends BridgeError {
       message: RSK_SWAP_ERROR_CODES.MANIPULATED_API_RESPONSE.description,
       code: RSK_SWAP_ERROR_CODES.MANIPULATED_API_RESPONSE.code,
       details: { request, response }
+    })
+  }
+
+  static unsupportedToken (network: string, token: string): RskSwapError {
+    return new RskSwapError({
+      timestamp: Date.now(),
+      recoverable: true,
+      message: RSK_SWAP_ERROR_CODES.UNSUPPORTED_TOKEN.description,
+      code: RSK_SWAP_ERROR_CODES.UNSUPPORTED_TOKEN.code,
+      details: { cause: `Token ${token} is not supported on ${network}`, network, token }
     })
   }
 

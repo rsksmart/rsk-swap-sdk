@@ -17,10 +17,9 @@ Table of everything exported from the package's public entry point ([`src/index.
 | [`SwapId`](../src/sdk/getSwap.ts) | interface | Identifies a swap univocally for `RskSwapSDK.getSwapStatus`. |
 | [`SwapLimitsArgs`](../src/sdk/getLimits.ts) | interface | Arguments for `RskSwapSDK.getSwapLimits`. |
 | [`GetPricesArgs`](../src/sdk/getPrices.ts) | interface | Arguments for `RskSwapSDK.getPrices`. |
-| [`GetQrCodeArgs`](../src/sdk/getQrCode.ts) | type | The QR-code type and payload for `RskSwapSDK.getQrCode` — a discriminated union over `'BIP-21'`, `'EIP-681'`, `'BOLT11'`. |
+| [`GetQrCodeArgs`](../src/sdk/getQrCode.ts) | type | The QR-code type and payload for `RskSwapSDK.getQrCode` — a discriminated union over `'BIP-21'`, `'EIP-681'`. |
 | [`Bip21QrCodeArgs`](../src/sdk/getQrCode.ts) | interface | Payload for a `'BIP-21'` QR code. |
 | [`Eip681QrCodeArgs`](../src/sdk/getQrCode.ts) | interface | Payload for a `'EIP-681'` QR code. |
-| [`LightningQrCodeArgs`](../src/sdk/getQrCode.ts) | interface | Payload for a `'BOLT11'` QR code. |
 
 ## Swap execution types
 
@@ -50,8 +49,7 @@ Re-exported from the generated API bindings ([`src/api/bindings/data-contracts.t
 
 | Export | Kind | Description |
 |---|---|---|
-| [`FeeType`](../src/api/feeType.ts) | const + type (same name) | Both a frozen runtime object of fee-type string constants (e.g. `FeeType.PERCENTAGE_BOLTZ_FEE`) and the type alias for a `Fee`'s `type` field. Re-exported as a value (not `export type`) all the way through `index.ts`, so both the runtime object and the type are usable from the package entry point. |
-| [`isPercentageFee`](../src/api/feeType.ts) | function | Checks whether a fee type is the percentage-based Boltz provider fee. |
+| [`FeeType`](../src/api/feeType.ts) | const + type (same name) | Both a frozen runtime object of fee-type string constants (e.g. `FeeType.FIXED_NETWORK_FEE`) and the type alias for a `Fee`'s `type` field. Re-exported as a value (not `export type`) all the way through `index.ts`, so both the runtime object and the type are usable from the package entry point. |
 | [`isNetworkFee`](../src/api/feeType.ts) | function | Checks whether a fee type represents a fixed network/miner fee (miner fee, destination network fee, or gas fee). |
 
 ## Environment
@@ -59,7 +57,7 @@ Re-exported from the generated API bindings ([`src/api/bindings/data-contracts.t
 | Export | Kind | Description |
 |---|---|---|
 | [`RskSwapEnvironmentName`](../src/constants/environment.ts) | type | Available environment for the RskSwapSDK — `'Local' \| 'Development' \| 'Testnet' \| 'Mainnet'`. |
-| [`RskSwapEnvironment`](../src/constants/environment.ts) | interface | Configuration for a network environment the SDK can target (currently just its API base URL). |
+| [`RskSwapEnvironment`](../src/constants/environment.ts) | interface | Configuration for a network environment the SDK can target: its API base URL and the Bitcoin network (`mainnet`, `testnet` or `regtest`) that BIP21 payment addresses are validated against. |
 | [`RskSwapEnvironments`](../src/constants/environment.ts) | type-only (declared as a `const`, but re-exported via `export type`) | The concrete `RskSwapEnvironmentName -> RskSwapEnvironment` map (see [`setup.md`](./setup.md) for the base URL table) — but since `index.ts` re-exports it with `export type { RskSwapEnvironments }`, it's usable only in type positions from the package entry point (e.g. `typeof RskSwapEnvironments`), not as a runtime value, despite being a `const` in `src/constants/environment.ts`. |
 
 ## Extension point

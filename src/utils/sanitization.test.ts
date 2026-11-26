@@ -136,8 +136,7 @@ describe('sanitizeSwap function should', () => {
       swap,
       action: {
         type: 'ERC20-PAYMENT',
-        data: { to: '0xabc', value: '0', data: '0x' },
-        requiresClaim: false
+        data: { to: '0xabc', value: '0', data: '0x' }
       }
     }
 

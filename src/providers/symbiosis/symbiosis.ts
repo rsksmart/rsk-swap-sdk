@@ -1,8 +1,13 @@
-import { type HttpClient, ethers, assertTruthy } from '@rsksmart/bridges-core-sdk'
-import { type Swap, type Token, type CreateSwapResult, Routes } from '../../api'
+import { ethers, assertTruthy } from '@rsksmart/bridges-core-sdk'
+import { type Swap, type CreateSwapResult } from '../../api'
 import { type SwapAction, type ProviderContext, type SwapProviderClient } from '../../providers/types'
+import { RskSwapError } from '../../error/error'
+import { validateEvmSwapTransaction } from '../evmTransaction'
 import { type CreateSwapArgs } from '../../sdk/createSwap'
-import { createApprovalHandler } from './approval'
+import { createApprovalHandler } from '../approval'
+import { type Network } from 'bitcoinjs-lib'
+import { buildBip21Uri } from '../../utils/bip21'
+import { BTC_DECIMALS, type PinnedToken } from '../../constants/tokens'
 
 export interface SymbiosisEvmContext {
   chainId: number
@@ -25,12 +30,9 @@ export type SymbiosisContext =
   | SymbiosisEvmContext
   | SymbiosisBtcContext
 
-/** {@link SwapProviderClient} implementation for Symbiosis. Its swaps never require a claim, so it only implements the required contract methods; for EVM contract-interaction swaps that need an ERC20 approval, it attaches an approval step via `executePreSteps`. */
+/** {@link SwapProviderClient} implementation for Symbiosis. It only implements the required contract methods; for EVM contract-interaction swaps that need an ERC20 approval, it attaches an approval step via `executePreSteps`. */
 export class SymbiosisClient implements SwapProviderClient {
-  constructor (
-    private readonly apiUrl: string,
-    private readonly httpClient: HttpClient
-  ) {}
+  constructor (private readonly bitcoinNetwork: Network) {}
 
   createContext (_args: CreateSwapArgs): ProviderContext {
     return {
@@ -43,9 +45,8 @@ export class SymbiosisClient implements SwapProviderClient {
     return Promise.resolve(true)
   }
 
-  async generateAction (createdSwap: CreateSwapResult): Promise<SwapAction> {
+  async generateAction (createdSwap: CreateSwapResult, tokenInfo: PinnedToken): Promise<SwapAction> {
     const { swap, actionType } = createdSwap
-    const tokenInfo = await this.httpClient.get<Token>(this.apiUrl + Routes.getToken + swap.fromToken)
 
     switch (actionType) {
       case 'BIP21': {
@@ -53,39 +54,49 @@ export class SymbiosisClient implements SwapProviderClient {
         assertTruthy(context.depositAddress, 'Missing deposit address in Symbiosis swap context')
         return {
           type: actionType,
-          data: `bitcoin:${context.depositAddress}?amount=${ethers.utils.formatUnits(swap.fromAmount, tokenInfo.decimals)}`,
-          requiresClaim: false
+          data: buildBip21Uri({ address: context.depositAddress, amountInDecimal: ethers.utils.formatUnits(swap.fromAmount, BTC_DECIMALS) }, this.bitcoinNetwork)
         }
       }
       case 'CONTRACT-INTERACTION': {
         const { publicContext: context } = swap.context as { publicContext: SymbiosisEvmContext }
         assertTruthy(context?.to, 'Missing "to" address in Symbiosis swap context')
         assertTruthy(context?.data, 'Missing transaction data in Symbiosis swap context')
+        const value = context.value === '0' ? '0x0' : context.value
+        const spender = validateEvmSwapTransaction('SYMBIOSIS', swap, tokenInfo, { to: context.to, value, chainId: context.chainId })
 
         const action: SwapAction = {
           type: actionType,
           data: {
-            to: context.to,
+            to: context.to.toLowerCase(),
             data: context.data,
-            value: context.value === '0' ? '0x0' : context.value
+            value
           },
-          requiresClaim: false
+          chainId: Number(swap.fromNetwork)
         }
 
         if (context.approveTo) {
           const contextTokenAddress = context.tokenAddress
-          const apiTokenAddress = tokenInfo.addresses?.[swap.fromNetwork]
+          const pinnedTokenAddress = tokenInfo.address
           assertTruthy(contextTokenAddress, `Token address not found in context for ${swap.fromToken}`)
-          assertTruthy(apiTokenAddress, `Token address not found in API for ${swap.fromToken} on ${swap.fromNetwork}`)
+          assertTruthy(pinnedTokenAddress, `Token address not found for ${swap.fromToken} on ${swap.fromNetwork}`)
           assertTruthy(
-            contextTokenAddress.toLowerCase() === apiTokenAddress.toLowerCase(),
-            `Token address mismatch: context=${contextTokenAddress}, api=${apiTokenAddress}`
+            contextTokenAddress.toLowerCase() === pinnedTokenAddress.toLowerCase(),
+            `Token address mismatch: context=${contextTokenAddress}, expected=${pinnedTokenAddress}`
           )
+
+          if (context.approveTo.toLowerCase() !== spender.toLowerCase()) {
+            throw RskSwapError.untrustedAddress(swap)
+          }
+          const approveAmount = ethers.BigNumber.from(context.approveAmount ?? swap.fromAmount.toString())
+          if (approveAmount.gt(swap.fromAmount.toString())) {
+            throw RskSwapError.invalidApiResponse({ fromAmount: swap.fromAmount.toString() }, { approveAmount: context.approveAmount })
+          }
 
           action.executePreSteps = createApprovalHandler({
             tokenAddress: contextTokenAddress,
-            spender: context.approveTo,
-            amount: context.approveAmount ?? swap.fromAmount.toString()
+            spender,
+            amount: approveAmount.toString(),
+            transferAmount: swap.fromAmount.toString()
           })
         }
 
